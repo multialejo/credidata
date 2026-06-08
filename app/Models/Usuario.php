@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class Usuario extends Authenticatable
 {
+    use HasApiTokens;
     use Notifiable;
 
     protected $primaryKey = 'uid';
@@ -14,13 +16,20 @@ class Usuario extends Authenticatable
     protected $keyType = 'string';
 
     protected $fillable = [
-        'uid', 'email', 'firebase_uid', 'nombre', 'estado', 'roles',
+        'uid', 'email', 'firebase_uid', 'password', 'nombre', 'estado', 'roles',
     ];
 
     protected $casts = [
         'roles' => 'array',
+        'email_verified_at' => 'datetime',
         'fecha_registro' => 'datetime',
+        'password' => 'hashed',
     ];
+
+    public function getNameAttribute()
+    {
+        return $this->nombre;
+    }
 
     public function cliente()
     {
