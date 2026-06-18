@@ -17,9 +17,11 @@ cp .env.example .env
 
 # 3. Install PHP dependencies via Docker
 docker run --rm \
-    -v "$(pwd):/app" \
-    -w /app \
-    composer install
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    laravelsail/php83-composer:latest \
+    composer install --ignore-platform-reqs
 
 # 4. Start Sail (detached)
 ./vendor/bin/sail up -d
@@ -30,10 +32,6 @@ docker run --rm \
 # 6. Run database migrations
 ./vendor/bin/sail artisan migrate
 
-# 7. Verify Firebase connection
-./vendor/bin/sail artisan firebase:users
-```
-
 > All `sail artisan` commands can also be run as `./vendor/bin/sail artisan` if the `sail` alias is not configured.
 
 ## Firebase Setup
@@ -43,7 +41,7 @@ docker run --rm \
 3. Verify the credentials are picked up:
 
 ```bash
-./vendor/bin/sail artisan firebase:users
+./vendor/bin/sail artisan firebase:vacas
 ```
 
 The `.env` file must contain:
@@ -60,7 +58,7 @@ GOOGLE_APPLICATION_CREDENTIALS=storage/app/firebase/credentials.json
 |---|---|
 | `sail artisan apikey:generate {uid}` | Genera una API key para un cliente |
 | `sail artisan credito:asignar {uid} {cantidad}` | Asigna créditos manualmente a un cliente |
-| `sail artisan firebase:users` | List documents from the Firestore `users` collection |
+| `sail artisan firebase:vacas` | List documents from the Firestore `vacas` collection |
 
 ## Useful Sail Commands
 

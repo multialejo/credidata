@@ -6,13 +6,13 @@ use Illuminate\Console\Command;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 use Throwable;
 
-class FirebaseUsers extends Command
+class FirebaseVacas extends Command
 {
-    protected $signature = 'firebase:users
+    protected $signature = 'firebase:vacas
         {--limit=10 : Número máximo de documentos a recuperar}
         {--all : Recuperar todos los documentos}';
 
-    protected $description = 'Recupera documentos de la colección "users" en Firestore';
+    protected $description = 'Recupera documentos de la colección "vacas" en Firestore (healthcheck)';
 
     public function handle()
     {
@@ -33,7 +33,7 @@ class FirebaseUsers extends Command
 
         if (empty($documents)) {
             $this->newLine();
-            $this->components->warn('No se encontraron documentos en la colección "users".');
+            $this->components->warn('No se encontraron "vacas".');
             return 0;
         }
 
@@ -50,7 +50,7 @@ class FirebaseUsers extends Command
 
             $data = $doc->data() ?? [];
             $formatted = collect($data)
-                ->map(fn ($v, $k) => is_scalar($v) ? "{$k}: {$v}" : "{$k}: " . json_encode($v))
+                ->map(fn($v, $k) => is_scalar($v) ? "{$k}: {$v}" : "{$k}: " . json_encode($v))
                 ->implode(', ');
 
             $rows[] = [$doc->id(), $formatted];
@@ -59,7 +59,7 @@ class FirebaseUsers extends Command
         $this->newLine();
 
         if (empty($rows)) {
-            $this->components->warn('No se encontraron documentos con datos en la colección "users".');
+            $this->components->warn('No se encontraron "vacas".');
             return 0;
         }
 
@@ -68,7 +68,7 @@ class FirebaseUsers extends Command
         $count = count($rows);
         $showing = $hasMore
             ? "Mostrando {$count} de {$total} documentos"
-            : "{$count} documento(s) recuperado(s) de la colección \"users\".";
+            : "{$count} documento(s) recuperado(s) de la colección \"vacas\".";
 
         $this->newLine();
         $this->components->info($showing);
