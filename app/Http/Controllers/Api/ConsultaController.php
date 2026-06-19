@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cliente;
 use App\Models\ConfigParametro;
 use App\Models\Consulta;
 use App\Models\LogActividad;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class ConsultaController extends Controller
 {
@@ -18,19 +16,7 @@ class ConsultaController extends Controller
             'cedula' => ['required', 'string', 'digits_between:8,13'],
         ]);
 
-        $bearer = $request->header('Authorization');
-        if (!$bearer || !str_starts_with($bearer, 'Bearer ')) {
-            return response()->json(['error' => 'API_KEY_REQUERIDA'], 401);
-        }
-        $apiKey = substr($bearer, 7);
-
-        $cliente = null;
-        foreach (Cliente::where('api_key_revocada', false)->whereNotNull('api_key_hash')->cursor() as $c) {
-            if (Hash::check($apiKey, $c->api_key_hash)) {
-                $cliente = $c;
-                break;
-            }
-        }
+        $cliente = $request->cliente_autenticado;
 
         if (!$cliente) {
             return response()->json(['error' => 'API_KEY_INVALIDA'], 401);
