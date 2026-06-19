@@ -52,6 +52,20 @@ FIREBASE_PROJECT_ID=your-project-id
 GOOGLE_APPLICATION_CREDENTIALS=storage/app/firebase/credentials.json
 ```
 
+## Frontend Assets
+
+The login page and other views use [Vite](https://vitejs.dev/) for asset compilation. Run one of the following **before** accessing the app:
+
+```bash
+# Development (hot-reload)
+./vendor/bin/sail npm run dev
+
+# Production (compiled assets)
+./vendor/bin/sail npm run build
+```
+
+Without this step, you'll see a `ViteManifestNotFoundException` when visiting the app.
+
 ## Available Commands
 
 | Command | Description |
