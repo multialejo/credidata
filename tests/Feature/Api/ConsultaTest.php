@@ -19,7 +19,7 @@ class ConsultaTest extends TestCase
     private string $validApiKey = 'cd_sk_testvalidkey1234567890abcd';
     private string $invalidApiKey = 'cd_sk_thiskeydoesnotexist123456';
     private Cliente $cliente;
-    private string $cedula = '1234567890';
+    private string $cedula = '1713175071';
 
     protected function setUp(): void
     {
@@ -198,6 +198,18 @@ class ConsultaTest extends TestCase
             'Authorization' => 'Bearer ' . $this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => 'abc',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['cedula']);
+    }
+
+    public function test_rejects_invalid_cedula_checksum(): void
+    {
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $this->validApiKey,
+        ])->postJson('/api/v1/consulta/cedula', [
+            'cedula' => '1713175072',
         ]);
 
         $response->assertStatus(422);

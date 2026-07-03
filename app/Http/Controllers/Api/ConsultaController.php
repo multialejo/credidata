@@ -7,6 +7,7 @@ use App\Models\Cliente;
 use App\Models\ConfigParametro;
 use App\Models\Consulta;
 use App\Models\LogActividad;
+use App\Rules\EcuadorianIdentificador;
 use App\Services\DinardapService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class ConsultaController extends Controller
     public function consultaCedula(Request $request)
     {
         $request->validate([
-            'cedula' => ['required', 'string', 'digits_between:8,13'],
+            'cedula' => ['required', 'string', new EcuadorianIdentificador()],
         ]);
 
         $cliente = $request->cliente_autenticado;

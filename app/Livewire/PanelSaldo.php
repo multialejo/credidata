@@ -35,7 +35,7 @@ class PanelSaldo extends Component
                 'fecha' => $r->fecha,
             ]);
 
-        $this->ultimosMovimientos = $consultas->concat($recargas)
+        $this->ultimosMovimientos = $consultas->toBase()->concat($recargas)
             ->sortByDesc('fecha')->take(5)->values();
     }
 

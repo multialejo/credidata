@@ -18,7 +18,7 @@ class ConsultaCacheTest extends TestCase
 
     private string $validApiKey = 'cd_sk_testvalidkey1234567890abcd';
     private Cliente $cliente;
-    private string $cedula = '1234567890';
+    private string $cedula = '1713175071';
 
     private array $cachedData = [
         'tipoIdentificador' => 'cedula',
