@@ -52,6 +52,15 @@ class DinardapTest extends Command
         $this->newLine();
         $this->components->twoColumnDetail('<fg=yellow>Paso 2</>', 'Consultando API Dinardap...');
 
+        $this->line(sprintf(
+            '  Payload: <fg=cyan>%s</>',
+            json_encode([
+                'cedula' => $cedula,
+                'user' => config('dinardap.api_user'),
+                'ip' => config('dinardap.api_ip'),
+            ]),
+        ));
+
         try {
             $resultado = $dinardapService->consultar($cedula);
         } catch (ConnectionException $e) {

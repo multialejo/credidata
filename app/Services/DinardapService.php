@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\ConfigParametro;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 use Throwable;
 
@@ -14,8 +13,6 @@ class DinardapService
     public function consultar(string $cedula): array
     {
         if (config('dinardap.mock')) {
-            Log::info('Dinardap mock activado, devolviendo datos ficticios', ['cedula' => $cedula]);
-
             return [
                 'status' => 'success',
                 'data' => [
@@ -33,11 +30,15 @@ class DinardapService
             ];
         }
 
+        $payload = [
+            'cedula' => $cedula,
+            'user' => config('dinardap.api_user'),
+            'ip' => config('dinardap.api_ip'),
+        ];
+
         $response = Http::withToken(config('dinardap.api_token'))
             ->timeout(config('dinardap.timeout'))
-            ->post(config('dinardap.api_url'), [
-                'cedula' => $cedula,
-            ]);
+            ->post(config('dinardap.api_url'), $payload);
 
         if ($response->unauthorized()) {
             Log::error('Dinardap API: token inválido o expirado', [
@@ -100,6 +101,7 @@ class DinardapService
             Log::warning('Firestore: error al leer cache', [
                 'cedula' => $cedula,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return null;
@@ -136,6 +138,7 @@ class DinardapService
             Log::warning('Firestore: error al guardar cache', [
                 'cedula' => $cedula,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return false;
