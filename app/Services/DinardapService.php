@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ConfigParametro;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 use Throwable;
 
