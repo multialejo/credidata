@@ -163,8 +163,6 @@ class DinardapService
             ];
         }
 
-        Log::debug($raw);
-
         return [
             'nombres' => $raw['nombres'] ?? $raw['nombre'] ?? $raw['nombreCompleto'] ?? '',
             'fechaNacimiento' => $raw['fechaNacimiento'] ?? $raw['fecha_nacimiento'] ?? null,
