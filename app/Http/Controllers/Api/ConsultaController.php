@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ConsultaResource;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
 use App\Models\Consulta;
@@ -72,11 +73,9 @@ class ConsultaController extends Controller
                 'codigo' => 200,
                 'exito' => true,
                 'mensaje' => 'Consulta exitosa',
-                'datos' => $cache,
+                'datos' => new ConsultaResource(array_merge($cache, ['cedula' => $cedula])),
                 'metadatos' => [
                     'timestamp' => now()->toIso8601String(),
-                    'consulta_id' => $consulta->id,
-                    'cedula' => $cedula,
                     'creditos_gastados' => $costo,
                     'creditos_restantes' => (int) $cliente->saldo_creditos,
                     'fuente' => 'cache',
@@ -108,11 +107,9 @@ class ConsultaController extends Controller
             'codigo' => 200,
             'exito' => true,
             'mensaje' => 'Consulta exitosa',
-            'datos' => $resultado['data'],
+            'datos' => new ConsultaResource(array_merge($resultado['data'], ['cedula' => $cedula])),
             'metadatos' => [
                 'timestamp' => now()->toIso8601String(),
-                'consulta_id' => $consulta->id,
-                'cedula' => $cedula,
                 'creditos_gastados' => $costo,
                 'creditos_restantes' => (int) $cliente->saldo_creditos,
                 'fuente' => 'dinardap',

@@ -163,6 +163,8 @@ class DinardapService
             ];
         }
 
+        Log::debug($raw);
+
         return [
             'nombres' => $raw['nombres'] ?? $raw['nombre'] ?? $raw['nombreCompleto'] ?? '',
             'fechaNacimiento' => $raw['fechaNacimiento'] ?? $raw['fecha_nacimiento'] ?? null,
@@ -170,9 +172,9 @@ class DinardapService
             'estadoCivilCodigo' => $raw['estadoCivilCodigo'] ?? $raw['estado_civil_codigo'] ?? $raw['estadoCivil'] ?? null,
             'conyuge' => $raw['conyuge'] ?? $raw['nombreConyuge'] ?? null,
             'ubicacion' => [
-                'provincia' => $raw['ubicacion']['provincia'] ?? $raw['provincia'] ?? '',
-                'canton' => $raw['ubicacion']['canton'] ?? $raw['canton'] ?? '',
-                'parroquia' => $raw['ubicacion']['parroquia'] ?? $raw['parroquia'] ?? '',
+                'provincia' => $raw['ubicacion']['provincia'] ?? $raw['residenciaActualProvincia'] ?? '',
+                'canton' => $raw['ubicacion']['canton'] ?? $raw['residenciaActualCanton'] ?? '',
+                'parroquia' => $raw['ubicacion']['parroquia'] ?? $raw['residenciaActualParroquia'] ?? '',
             ],
         ];
     }

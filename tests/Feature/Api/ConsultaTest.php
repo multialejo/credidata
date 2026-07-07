@@ -138,11 +138,11 @@ class ConsultaTest extends TestCase
             'exito' => true,
             'mensaje' => 'Consulta exitosa',
         ]);
-        $response->assertJsonPath('metadatos.cedula', $this->cedula);
+        $response->assertJsonPath('datos.cedula', $this->cedula);
+        $response->assertJsonPath('datos.nombres', 'Juan Carlos Pérez García');
         $response->assertJsonPath('metadatos.creditos_gastados', 1);
         $response->assertJsonPath('metadatos.creditos_restantes', 99);
         $response->assertJsonPath('metadatos.fuente', 'dinardap');
-        $response->assertJsonPath('datos.nombres', 'Juan Carlos Pérez García');
     }
 
     public function test_deducts_credits(): void
@@ -256,17 +256,73 @@ class ConsultaTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonStructure([
             'datos' => [
+                'cedula',
                 'nombres',
+                'profesion',
                 'fechaNacimiento',
                 'lugarNacimiento',
                 'estadoCivilCodigo',
                 'conyuge',
                 'ubicacion' => ['provincia', 'canton', 'parroquia'],
+                'ruc',
+                'contacto' => ['telefonos', 'emails', 'direcciones'],
             ],
         ]);
+        $response->assertJsonPath('datos.cedula', $this->cedula);
         $response->assertJsonPath('datos.nombres', 'Juan Carlos Pérez García');
         $response->assertJsonPath('datos.fechaNacimiento', '1985-06-15');
         $response->assertJsonPath('datos.ubicacion.provincia', 'Pichincha');
+        $response->assertJsonPath('datos.ruc', null);
+        $response->assertJsonPath('datos.contacto.telefonos', []);
+        $response->assertJsonPath('datos.contacto.emails', []);
+        $response->assertJsonPath('datos.contacto.direcciones', []);
+    }
+
+    public function test_response_omits_internal_cache_fields(): void
+    {
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $this->validApiKey,
+        ])->postJson('/api/v1/consulta/cedula', [
+            'cedula' => $this->cedula,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonMissingPath('datos.tipoIdentificador');
+        $response->assertJsonMissingPath('datos.fuentesUtilizadas');
+        $response->assertJsonMissingPath('datos.ultimaActualizacion');
+        $response->assertJsonMissingPath('datos.ultimaConsulta');
+        $response->assertJsonMissingPath('metadatos.consulta_id');
+    }
+
+    public function test_metadatos_minimal_on_success(): void
+    {
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $this->validApiKey,
+        ])->postJson('/api/v1/consulta/cedula', [
+            'cedula' => $this->cedula,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'metadatos' => ['timestamp', 'creditos_gastados', 'creditos_restantes', 'fuente'],
+        ]);
+    }
+
+    public function test_ruc_and_contacto_have_default_shape_when_no_data(): void
+    {
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $this->validApiKey,
+        ])->postJson('/api/v1/consulta/cedula', [
+            'cedula' => $this->cedula,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('datos.ruc', null);
+        $response->assertJsonPath('datos.contacto', [
+            'telefonos' => [],
+            'emails' => [],
+            'direcciones' => [],
+        ]);
     }
 
     public function test_creates_consulta_with_resultado_json(): void
@@ -310,7 +366,7 @@ class ConsultaTest extends TestCase
             'exito',
             'mensaje',
             'datos',
-            'metadatos' => ['timestamp', 'consulta_id', 'cedula', 'creditos_gastados', 'creditos_restantes', 'fuente'],
+            'metadatos' => ['timestamp', 'creditos_gastados', 'creditos_restantes', 'fuente'],
         ]);
     }
 }

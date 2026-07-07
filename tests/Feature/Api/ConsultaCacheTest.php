@@ -178,10 +178,17 @@ class ConsultaCacheTest extends TestCase
             'codigo',
             'exito',
             'mensaje',
-            'datos' => ['nombres', 'fechaNacimiento', 'conyuge'],
-            'metadatos' => ['timestamp', 'consulta_id', 'cedula', 'creditos_gastados', 'creditos_restantes', 'fuente'],
+            'datos' => [
+                'cedula', 'nombres', 'profesion', 'fechaNacimiento',
+                'lugarNacimiento', 'estadoCivilCodigo', 'conyuge',
+                'ubicacion' => ['provincia', 'canton', 'parroquia'],
+                'ruc',
+                'contacto' => ['telefonos', 'emails', 'direcciones'],
+            ],
+            'metadatos' => ['timestamp', 'creditos_gastados', 'creditos_restantes', 'fuente'],
         ]);
-        $response->assertJsonPath('metadatos.cedula', $this->cedula);
+        $response->assertJsonPath('datos.cedula', $this->cedula);
+        $response->assertJsonPath('datos.nombres', 'Carlos Cacheado');
         $response->assertJsonPath('metadatos.creditos_gastados', 1);
         $response->assertJsonPath('metadatos.creditos_restantes', 99);
         $response->assertJsonPath('metadatos.fuente', 'cache');

@@ -86,12 +86,12 @@ class DinardapServiceTest extends TestCase
         $this->assertEquals('Pedro Pablo', $result['nombres']);
     }
 
-    public function test_normalizar_maps_flat_ubicacion(): void
+    public function test_normalizar_maps_residencia_actual_ubicacion(): void
     {
         $input = [
-            'provincia' => 'Azuay',
-            'canton' => 'Cuenca',
-            'parroquia' => 'El Valle',
+            'residenciaActualProvincia' => 'Azuay',
+            'residenciaActualCanton' => 'Cuenca',
+            'residenciaActualParroquia' => 'El Valle',
         ];
 
         $result = $this->service->publicNormalizar($input);
