@@ -15,6 +15,8 @@ cd credidata
 # 2. Environment configuration
 cp .env.example .env
 
+# Note: The app uses MySQL through Laravel Sail. **`.env` must define a non-empty `DB_PASSWORD`** — empty passwords are rejected by the MySQL containe
+
 # 3. Install PHP dependencies via Docker
 docker run --rm \
     -u "$(id -u):$(id -g)" \
@@ -33,35 +35,7 @@ docker run --rm \
 ./vendor/bin/sail artisan migrate
 
 > All `sail artisan` commands can also be run as `./vendor/bin/sail artisan` if the `sail` alias is not configured.
-
-## Database
-
-The app uses MySQL through Laravel Sail. **`.env` must define a non-empty `DB_PASSWORD`** — empty passwords are rejected by the MySQL container.
-
-```env
-DB_PASSWORD=admin123   # any non-empty value you choose
 ```
-
-`compose.yaml` reads this and passes it to the MySQL container as `MYSQL_PASSWORD`. There is intentionally no `MYSQL_ALLOW_EMPTY_PASSWORD` flag, so the server will deny unauthenticated access.
-
-### Verify the connection
-
-```bash
-./vendor/bin/sail artisan db:show
-```
-
-A successful response lists the MySQL version and the databases. You can also log in to phpMyAdmin at `http://localhost:8080` with `sail` / your `DB_PASSWORD`.
-
-### Changing the password later
-
-The `sail-mysql` Docker volume persists the MySQL user from the first run. If you change `DB_PASSWORD` in `.env`, sync the user inside the container or you'll get `Access denied for user 'sail'@'...'`:
-
-```bash
-docker exec laravel-mysql-1 mysql -uroot -p"$DB_PASSWORD" \
-  -e "ALTER USER 'sail'@'%' IDENTIFIED BY 'new-password'; FLUSH PRIVILEGES;"
-```
-
-> Resetting the volume (`sail down -v`) also works but wipes all data.
 
 ## Firebase Setup
 
@@ -111,6 +85,9 @@ Without this step, you'll see a `ViteManifestNotFoundException` when visiting th
 
 # Stop containers
 ./vendor/bin/sail down
+
+# Verify conexion
+./vendor/bin/sail artisan db:show
 
 # View logs
 ./vendor/bin/sail logs -f
