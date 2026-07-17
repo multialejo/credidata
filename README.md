@@ -60,6 +60,9 @@ GOOGLE_APPLICATION_CREDENTIALS=storage/app/firebase/credentials.json
 The login page and other views use [Vite](https://vitejs.dev/) for asset compilation. Run one of the following **before** accessing the app:
 
 ```bash
+# Install node_modulesr
+./vendor/bin/sail npm install
+
 # Development (hot-reload)
 ./vendor/bin/sail npm run dev
 
