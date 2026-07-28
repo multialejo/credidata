@@ -12,8 +12,7 @@ return new class extends Migration {
     {
         Schema::create('recargas', function (Blueprint $table) {
             $table->id();
-            $table->string('cliente_id');
-            $table->foreign('cliente_id')->references('uid')->on('clientes')->onDelete('cascade');
+            $table->foreignId('cliente_id')->constrained('clientes')->cascadeOnDelete();
             $table->string('metodo'); // paypal | payphone | transferencia | bonificacion
             $table->decimal('monto_usd', 10, 2)->default(0);
             $table->integer('creditos_obtenidos')->default(0);

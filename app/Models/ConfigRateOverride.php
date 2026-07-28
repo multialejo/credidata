@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class ConfigRateOverride extends Model
 {
-    protected $primaryKey = 'cliente_uid';
+    protected $primaryKey = 'cliente_id';
     public $incrementing = false;
-    protected $keyType = 'string';
+    protected $keyType = 'int';
 
     protected $fillable = [
-        'cliente_uid', 'por_minuto', 'por_dia', 'actualizado_por', 'actualizado_en',
+        'cliente_id', 'por_minuto', 'por_dia', 'actualizado_por', 'actualizado_en',
     ];
 
     protected $casts = [
@@ -22,6 +22,6 @@ class ConfigRateOverride extends Model
 
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'cliente_uid', 'uid');
+        return $this->belongsTo(Cliente::class, 'cliente_id', 'id');
     }
 }

@@ -30,7 +30,7 @@ class ConsultaErrorTest extends TestCase
 
         $apiKeyHash = Hash::make($this->validApiKey);
 
-        Usuario::create([
+        $usuario = Usuario::create([
             'uid' => 'test-cliente-uid',
             'email' => 'cliente@test.com',
             'nombre' => 'Test Cliente',
@@ -38,7 +38,7 @@ class ConsultaErrorTest extends TestCase
         ]);
 
         $this->cliente = Cliente::create([
-            'uid' => 'test-cliente-uid',
+            'usuario_id' => $usuario->id,
             'saldo_creditos' => 100,
             'api_key_prefijo' => substr($this->validApiKey, 0, 12),
             'api_key_hash' => $apiKeyHash,
@@ -86,7 +86,7 @@ class ConsultaErrorTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('clientes', [
-            'uid' => $this->cliente->uid,
+            'id' => $this->cliente->id,
             'saldo_creditos' => 100.0,
         ]);
     }
@@ -102,7 +102,7 @@ class ConsultaErrorTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('consultas', [
-            'cliente_id' => $this->cliente->uid,
+            'cliente_id' => $this->cliente->id,
             'exitosa' => false,
             'creditos_gastados' => 0,
         ]);
@@ -120,7 +120,7 @@ class ConsultaErrorTest extends TestCase
 
         $this->assertDatabaseHas('logs_actividad', [
             'accion' => 'CONSULTA_CEDULA',
-            'actor_id' => $this->cliente->uid,
+            'actor_id' => $this->cliente->usuario->id,
         ]);
     }
 
@@ -150,7 +150,7 @@ class ConsultaErrorTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('clientes', [
-            'uid' => $this->cliente->uid,
+            'id' => $this->cliente->id,
             'saldo_creditos' => 99.0,
         ]);
     }
@@ -166,7 +166,7 @@ class ConsultaErrorTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('consultas', [
-            'cliente_id' => $this->cliente->uid,
+            'cliente_id' => $this->cliente->id,
             'exitosa' => true,
             'creditos_gastados' => 1,
         ]);
@@ -184,7 +184,7 @@ class ConsultaErrorTest extends TestCase
 
         $this->assertDatabaseHas('logs_actividad', [
             'accion' => 'CONSULTA_CEDULA',
-            'actor_id' => $this->cliente->uid,
+            'actor_id' => $this->cliente->usuario->id,
         ]);
     }
 
@@ -213,7 +213,7 @@ class ConsultaErrorTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('clientes', [
-            'uid' => $this->cliente->uid,
+            'id' => $this->cliente->id,
             'saldo_creditos' => 100.0,
         ]);
     }

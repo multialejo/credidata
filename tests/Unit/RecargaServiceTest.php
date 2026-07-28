@@ -23,7 +23,7 @@ class RecargaServiceTest extends TestCase
     {
         parent::setUp();
 
-        Usuario::create([
+        $usuario = Usuario::create([
             'uid' => 'test-uid-1',
             'email' => 'cliente-rs@test.com',
             'nombre' => 'Cliente RecargaService',
@@ -31,7 +31,7 @@ class RecargaServiceTest extends TestCase
         ]);
 
         $this->cliente = Cliente::create([
-            'uid' => 'test-uid-1',
+            'usuario_id' => $usuario->id,
             'saldo_creditos' => 100,
         ]);
 
@@ -40,7 +40,7 @@ class RecargaServiceTest extends TestCase
 
     public function test_creates_recarga_row_with_estado_completada(): void
     {
-        $recarga = $this->service->procesar('REF-NEW-1', $this->cliente->uid, 50, 'paypal');
+        $recarga = $this->service->procesar('REF-NEW-1', $this->cliente->usuario->uid, 50, 'paypal');
 
         $this->assertInstanceOf(Recarga::class, $recarga);
         $this->assertSame('completada', $recarga->estado);
@@ -51,14 +51,14 @@ class RecargaServiceTest extends TestCase
         $this->assertDatabaseHas('recargas', [
             'referencia_externa' => 'REF-NEW-1',
             'estado' => 'completada',
-            'cliente_id' => $this->cliente->uid,
+            'cliente_id' => $this->cliente->id,
         ]);
     }
 
     public function test_idempotency_returns_existing_row_on_second_call(): void
     {
-        $first = $this->service->procesar('REF-IDEMP-1', $this->cliente->uid, 30, 'paypal');
-        $second = $this->service->procesar('REF-IDEMP-1', $this->cliente->uid, 30, 'paypal');
+        $first = $this->service->procesar('REF-IDEMP-1', $this->cliente->usuario->uid, 30, 'paypal');
+        $second = $this->service->procesar('REF-IDEMP-1', $this->cliente->usuario->uid, 30, 'paypal');
 
         $this->assertSame($first->id, $second->id);
         $this->assertSame(1, Recarga::where('referencia_externa', 'REF-IDEMP-1')->count());
@@ -68,22 +68,22 @@ class RecargaServiceTest extends TestCase
     {
         $saldoInicial = (int) $this->cliente->saldo_creditos;
 
-        $this->service->procesar('REF-SALDO-1', $this->cliente->uid, 25, 'paypal');
+        $this->service->procesar('REF-SALDO-1', $this->cliente->usuario->uid, 25, 'paypal');
 
         $this->assertSame($saldoInicial + 25, (int) $this->cliente->fresh()->saldo_creditos);
     }
 
     public function test_inserts_log_actividad_with_detalle(): void
     {
-        $this->service->procesar('REF-LOG-1', $this->cliente->uid, 10, 'payphone');
+        $this->service->procesar('REF-LOG-1', $this->cliente->usuario->uid, 10, 'payphone');
 
         $this->assertDatabaseHas('logs_actividad', [
             'accion' => 'recarga.acreditada',
-            'actor_id' => $this->cliente->uid,
+            'actor_id' => $this->cliente->usuario->id,
         ]);
 
         $log = LogActividad::where('accion', 'recarga.acreditada')
-            ->where('actor_id', $this->cliente->uid)
+            ->where('actor_id', $this->cliente->usuario->id)
             ->latest('id')
             ->first();
 
@@ -97,7 +97,7 @@ class RecargaServiceTest extends TestCase
     public function test_updates_pendiente_row_in_place_not_insert(): void
     {
         Recarga::create([
-            'cliente_id' => $this->cliente->uid,
+            'cliente_id' => $this->cliente->id,
             'metodo' => 'paypal',
             'monto_usd' => 10.00,
             'creditos_obtenidos' => 100,
@@ -108,7 +108,7 @@ class RecargaServiceTest extends TestCase
 
         $this->assertSame(1, Recarga::where('referencia_externa', 'REF-PEND-1')->count());
 
-        $recarga = $this->service->procesar('REF-PEND-1', $this->cliente->uid, 100, 'paypal');
+        $recarga = $this->service->procesar('REF-PEND-1', $this->cliente->usuario->uid, 100, 'paypal');
 
         $this->assertSame(1, Recarga::where('referencia_externa', 'REF-PEND-1')->count());
         $this->assertSame('completada', $recarga->fresh()->estado);
@@ -122,7 +122,7 @@ class RecargaServiceTest extends TestCase
 
         $threw = false;
         try {
-            $service->procesar('REF-FAIL-1', $this->cliente->uid, 75, 'paypal');
+            $service->procesar('REF-FAIL-1', $this->cliente->usuario->uid, 75, 'paypal');
         } catch (RuntimeException $e) {
             $threw = true;
         }
@@ -132,7 +132,7 @@ class RecargaServiceTest extends TestCase
         $this->assertDatabaseMissing('recargas', ['referencia_externa' => 'REF-FAIL-1']);
         $this->assertDatabaseMissing('logs_actividad', [
             'accion' => 'recarga.acreditada',
-            'actor_id' => $this->cliente->uid,
+            'actor_id' => $this->cliente->usuario->id,
         ]);
         $this->assertSame($saldoInicial, (int) $this->cliente->fresh()->saldo_creditos);
     }
@@ -141,25 +141,25 @@ class RecargaServiceTest extends TestCase
     {
         $saldoInicial = (int) $this->cliente->saldo_creditos;
 
-        $this->service->procesar('REF-MULT-1', $this->cliente->uid, 10, 'paypal');
-        $this->service->procesar('REF-MULT-2', $this->cliente->uid, 20, 'payphone');
-        $this->service->procesar('REF-MULT-3', $this->cliente->uid, 30, 'paypal');
+        $this->service->procesar('REF-MULT-1', $this->cliente->usuario->uid, 10, 'paypal');
+        $this->service->procesar('REF-MULT-2', $this->cliente->usuario->uid, 20, 'payphone');
+        $this->service->procesar('REF-MULT-3', $this->cliente->usuario->uid, 30, 'paypal');
 
         $this->cliente->refresh();
         $this->assertSame($saldoInicial + 60, (int) $this->cliente->saldo_creditos);
 
         $logsCount = LogActividad::where('accion', 'recarga.acreditada')
-            ->where('actor_id', $this->cliente->uid)
+            ->where('actor_id', $this->cliente->usuario->id)
             ->count();
         $this->assertSame(3, $logsCount);
     }
 
     public function test_returns_existing_completada_without_opening_transaction(): void
     {
-        $this->service->procesar('REF-EXISTS-1', $this->cliente->uid, 5, 'paypal');
+        $this->service->procesar('REF-EXISTS-1', $this->cliente->usuario->uid, 5, 'paypal');
         $logCountBefore = LogActividad::where('accion', 'recarga.acreditada')->count();
 
-        $this->service->procesar('REF-EXISTS-1', $this->cliente->uid, 5, 'paypal');
+        $this->service->procesar('REF-EXISTS-1', $this->cliente->usuario->uid, 5, 'paypal');
         $logCountAfter = LogActividad::where('accion', 'recarga.acreditada')->count();
 
         $this->assertSame($logCountBefore, $logCountAfter);

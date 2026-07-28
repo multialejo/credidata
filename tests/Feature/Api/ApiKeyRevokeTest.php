@@ -23,7 +23,7 @@ class ApiKeyRevokeTest extends TestCase
 
         $apiKeyHash = Hash::make($this->validApiKey);
 
-        Usuario::create([
+        $usuario = Usuario::create([
             'uid' => 'test-cliente-uid',
             'email' => 'cliente@test.com',
             'nombre' => 'Test Cliente',
@@ -31,7 +31,7 @@ class ApiKeyRevokeTest extends TestCase
         ]);
 
         $this->cliente = Cliente::create([
-            'uid' => 'test-cliente-uid',
+            'usuario_id' => $usuario->id,
             'saldo_creditos' => 100,
             'api_key_prefijo' => substr($this->validApiKey, 0, 12),
             'api_key_hash' => $apiKeyHash,
@@ -60,7 +60,7 @@ class ApiKeyRevokeTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('clientes', [
-            'uid' => $this->cliente->uid,
+            'id' => $this->cliente->id,
             'api_key_revocada' => true,
         ]);
     }
@@ -73,7 +73,7 @@ class ApiKeyRevokeTest extends TestCase
 
         $this->assertDatabaseHas('logs_actividad', [
             'accion' => 'API_KEY_REVOCADA',
-            'actor_id' => $this->cliente->uid,
+            'actor_id' => $this->cliente->usuario->id,
             'ip_origen' => '127.0.0.1',
         ]);
     }

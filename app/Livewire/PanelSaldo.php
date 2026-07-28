@@ -16,7 +16,7 @@ class PanelSaldo extends Component
         $cliente = auth()->user()->cliente;
         $this->saldo = $cliente->saldo_creditos;
 
-        $consultas = Consulta::where('cliente_id', $cliente->uid)
+        $consultas = Consulta::where('cliente_id', $cliente->id)
             ->latest('fecha')->take(5)->get()
             ->map(fn($c) => [
                 'tipo' => 'consulta',
@@ -25,7 +25,7 @@ class PanelSaldo extends Component
                 'fecha' => $c->fecha,
             ]);
 
-        $recargas = Recarga::where('cliente_id', $cliente->uid)
+        $recargas = Recarga::where('cliente_id', $cliente->id)
             ->where('estado', 'completada')
             ->latest('fecha')->take(5)->get()
             ->map(fn($r) => [

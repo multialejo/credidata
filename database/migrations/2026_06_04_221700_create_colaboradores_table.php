@@ -11,8 +11,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('colaboradores', function (Blueprint $table) {
-            $table->string('uid')->primary();
-            $table->foreign('uid')->references('uid')->on('usuarios')->onDelete('cascade');
+            $table->id();
+            $table->foreignId('usuario_id')->constrained('usuarios')->cascadeOnDelete()->unique();
             $table->integer('creditos_ganados')->default(0);
             $table->integer('creditos_acreditados')->default(0);
             $table->integer('total_aportes')->default(0);

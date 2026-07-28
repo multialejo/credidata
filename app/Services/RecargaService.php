@@ -18,7 +18,7 @@ class RecargaService
      *                                     PayPal order_id, o UUID interno de la
      *                                     solicitud de depósito). Clave de
      *                                     idempotencia en `recargas.referencia_externa`.
-     * @param  string  $clienteUid  UID del `Cliente` que recibe los créditos.
+     * @param  string  $clienteUid  UID público del `Cliente` que recibe los créditos.
      * @param  int  $creditosObtenidos  Créditos a acreditar (entero >= 1). Ya
      *                                  calculado server-side; el servicio NO
      *                                  recalcula ni acepta valores del request.
@@ -37,12 +37,16 @@ class RecargaService
         string $metodoPago,
         ?string $evidenciaPath = null,
     ): Recarga {
+        $cliente = Cliente::whereHas('usuario', fn ($q) =>
+            $q->where('uid', $clienteUid)
+        )->firstOrFail();
+
         if (Recarga::where('referencia_externa', $referenciaExterna)->where('estado', 'completada')->exists()) {
             return Recarga::where('referencia_externa', $referenciaExterna)->first();
         }
 
         return DB::transaction(function () use (
-            $referenciaExterna, $clienteUid, $creditosObtenidos,
+            $referenciaExterna, $cliente, $creditosObtenidos,
             $metodoPago, $evidenciaPath,
         ) {
             $recarga = Recarga::lockForUpdate()
@@ -55,7 +59,7 @@ class RecargaService
 
             if ($recarga === null) {
                 $recarga = Recarga::create([
-                    'cliente_id' => $clienteUid,
+                    'cliente_id' => $cliente->id,
                     'metodo' => $metodoPago,
                     'monto_usd' => 0,
                     'creditos_obtenidos' => $creditosObtenidos,
@@ -66,7 +70,7 @@ class RecargaService
                 ]);
             } else {
                 $recarga->update([
-                    'cliente_id' => $clienteUid,
+                    'cliente_id' => $cliente->id,
                     'metodo' => $metodoPago,
                     'creditos_obtenidos' => $creditosObtenidos,
                     'comprobante_url' => $evidenciaPath,
@@ -75,14 +79,15 @@ class RecargaService
                 $recarga->refresh();
             }
 
-            Cliente::where('uid', $clienteUid)
+            $cliente->newQuery()
+                ->where('id', $cliente->id)
                 ->update([
                     'saldo_creditos' => DB::raw("saldo_creditos + {$creditosObtenidos}"),
                 ]);
 
             $this->recordLog([
                 'accion' => 'recarga.acreditada',
-                'actor_id' => $clienteUid,
+                'actor_id' => $cliente->usuario->id,
                 'detalle' => [
                     'recarga_id' => $recarga->id,
                     'metodo' => $metodoPago,

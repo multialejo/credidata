@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->string('modulo');
             $table->string('clave');
             $table->json('valor');
-            $table->string('actualizado_por')->nullable();
+            $table->unsignedBigInteger('actualizado_por')->nullable();
             $table->timestamp('actualizado_en')->useCurrent()->useCurrentOnUpdate();
             $table->primary(['modulo', 'clave']);
             $table->timestamps();

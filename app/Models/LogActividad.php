@@ -20,6 +20,6 @@ class LogActividad extends Model
 
     public function actor()
     {
-        return $this->belongsTo(Usuario::class, 'actor_id', 'uid');
+        return $this->belongsTo(Usuario::class, 'actor_id', 'id');
     }
 }

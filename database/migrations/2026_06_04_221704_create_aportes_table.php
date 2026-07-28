@@ -12,14 +12,13 @@ return new class extends Migration {
     {
         Schema::create('aportes', function (Blueprint $table) {
             $table->id();
-            $table->string('colaborador_id');
-            $table->foreign('colaborador_id')->references('uid')->on('colaboradores')->onDelete('cascade');
+            $table->foreignId('colaborador_id')->constrained('colaboradores')->cascadeOnDelete();
             $table->string('identificador_relacionado');
             $table->string('tipo_dato'); // telefono | email | direccion
             $table->string('valor');
             $table->string('evidencia_url')->nullable();
             $table->string('estado')->default('pendiente'); // pendiente | aprobado | rechazado
-            $table->string('revisado_por')->nullable();
+            $table->unsignedBigInteger('revisado_por')->nullable();
             $table->text('comentario_rechazo')->nullable();
             $table->timestamp('fecha')->useCurrent();
             $table->timestamps();

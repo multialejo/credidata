@@ -11,7 +11,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -39,10 +38,7 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $uid = (string) Str::uuid();
-
         $usuario = Usuario::create([
-            'uid' => $uid,
             'email' => $request->email,
             'nombre' => $request->name,
             'password' => Hash::make($request->password),
@@ -52,14 +48,14 @@ class RegisteredUserController extends Controller
         ]);
 
         Cliente::create([
-            'uid' => $uid,
+            'usuario_id' => $usuario->id,
             'saldo_creditos' => 0,
             'metodo_pago_preferido' => 'paypal',
         ]);
 
         LogActividad::create([
             'accion' => 'CLIENTE_REGISTRADO',
-            'actor_id' => $uid,
+            'actor_id' => $usuario->id,
             'detalle' => ['email' => $request->email, 'nombre' => $request->name],
             'ip_origen' => $request->ip(),
         ]);

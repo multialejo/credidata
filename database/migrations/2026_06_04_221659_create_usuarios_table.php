@@ -11,7 +11,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('usuarios', function (Blueprint $table) {
-            $table->string('uid')->primary();
+            $table->id();
+            $table->string('uid')->unique();
             $table->string('email')->unique();
             $table->string('firebase_uid')->unique()->nullable();
             $table->string('nombre');

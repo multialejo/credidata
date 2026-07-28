@@ -12,11 +12,13 @@ class ApiKeyGenerateCommandTest extends TestCase
 {
     use RefreshDatabase;
 
+    private Usuario $usuario;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        Usuario::create([
+        $this->usuario = Usuario::create([
             'uid' => 'test-cliente-uid',
             'email' => 'cliente@test.com',
             'nombre' => 'Test Cliente',
@@ -24,7 +26,7 @@ class ApiKeyGenerateCommandTest extends TestCase
         ]);
 
         Cliente::create([
-            'uid' => 'test-cliente-uid',
+            'usuario_id' => $this->usuario->id,
             'saldo_creditos' => 100,
         ]);
     }
@@ -48,7 +50,9 @@ class ApiKeyGenerateCommandTest extends TestCase
         $this->artisan('apikey:generate', ['uid' => 'test-cliente-uid'])
             ->assertExitCode(0);
 
-        $cliente = Cliente::find('test-cliente-uid');
+        $cliente = Cliente::whereHas('usuario', fn ($q) =>
+            $q->where('uid', 'test-cliente-uid')
+        )->first();
 
         $this->assertNotNull($cliente->api_key_hash);
         $this->assertNotNull($cliente->api_key_prefijo);
@@ -67,7 +71,7 @@ class ApiKeyGenerateCommandTest extends TestCase
 
         $this->assertDatabaseHas('logs_actividad', [
             'accion' => 'API_KEY_GENERADA',
-            'actor_id' => 'test-cliente-uid',
+            'actor_id' => $this->usuario->id,
             'ip_origen' => 'sistema',
         ]);
     }

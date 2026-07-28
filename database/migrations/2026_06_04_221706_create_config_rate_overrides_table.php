@@ -11,11 +11,10 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('config_rate_overrides', function (Blueprint $table) {
-            $table->string('cliente_uid')->primary();
-            $table->foreign('cliente_uid')->references('uid')->on('clientes')->onDelete('cascade');
+            $table->foreignId('cliente_id')->primary()->constrained('clientes')->cascadeOnDelete();
             $table->integer('por_minuto');
             $table->integer('por_dia');
-            $table->string('actualizado_por')->nullable();
+            $table->unsignedBigInteger('actualizado_por')->nullable();
             $table->timestamp('actualizado_en')->useCurrent()->useCurrentOnUpdate();
             $table->timestamps();
         });

@@ -14,7 +14,9 @@ class CreditoAsignar extends Command
 
     public function handle()
     {
-        $cliente = Cliente::where('uid', $this->argument('uid'))->first();
+        $cliente = Cliente::whereHas('usuario', fn ($q) =>
+            $q->where('uid', $this->argument('uid'))
+        )->first();
         if (!$cliente) {
             $this->error('Cliente no encontrado');
             return 1;
@@ -25,7 +27,7 @@ class CreditoAsignar extends Command
         $cliente->increment('saldo_creditos', $cantidad);
 
         Recarga::create([
-            'cliente_id' => $cliente->uid,
+            'cliente_id' => $cliente->id,
             'metodo' => 'bonificacion',
             'monto_usd' => 0,
             'creditos_obtenidos' => $cantidad,
@@ -34,7 +36,7 @@ class CreditoAsignar extends Command
 
         LogActividad::create([
             'accion' => 'CREDITOS_ASIGNADOS',
-            'actor_id' => $cliente->uid,
+            'actor_id' => $cliente->usuario->id,
             'actor_sistema' => true,
             'detalle' => ['creditos' => $cantidad, 'tipo' => 'manual'],
             'ip_origen' => 'sistema',

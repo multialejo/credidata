@@ -45,7 +45,7 @@ class ConsultaCacheTest extends TestCase
 
         $this->app['config']->set('dinardap.mock', false);
 
-        Usuario::create([
+        $usuario = Usuario::create([
             'uid' => 'test-cliente-uid',
             'email' => 'cliente@test.com',
             'nombre' => 'Test Cliente',
@@ -53,7 +53,7 @@ class ConsultaCacheTest extends TestCase
         ]);
 
         $this->cliente = Cliente::create([
-            'uid' => 'test-cliente-uid',
+            'usuario_id' => $usuario->id,
             'saldo_creditos' => 100,
             'api_key_prefijo' => substr($this->validApiKey, 0, 12),
             'api_key_hash' => $apiKeyHash,
@@ -118,7 +118,7 @@ class ConsultaCacheTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('clientes', [
-            'uid' => $this->cliente->uid,
+            'id' => $this->cliente->id,
             'saldo_creditos' => 99.0,
         ]);
     }
@@ -134,7 +134,7 @@ class ConsultaCacheTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('consultas', [
-            'cliente_id' => $this->cliente->uid,
+            'cliente_id' => $this->cliente->id,
             'tipo' => 'cedula',
             'identificador' => $this->cedula,
             'creditos_gastados' => 1,
@@ -142,7 +142,7 @@ class ConsultaCacheTest extends TestCase
             'origen' => 'api',
         ]);
 
-        $consulta = Consulta::where('cliente_id', $this->cliente->uid)->first();
+        $consulta = Consulta::where('cliente_id', $this->cliente->id)->first();
         $this->assertNotNull($consulta->resultado_json);
         $this->assertEquals('Carlos Cacheado', $consulta->resultado_json['nombres']);
     }
@@ -159,7 +159,7 @@ class ConsultaCacheTest extends TestCase
 
         $this->assertDatabaseHas('logs_actividad', [
             'accion' => 'CONSULTA_CEDULA',
-            'actor_id' => $this->cliente->uid,
+            'actor_id' => $this->cliente->usuario->id,
             'ip_origen' => '127.0.0.1',
         ]);
     }

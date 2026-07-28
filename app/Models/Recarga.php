@@ -19,6 +19,6 @@ class Recarga extends Model
 
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'cliente_id', 'uid');
+        return $this->belongsTo(Cliente::class, 'cliente_id', 'id');
     }
 }

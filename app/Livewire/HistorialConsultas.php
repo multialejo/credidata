@@ -19,7 +19,7 @@ class HistorialConsultas extends Component
     {
         $cliente = auth()->user()->cliente;
 
-        $query = Consulta::where('cliente_id', $cliente->uid);
+        $query = Consulta::where('cliente_id', $cliente->id);
 
         if ($this->filtroFechaDesde) {
             $query->whereDate('fecha', '>=', $this->filtroFechaDesde);
@@ -42,7 +42,7 @@ class HistorialConsultas extends Component
     public function exportarCsv()
     {
         $cliente = auth()->user()->cliente;
-        $consultas = Consulta::where('cliente_id', $cliente->uid)
+        $consultas = Consulta::where('cliente_id', $cliente->id)
             ->latest('fecha')->get();
 
         $csv = "ID,Fecha,Tipo,Identificador,Creditos,Exitosa,IP\n";

@@ -6,12 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Staff extends Model
 {
-    protected $primaryKey = 'uid';
-    public $incrementing = false;
-    protected $keyType = 'string';
-
     protected $fillable = [
-        'uid', 'rol_staff', 'fecha_asignacion',
+        'usuario_id', 'rol_staff', 'fecha_asignacion',
     ];
 
     protected $casts = [
@@ -20,6 +16,6 @@ class Staff extends Model
 
     public function usuario()
     {
-        return $this->belongsTo(Usuario::class, 'uid', 'uid');
+        return $this->belongsTo(Usuario::class, 'usuario_id', 'id');
     }
 }

@@ -2,18 +2,15 @@
 
 namespace App\Models;
 
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
 class Usuario extends Authenticatable
 {
     use HasApiTokens;
     use Notifiable;
-
-    protected $primaryKey = 'uid';
-    public $incrementing = false;
-    protected $keyType = 'string';
 
     protected $fillable = [
         'uid', 'email', 'firebase_uid', 'password', 'nombre', 'estado', 'roles',
@@ -26,6 +23,15 @@ class Usuario extends Authenticatable
         'password' => 'hashed',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (Usuario $usuario): void {
+            if (empty($usuario->uid)) {
+                $usuario->uid = (string) Str::uuid();
+            }
+        });
+    }
+
     public function getNameAttribute()
     {
         return $this->nombre;
@@ -33,21 +39,21 @@ class Usuario extends Authenticatable
 
     public function cliente()
     {
-        return $this->hasOne(Cliente::class, 'uid', 'uid');
+        return $this->hasOne(Cliente::class, 'usuario_id', 'id');
     }
 
     public function colaborador()
     {
-        return $this->hasOne(Colaborador::class, 'uid', 'uid');
+        return $this->hasOne(Colaborador::class, 'usuario_id', 'id');
     }
 
     public function staff()
     {
-        return $this->hasOne(Staff::class, 'uid', 'uid');
+        return $this->hasOne(Staff::class, 'usuario_id', 'id');
     }
 
     public function logs()
     {
-        return $this->hasMany(LogActividad::class, 'actor_id', 'uid');
+        return $this->hasMany(LogActividad::class, 'actor_id', 'id');
     }
 }

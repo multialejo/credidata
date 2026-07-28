@@ -12,8 +12,7 @@ return new class extends Migration {
     {
         Schema::create('consultas', function (Blueprint $table) {
             $table->id();
-            $table->string('cliente_id');
-            $table->foreign('cliente_id')->references('uid')->on('clientes')->onDelete('cascade');
+            $table->foreignId('cliente_id')->constrained('clientes')->cascadeOnDelete();
             $table->string('tipo'); // cedula | ruc | lote
             $table->string('identificador');
             $table->string('sujeto_id')->nullable();
