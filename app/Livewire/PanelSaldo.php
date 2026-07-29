@@ -26,13 +26,13 @@ class PanelSaldo extends Component
             ]);
 
         $recargas = Recarga::where('cliente_id', $cliente->id)
-            ->where('estado', 'completada')
             ->latest('fecha')->take(5)->get()
             ->map(fn($r) => [
                 'tipo' => 'recarga',
                 'descripcion' => "Recarga vía {$r->metodo}",
                 'monto' => (int) $r->creditos_obtenidos,
                 'fecha' => $r->fecha,
+                'estado' => $r->estado,
             ]);
 
         $this->ultimosMovimientos = $consultas->toBase()->concat($recargas)
