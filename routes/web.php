@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RecargaPaypalReturnController;
 use App\Livewire\GestionApiKey;
 use App\Livewire\HistorialConsultas;
 use App\Livewire\PanelSaldo;
@@ -25,5 +26,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Public PayPal return/cancel URLs (no auth middleware: PayPal redirects here from the buyer's browser).
+Route::get('/dashboard/recargas/paypal/return', [RecargaPaypalReturnController::class, 'showReturn'])->name('recargas.paypal.return');
+Route::get('/dashboard/recargas/paypal/cancel', [RecargaPaypalReturnController::class, 'showCancel'])->name('recargas.paypal.cancel');
 
 require __DIR__.'/auth.php';
