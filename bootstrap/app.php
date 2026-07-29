@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'api.key' => \App\Http\Middleware\ValidateApiKey::class,
+            'staff' => \App\Http\Middleware\EnsureStaff::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

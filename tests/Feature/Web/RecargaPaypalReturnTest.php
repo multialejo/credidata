@@ -327,6 +327,25 @@ class RecargaPaypalReturnTest extends TestCase
         Mail::assertSentCount(1);
     }
 
+    public function test_renderiza_recarga_rechazada(): void
+    {
+        $recarga = \App\Models\Recarga::create([
+            'cliente_id' => $this->cliente->id,
+            'metodo' => 'transferencia',
+            'monto_usd' => 10,
+            'creditos_obtenidos' => 100,
+            'estado' => \App\Enums\EstadoRecarga::Rechazada,
+            'referencia_externa' => 'TEST-REJ-001',
+            'fecha' => now(),
+        ]);
+
+        $response = $this->actingAs($this->usuario)
+            ->get('/dashboard/recargas/paypal/return?token='.$recarga->referencia_externa);
+
+        $response->assertStatus(200);
+        $response->assertSee('Recarga rechazada', false);
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();

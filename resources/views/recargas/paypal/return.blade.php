@@ -84,6 +84,26 @@
                         </div>
                     @break
 
+                    @case('rechazada')
+                        <div class="text-center">
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100">
+                                <svg class="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
+                                </svg>
+                            </div>
+                            <h3 class="mt-4 text-lg font-semibold text-gray-900">Recarga rechazada</h3>
+                            <p class="mt-2 text-sm text-gray-600">
+                                Tu recarga fue rechazada. Contactá a soporte para más información.
+                            </p>
+                            <a href="{{ route('dashboard') }}" class="mt-6 inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded">
+                                Volver al Panel de Saldo
+                                <svg class="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </a>
+                        </div>
+                    @break
+
                     @default
                         <div class="text-center">
                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">

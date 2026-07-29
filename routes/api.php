@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminRecargaController;
 use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\ConsultaController;
 use App\Http\Controllers\Api\RecargaPaypalController;
@@ -19,5 +20,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('v1/recargas/paypal')->group(function () {
         Route::post('/orden', [RecargaPaypalController::class, 'crearOrden']);
         Route::post('/{order_id}/capturar', [RecargaPaypalController::class, 'capturar']);
+    });
+
+    Route::middleware(['staff'])->prefix('v1/admin')->group(function () {
+        Route::post('recargas/{recarga}/rechazar', [AdminRecargaController::class, 'rechazar']);
     });
 });
