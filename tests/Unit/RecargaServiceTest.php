@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Enums\EstadoRecarga;
 use App\Models\Cliente;
 use App\Models\LogActividad;
 use App\Models\Recarga;
@@ -43,7 +44,7 @@ class RecargaServiceTest extends TestCase
         $recarga = $this->service->procesar('REF-NEW-1', $this->cliente->usuario->uid, 50, 'paypal');
 
         $this->assertInstanceOf(Recarga::class, $recarga);
-        $this->assertSame('completada', $recarga->estado);
+        $this->assertSame(EstadoRecarga::Completada, $recarga->estado);
         $this->assertSame('REF-NEW-1', $recarga->referencia_externa);
         $this->assertSame(50, (int) $recarga->creditos_obtenidos);
         $this->assertSame('paypal', $recarga->metodo);
@@ -111,7 +112,7 @@ class RecargaServiceTest extends TestCase
         $recarga = $this->service->procesar('REF-PEND-1', $this->cliente->usuario->uid, 100, 'paypal');
 
         $this->assertSame(1, Recarga::where('referencia_externa', 'REF-PEND-1')->count());
-        $this->assertSame('completada', $recarga->fresh()->estado);
+        $this->assertSame(EstadoRecarga::Completada, $recarga->fresh()->estado);
         $this->assertSame(10.00, (float) $recarga->fresh()->monto_usd);
     }
 

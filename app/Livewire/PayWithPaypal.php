@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Enums\EstadoRecarga;
 use App\Http\Controllers\Concerns\InteractsWithFinancieroConfig;
 use App\Models\Recarga;
 use App\Services\RecargaPaypalService;
@@ -74,7 +75,7 @@ class PayWithPaypal extends Component
             'metodo' => 'paypal',
             'monto_usd' => $this->monto,
             'creditos_obtenidos' => $creditos,
-            'estado' => 'pendiente',
+            'estado' => EstadoRecarga::Pendiente,
             'referencia_externa' => $orderId,
             'fecha' => now(),
         ]);

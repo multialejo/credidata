@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\EstadoRecarga;
 use App\Http\Controllers\Concerns\InteractsWithFinancieroConfig;
 use App\Http\Controllers\Controller;
 use App\Models\LogActividad;
@@ -51,7 +52,7 @@ class RecargaPaypalController extends Controller
             'metodo' => 'paypal',
             'monto_usd' => $monto,
             'creditos_obtenidos' => $creditos,
-            'estado' => 'pendiente',
+            'estado' => EstadoRecarga::Pendiente,
             'referencia_externa' => $order['id'],
             'fecha' => now(),
         ]);
@@ -75,7 +76,7 @@ class RecargaPaypalController extends Controller
         $cliente = $request->user()->cliente;
 
         $existente = Recarga::where('referencia_externa', $orderId)->first();
-        if ($existente && $existente->estado === 'completada') {
+        if ($existente && $existente->estado === EstadoRecarga::Completada) {
             return response()->json([
                 'codigo' => 200,
                 'exito' => true,
@@ -116,7 +117,7 @@ class RecargaPaypalController extends Controller
 
         if (($captura['status'] ?? null) !== 'COMPLETED') {
             if ($existente) {
-                $existente->update(['estado' => 'fallida']);
+                $existente->update(['estado' => EstadoRecarga::Fallida]);
             }
             LogActividad::create([
                 'accion' => 'recarga.fallida',

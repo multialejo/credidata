@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\EstadoRecarga;
 use App\Models\Cliente;
 use App\Models\LogActividad;
 use App\Models\Recarga;
@@ -31,7 +32,7 @@ class CreditoAsignar extends Command
             'metodo' => 'bonificacion',
             'monto_usd' => 0,
             'creditos_obtenidos' => $cantidad,
-            'estado' => 'completada',
+            'estado' => EstadoRecarga::Completada,
         ]);
 
         LogActividad::create([

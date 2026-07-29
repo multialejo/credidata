@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Livewire;
 
+use App\Enums\EstadoRecarga;
 use App\Livewire\PanelSaldo;
 use App\Models\Cliente;
 use App\Models\Recarga;
@@ -70,9 +71,9 @@ class PanelSaldoPaypalBadgeTest extends TestCase
         Livewire::actingAs($this->usuario)
             ->test(PanelSaldo::class)
             ->assertSeeText('Recarga vía paypal')
-            ->assertSeeText('Pendiente')
-            ->assertSeeText('Completada')
-            ->assertSeeText('Fallida');
+            ->assertSeeText(EstadoRecarga::Pendiente->label())
+            ->assertSeeText(EstadoRecarga::Completada->label())
+            ->assertSeeText(EstadoRecarga::Fallida->label());
     }
 
     public function test_panel_saldo_sin_recargas_muestra_mensaje_vacio_sin_layout_shift(): void

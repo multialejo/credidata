@@ -33,7 +33,7 @@ class PanelSaldo extends Component
                 'descripcion' => "Recarga vía {$r->metodo}",
                 'monto' => (int) $r->creditos_obtenidos,
                 'fecha' => $r->fecha,
-                'estado' => $r->estado,
+                'estado' => $r->estado?->value,
             ]);
 
         $this->ultimosMovimientos = $consultas->toBase()->concat($recargas)

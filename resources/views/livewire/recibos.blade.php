@@ -27,23 +27,28 @@
                         </td>
                         <td class="py-2">
                             @switch($r->estado)
-                                @case('completada')
+                                @case(\App\Enums\EstadoRecarga::Completada)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                         Completada
                                     </span>
                                 @break
-                                @case('pendiente')
+                                @case(\App\Enums\EstadoRecarga::Pendiente)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                         Pendiente
                                     </span>
                                 @break
-                                @case('rechazada')
+                                @case(\App\Enums\EstadoRecarga::Rechazada)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                         Rechazada
                                     </span>
                                 @break
+                                @case(\App\Enums\EstadoRecarga::Fallida)
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        Pago no completado
+                                    </span>
+                                @break
                                 @default
-                                    {{ $r->estado }}
+                                    {{ $r->estado->value ?? $r->estado }}
                             @endswitch
                         </td>
                     </tr>

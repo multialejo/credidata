@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EstadoRecarga;
 use Illuminate\Database\Eloquent\Model;
 
 class Recarga extends Model
@@ -15,6 +16,7 @@ class Recarga extends Model
         'monto_usd' => 'decimal:2',
         'creditos_obtenidos' => 'integer',
         'fecha' => 'datetime',
+        'estado' => EstadoRecarga::class,
     ];
 
     public function cliente()

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Web;
 
+use App\Enums\EstadoRecarga;
 use App\Models\Cliente;
 use App\Models\Recarga;
 use App\Models\Usuario;
@@ -79,6 +80,6 @@ class RecargaPaypalCancelTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.paypal.cancel');
         $response->assertSeeText('Has cancelado el pago');
-        $this->assertSame('pendiente', Recarga::where('referencia_externa', $token)->first()->estado);
+        $this->assertSame(EstadoRecarga::Pendiente, Recarga::where('referencia_externa', $token)->first()->estado);
     }
 }

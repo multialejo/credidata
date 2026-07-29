@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\EstadoRecarga;
 use App\Jobs\SendRecargaEmail;
 use App\Models\Cliente;
 use App\Models\LogActividad;
@@ -41,7 +42,7 @@ class RecargaService
             $q->where('uid', $clienteUid)
         )->firstOrFail();
 
-        if (Recarga::where('referencia_externa', $referenciaExterna)->where('estado', 'completada')->exists()) {
+        if (Recarga::where('referencia_externa', $referenciaExterna)->where('estado', EstadoRecarga::Completada)->exists()) {
             return Recarga::where('referencia_externa', $referenciaExterna)->first();
         }
 
@@ -53,7 +54,7 @@ class RecargaService
                 ->where('referencia_externa', $referenciaExterna)
                 ->first();
 
-            if ($recarga !== null && $recarga->estado === 'completada') {
+            if ($recarga !== null && $recarga->estado === EstadoRecarga::Completada) {
                 return $recarga;
             }
 
@@ -63,7 +64,7 @@ class RecargaService
                     'metodo' => $metodoPago,
                     'monto_usd' => 0,
                     'creditos_obtenidos' => $creditosObtenidos,
-                    'estado' => 'completada',
+                    'estado' => EstadoRecarga::Completada,
                     'referencia_externa' => $referenciaExterna,
                     'comprobante_url' => $evidenciaPath,
                     'fecha' => now(),
@@ -74,7 +75,7 @@ class RecargaService
                     'metodo' => $metodoPago,
                     'creditos_obtenidos' => $creditosObtenidos,
                     'comprobante_url' => $evidenciaPath,
-                    'estado' => 'completada',
+                    'estado' => EstadoRecarga::Completada,
                 ]);
                 $recarga->refresh();
             }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EstadoRecarga;
 use App\Http\Controllers\Concerns\InteractsWithFinancieroConfig;
 use App\Models\LogActividad;
 use App\Models\Recarga;
@@ -45,7 +46,7 @@ class RecargaPaypalReturnController extends Controller
         }
 
         // REQ-01: ya completada, no re-capturar.
-        if ($recarga->estado === 'completada') {
+        if ($recarga->estado === EstadoRecarga::Completada) {
             return view('recargas.paypal.return', [
                 'status' => 'completada',
                 'recarga' => $recarga,
@@ -53,9 +54,17 @@ class RecargaPaypalReturnController extends Controller
         }
 
         // REQ-05: fallida, no reintentar.
-        if ($recarga->estado === 'fallida') {
+        if ($recarga->estado === EstadoRecarga::Fallida) {
             return view('recargas.paypal.return', [
                 'status' => 'fallida',
+                'recarga' => $recarga,
+            ]);
+        }
+
+        // F-027: rechazada (terminal), no reintentar.
+        if ($recarga->estado === EstadoRecarga::Rechazada) {
+            return view('recargas.paypal.return', [
+                'status' => 'rechazada',
                 'recarga' => $recarga,
             ]);
         }
@@ -84,7 +93,7 @@ class RecargaPaypalReturnController extends Controller
         }
 
         if (($capture['status'] ?? null) !== 'COMPLETED') {
-            $recarga->update(['estado' => 'fallida']);
+            $recarga->update(['estado' => EstadoRecarga::Fallida]);
             LogActividad::create([
                 'accion' => 'recarga.fallida',
                 'actor_id' => $user->cliente->usuario->id,

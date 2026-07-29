@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Web;
 
+use App\Enums\EstadoRecarga;
 use App\Mail\RecargaConfirmada;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
@@ -107,7 +108,7 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertSeeText('100');
         $response->assertSeeText('Volver al Panel de Saldo');
         $response->assertSee(route('dashboard'));
-        $this->assertSame('completada', $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
+        $this->assertSame(EstadoRecarga::Completada, $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
         $this->assertSame($saldoInicial, (int) $this->cliente->fresh()->saldo_creditos);
     }
 
@@ -151,7 +152,7 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertSeeText('Volver al Panel de Saldo');
         $response->assertSee(route('dashboard'));
 
-        $this->assertSame('completada', $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
+        $this->assertSame(EstadoRecarga::Completada, $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
         $this->assertSame($saldoInicial + 100, (int) $this->cliente->fresh()->saldo_creditos);
         $this->assertSame(1, LogActividad::where('accion', 'recarga.acreditada')
             ->where('actor_id', $this->usuario->id)->count());
@@ -196,7 +197,7 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertSeeText('Orden no encontrada');
         $response->assertSeeText('Volver al Panel de Saldo');
         $response->assertSee(route('dashboard'));
-        $this->assertSame('pendiente', $otroCliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
+        $this->assertSame(EstadoRecarga::Pendiente, $otroCliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
     }
 
     // --- REQ-03 ---
@@ -226,7 +227,7 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.paypal.return');
         $response->assertSeeText('Pendiente');
-        $this->assertSame('pendiente', $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
+        $this->assertSame(EstadoRecarga::Pendiente, $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
         $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
         Mail::assertNothingSent();
     }
@@ -279,7 +280,7 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertSeeText('Pago no completado');
         $response->assertSeeText('Volver al Panel de Saldo');
         $response->assertSee(route('dashboard'));
-        $this->assertSame('fallida', $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
+        $this->assertSame(EstadoRecarga::Fallida, $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
         Mail::assertNothingSent();
     }
 
