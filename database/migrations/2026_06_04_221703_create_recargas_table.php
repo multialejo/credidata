@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->string('metodo'); // paypal | payphone | transferencia | bonificacion
             $table->decimal('monto_usd', 10, 2)->default(0);
             $table->integer('creditos_obtenidos')->default(0);
-            $table->string('estado')->default('pendiente'); // completada | pendiente | rechazada
+            $table->string('estado')->default('pendiente'); // completada | pendiente | fallida | rechazada
             $table->string('referencia_externa')->nullable()->unique();
             $table->string('comprobante_url')->nullable();
             $table->timestamp('fecha')->useCurrent();
