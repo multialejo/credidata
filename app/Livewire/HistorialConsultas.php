@@ -2,17 +2,20 @@
 
 namespace App\Livewire;
 
+use App\Models\Consulta;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Consulta;
 
 class HistorialConsultas extends Component
 {
     use WithPagination;
 
     public $filtroFechaDesde = '';
+
     public $filtroFechaHasta = '';
+
     public $filtroTipo = '';
+
     public $filtroResultado = '';
 
     public function render()
@@ -49,12 +52,12 @@ class HistorialConsultas extends Component
         foreach ($consultas as $c) {
             $csv .= "{$c->id},{$c->fecha->format('Y-m-d H:i:s')},{$c->tipo},";
             $csv .= "{$c->identificador},{$c->creditos_gastados},";
-            $csv .= ($c->exitosa ? 'Si' : 'No') . ",{$c->ip_origen}\n";
+            $csv .= ($c->exitosa ? 'Si' : 'No').",{$c->ip_origen}\n";
         }
 
         return response()->streamDownload(function () use ($csv) {
             echo $csv;
-        }, 'historial-consultas-' . now()->format('Y-m-d') . '.csv', [
+        }, 'historial-consultas-'.now()->format('Y-m-d').'.csv', [
             'Content-Type' => 'text/csv',
         ]);
     }

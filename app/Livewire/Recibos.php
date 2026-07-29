@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Models\Recarga;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Recarga;
 
 class Recibos extends Component
 {
