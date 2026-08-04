@@ -39,8 +39,8 @@ class RecargaPayphoneService
                     'reference' => config('payphone.reference', 'CrediData recarga'),
                     'storeId' => config('payphone.store_id'),
                     'currency' => config('payphone.currency'),
-                    'responseUrl' => config('payphone.response_url'),
-                    'cancellationUrl' => config('payphone.cancellation_url'),
+                    'responseUrl' => $this->callbackUrl('recargas.payphone.return', config('payphone.response_url')),
+                    'cancellationUrl' => $this->callbackUrl('recargas.payphone.cancel', config('payphone.cancellation_url')),
                 ]);
 
             if ($response->failed()) {
@@ -112,6 +112,15 @@ class RecargaPayphoneService
     private function baseUrl(): string
     {
         return rtrim(config('payphone.api_url'), '/');
+    }
+
+    private function callbackUrl(string $routeName, ?string $override): string
+    {
+        if (! empty($override)) {
+            return $override;
+        }
+
+        return request()->getSchemeAndHttpHost().route($routeName, [], false);
     }
 
     /**

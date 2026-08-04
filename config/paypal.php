@@ -6,6 +6,6 @@ return [
     'client_secret' => env('PAYPAL_CLIENT_SECRET'),
     'mock' => (bool) env('PAYPAL_MOCK', false),
     'timeout' => (int) env('PAYPAL_TIMEOUT', 10),
-    'return_url' => env('PAYPAL_RETURN_URL'),
-    'cancel_url' => env('PAYPAL_CANCEL_URL'),
+    'return_url' => env('PAYPAL_RETURN_URL') ?: null,
+    'cancel_url' => env('PAYPAL_CANCEL_URL') ?: null,
 ];

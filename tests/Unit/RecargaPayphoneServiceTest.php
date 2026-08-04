@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Services\RecargaPayphoneService;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -95,6 +96,41 @@ class RecargaPayphoneServiceTest extends TestCase
         $this->service->prepare(12.68, 'bs-1');
 
         Http::assertSent(fn ($r) => $r['amount'] === 1268 && $r['amountWithoutTax'] === 1268);
+    }
+
+    public function test_prepare_sin_override_construye_url_desde_el_host_del_request_actual(): void
+    {
+        config()->set('payphone.response_url', null);
+        config()->set('payphone.cancellation_url', null);
+
+        $this->app->instance('request', Request::create('http://192.168.1.21/some/path'));
+
+        Http::fake([
+            '*button/Prepare*' => Http::response(['paymentId' => 'P'], 200),
+        ]);
+
+        $this->service->prepare(10.00, 'bs-lan-001');
+
+        Http::assertSent(function ($request) {
+            return $request['responseUrl'] === 'http://192.168.1.21/dashboard/recargas/payphone/return'
+                && $request['cancellationUrl'] === 'http://192.168.1.21/dashboard/recargas/payphone/cancel';
+        });
+    }
+
+    public function test_prepare_con_override_explicito_ignora_el_host_del_request(): void
+    {
+        $this->app->instance('request', Request::create('http://192.168.1.21/some/path'));
+
+        Http::fake([
+            '*button/Prepare*' => Http::response(['paymentId' => 'P'], 200),
+        ]);
+
+        $this->service->prepare(10.00, 'bs-override-001');
+
+        Http::assertSent(function ($request) {
+            return $request['responseUrl'] === 'https://app.credidata.test/dashboard/recargas/payphone/return'
+                && $request['cancellationUrl'] === 'https://app.credidata.test/dashboard/recargas/payphone/cancel';
+        });
     }
 
     public function test_prepare_con_respuesta_http_error_lanza_connection_exception(): void

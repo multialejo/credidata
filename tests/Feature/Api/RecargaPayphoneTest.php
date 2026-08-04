@@ -35,8 +35,6 @@ class RecargaPayphoneTest extends TestCase
         config()->set('payphone.timeout', 10);
         config()->set('payphone.reference', 'CrediData recarga');
         config()->set('payphone.currency', 'USD');
-        config()->set('payphone.response_url', 'http://localhost/dashboard/recargas/payphone/return');
-        config()->set('payphone.cancellation_url', 'http://localhost/dashboard/recargas/payphone/cancel');
 
         $this->usuario = Usuario::create([
             'uid' => 'test-payphone-uid',

@@ -37,8 +37,8 @@ class RecargaPaypalService
                                 'user_action' => 'PAY_NOW',
                                 'shipping_preference' => 'NO_SHIPPING',
                                 'payment_method_preference' => 'IMMEDIATE_PAYMENT_REQUIRED',
-                                'return_url' => config('paypal.return_url'),
-                                'cancel_url' => config('paypal.cancel_url'),
+                                'return_url' => $this->callbackUrl('recargas.paypal.return', config('paypal.return_url')),
+                                'cancel_url' => $this->callbackUrl('recargas.paypal.cancel', config('paypal.cancel_url')),
                             ],
                         ],
                     ],
@@ -146,6 +146,15 @@ class RecargaPaypalService
         return config('paypal.mode') === 'live'
             ? 'https://api-m.paypal.com'
             : 'https://api-m.sandbox.paypal.com';
+    }
+
+    private function callbackUrl(string $routeName, ?string $override): string
+    {
+        if (! empty($override)) {
+            return $override;
+        }
+
+        return request()->getSchemeAndHttpHost().route($routeName, [], false);
     }
 
     private function createOrderMock(float $montoUsd): array

@@ -8,6 +8,6 @@ return [
     'timeout' => (int) env('PAYPHONE_TIMEOUT', 10),
     'currency' => env('PAYPHONE_CURRENCY', 'USD'),
     'reference' => env('PAYPHONE_REFERENCE', 'CrediData recarga'),
-    'response_url' => env('PAYPHONE_RESPONSE_URL', 'http://localhost/dashboard/recargas/payphone/return'),
-    'cancellation_url' => env('PAYPHONE_CANCELLATION_URL', 'http://localhost/dashboard/recargas/payphone/cancel'),
+    'response_url' => env('PAYPHONE_RESPONSE_URL') ?: null,
+    'cancellation_url' => env('PAYPHONE_CANCELLATION_URL') ?: null,
 ];
