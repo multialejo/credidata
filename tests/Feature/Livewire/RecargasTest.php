@@ -59,12 +59,14 @@ class RecargasTest extends TestCase
             ->assertSee('Pagar con PayPal');
     }
 
-    public function test_recargas_solo_paypal_es_seleccionable(): void
+    public function test_recargas_paypal_y_payphone_son_seleccionables_transferencia_no(): void
     {
         Livewire::actingAs($this->usuario)
             ->test(Recargas::class)
             ->assertSet('metodo', 'paypal')
             ->call('selectMetodo', 'payphone')
+            ->assertSet('metodo', 'payphone')
+            ->call('selectMetodo', 'paypal')
             ->assertSet('metodo', 'paypal')
             ->call('selectMetodo', 'transferencia')
             ->assertSet('metodo', 'paypal')

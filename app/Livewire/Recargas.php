@@ -9,9 +9,9 @@ class Recargas extends Component
 {
     use InteractsWithFinancieroConfig;
 
-    public const METODOS_DISPONIBLES = ['paypal'];
+    public const METODOS_DISPONIBLES = ['paypal', 'payphone'];
 
-    public const METODOS_PROXIMAMENTE = ['payphone', 'transferencia'];
+    public const METODOS_PROXIMAMENTE = ['transferencia'];
 
     public string $metodo = 'paypal';
 

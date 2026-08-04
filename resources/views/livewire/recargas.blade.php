@@ -51,6 +51,8 @@
     <div class="border-t border-gray-100 pt-4">
         @if($metodo === 'paypal')
             <livewire:pay-with-paypal :monto="$monto" :key="'paypal-'.$metodo" />
+        @elseif($metodo === 'payphone')
+            <livewire:pay-with-payphone :monto="$monto" :key="'payphone-'.$metodo" />
         @endif
     </div>
 </div>
