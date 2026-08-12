@@ -14,7 +14,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'cliente.web'])->group(function () {
     Route::get('/dashboard', PanelSaldo::class)->name('dashboard');
     Route::get('/dashboard/recargas', Recargas::class)->name('dashboard.recargas');
     Route::get('/dashboard/consultas', HistorialConsultas::class)->name('dashboard.consultas');

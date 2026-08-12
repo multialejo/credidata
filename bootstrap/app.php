@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.key' => \App\Http\Middleware\ValidateApiKey::class,
             'staff' => \App\Http\Middleware\EnsureStaff::class,
             'staff.web' => \App\Http\Middleware\EnsureStaffWeb::class,
+            'cliente.web' => \App\Http\Middleware\EnsureCliente::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
