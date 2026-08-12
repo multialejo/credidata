@@ -46,14 +46,25 @@ class LogsActividadTest extends TestCase
 
     private function crearLog(array $overrides = []): LogActividad
     {
-        return LogActividad::create(array_merge([
+        // Si el override pide una fecha específica, la aplicamos vía forceFill
+        // para respetar el principio de que `fecha` NO está en $fillable:
+        // la auditoría temporal debe venir del server.
+        $fechaCustom = $overrides['fecha'] ?? null;
+        unset($overrides['fecha']);
+
+        $log = LogActividad::create(array_merge([
             'accion' => 'STAFF_CREADO',
             'actor_id' => $this->staffUsuario->id,
             'actor_sistema' => false,
             'detalle' => ['rol_staff' => 'admin'],
             'ip_origen' => '127.0.0.1',
-            'fecha' => now(),
         ], $overrides));
+
+        if ($fechaCustom !== null) {
+            $log->forceFill(['fecha' => $fechaCustom])->save();
+        }
+
+        return $log;
     }
 
     // --- Acceso ---
