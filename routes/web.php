@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecargaPaypalReturnController;
 use App\Http\Controllers\RecargaPayphoneReturnController;
 use App\Livewire\GestionApiKey;
+use App\Livewire\GestionClientes;
 use App\Livewire\HistorialConsultas;
 use App\Livewire\PanelSaldo;
 use App\Livewire\Recargas;
@@ -27,7 +28,7 @@ Route::middleware(['auth', 'verified', 'staff.web'])->prefix('admin')->name('adm
         return view('admin.placeholder', ['titulo' => $titulo]);
     };
 
-    Route::get('/clientes', fn () => $placeholder('Gestión de clientes'))->name('clientes');
+    Route::get('/clientes', GestionClientes::class)->name('clientes');
     Route::get('/logs', fn () => $placeholder('Log de trazabilidad'))->name('logs');
     Route::get('/config', fn () => $placeholder('Configuración general'))->name('config');
     Route::get('/registros', fn () => $placeholder('Búsqueda y edición de registros'))->name('registros');
