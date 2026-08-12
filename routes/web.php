@@ -22,6 +22,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/recibos', Recibos::class)->name('dashboard.recibos');
 });
 
+Route::middleware(['auth', 'verified', 'staff.web'])->prefix('admin')->name('admin.')->group(function () {
+    $placeholder = function (string $titulo) {
+        return view('admin.placeholder', ['titulo' => $titulo]);
+    };
+
+    Route::get('/clientes', fn () => $placeholder('Gestión de clientes'))->name('clientes');
+    Route::get('/logs', fn () => $placeholder('Log de trazabilidad'))->name('logs');
+    Route::get('/config', fn () => $placeholder('Configuración general'))->name('config');
+    Route::get('/registros', fn () => $placeholder('Búsqueda y edición de registros'))->name('registros');
+    Route::get('/recargas', fn () => $placeholder('Validación de recargas'))->name('recargas');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

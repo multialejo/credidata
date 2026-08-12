@@ -24,6 +24,23 @@
                     <x-nav-link :href="route('dashboard.recibos')" :active="request()->routeIs('dashboard.recibos')">
                         {{ __('Recibos') }}
                     </x-nav-link>
+                    @if(auth()->user()->staff)
+                        <x-nav-link :href="route('admin.clientes')" :active="request()->routeIs('admin.*')">
+                            {{ __('Admin · Clientes') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.logs')" :active="request()->routeIs('admin.*')">
+                            {{ __('Admin · Logs') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.config')" :active="request()->routeIs('admin.*')">
+                            {{ __('Admin · Config') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.registros')" :active="request()->routeIs('admin.*')">
+                            {{ __('Admin · Registros') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.recargas')" :active="request()->routeIs('admin.*')">
+                            {{ __('Admin · Recargas') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -88,6 +105,24 @@
             <x-responsive-nav-link :href="route('dashboard.recibos')" :active="request()->routeIs('dashboard.recibos')">
                 {{ __('Recibos') }}
             </x-responsive-nav-link>
+            @if(auth()->user()->staff)
+                <div class="border-t border-gray-200 dark:border-gray-600 my-2"></div>
+                <x-responsive-nav-link :href="route('admin.clientes')" :active="request()->routeIs('admin.*')">
+                    {{ __('Admin · Clientes') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.logs')" :active="request()->routeIs('admin.*')">
+                    {{ __('Admin · Logs') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.config')" :active="request()->routeIs('admin.*')">
+                    {{ __('Admin · Config') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.registros')" :active="request()->routeIs('admin.*')">
+                    {{ __('Admin · Registros') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.recargas')" :active="request()->routeIs('admin.*')">
+                    {{ __('Admin · Recargas') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
