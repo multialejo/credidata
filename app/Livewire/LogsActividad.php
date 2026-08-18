@@ -33,6 +33,9 @@ class LogsActividad extends Component
         'recarga.acreditada',
         'recarga.fallida',
         'recarga.rechazada',
+        'config.actualizada',
+        'registro.editado_por_staff',
+        'recarga.acreditada_manual',
     ];
 
     protected $queryString = [

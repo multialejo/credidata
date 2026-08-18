@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecargaPaypalReturnController;
 use App\Http\Controllers\RecargaPayphoneReturnController;
+use App\Livewire\ConfigGeneral;
 use App\Livewire\GestionApiKey;
 use App\Livewire\GestionClientes;
 use App\Livewire\HistorialConsultas;
@@ -31,7 +32,7 @@ Route::middleware(['auth', 'verified', 'staff.web'])->prefix('admin')->name('adm
 
     Route::get('/clientes', GestionClientes::class)->name('clientes');
     Route::get('/logs', LogsActividad::class)->name('logs');
-    Route::get('/config', fn () => $placeholder('Configuración general'))->name('config');
+    Route::get('/config', ConfigGeneral::class)->name('config');
     Route::get('/registros', fn () => $placeholder('Búsqueda y edición de registros'))->name('registros');
     Route::get('/recargas', fn () => $placeholder('Validación de recargas'))->name('recargas');
 });
