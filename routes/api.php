@@ -29,6 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware(['staff'])->prefix('v1/admin')->group(function () {
+        Route::get('recargas/pendientes', [AdminRecargaController::class, 'pendientes']);
         Route::post('recargas/{recarga}/rechazar', [AdminRecargaController::class, 'rechazar']);
+        Route::post('recargas/{recarga}/acreditar', [AdminRecargaController::class, 'acreditar'])
+            ->middleware('staff.role:admin');
     });
 });

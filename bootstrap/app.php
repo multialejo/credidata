@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'api.key' => \App\Http\Middleware\ValidateApiKey::class,
             'staff' => \App\Http\Middleware\EnsureStaff::class,
+            'staff.role' => \App\Http\Middleware\EnsureStaffRole::class,
             'staff.web' => \App\Http\Middleware\EnsureStaffWeb::class,
             'cliente.web' => \App\Http\Middleware\EnsureCliente::class,
         ]);
