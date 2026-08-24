@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Models\Recarga;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Recarga;
 
 class Recibos extends Component
 {
@@ -13,7 +13,7 @@ class Recibos extends Component
     public function render()
     {
         $cliente = auth()->user()->cliente;
-        $recargas = Recarga::where('cliente_id', $cliente->uid)
+        $recargas = Recarga::where('cliente_id', $cliente->id)
             ->latest('fecha')->paginate(20);
 
         return view('livewire.recibos', ['recargas' => $recargas]);

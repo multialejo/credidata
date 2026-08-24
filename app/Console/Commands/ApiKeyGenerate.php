@@ -15,7 +15,9 @@ class ApiKeyGenerate extends Command
 
     public function handle()
     {
-        $cliente = Cliente::where('uid', $this->argument('uid'))->first();
+        $cliente = Cliente::whereHas('usuario', fn ($q) =>
+            $q->where('uid', $this->argument('uid'))
+        )->first();
         if (!$cliente) {
             $this->error('Cliente no encontrado');
             return 1;
@@ -33,7 +35,7 @@ class ApiKeyGenerate extends Command
 
         LogActividad::create([
             'accion' => 'API_KEY_GENERADA',
-            'actor_id' => $cliente->uid,
+            'actor_id' => $cliente->usuario->id,
             'detalle' => ['prefijo' => $cliente->api_key_prefijo],
             'ip_origen' => 'sistema',
         ]);

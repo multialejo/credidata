@@ -2,19 +2,25 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
+use App\Models\LogActividad;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use App\Models\LogActividad;
+use Livewire\Component;
 
 class GestionApiKey extends Component
 {
     public $prefijo;
+
     public $creada;
+
     public $ultimoUso;
+
     public $revocada;
+
     public $ipsPermitidas;
+
     public $alcance;
+
     public $nuevaKey;
 
     public function mount()
@@ -36,7 +42,7 @@ class GestionApiKey extends Component
     public function generar()
     {
         $cliente = auth()->user()->cliente;
-        $key = 'cd_sk_' . Str::random(32);
+        $key = 'cd_sk_'.Str::random(32);
 
         $cliente->update([
             'api_key_hash' => Hash::make($key),
@@ -48,7 +54,7 @@ class GestionApiKey extends Component
 
         LogActividad::create([
             'accion' => 'API_KEY_GENERADA',
-            'actor_id' => $cliente->uid,
+            'actor_id' => $cliente->usuario->id,
             'detalle' => ['prefijo' => $cliente->api_key_prefijo, 'origen' => 'dashboard'],
             'ip_origen' => request()->ip(),
         ]);
@@ -67,7 +73,7 @@ class GestionApiKey extends Component
 
         LogActividad::create([
             'accion' => 'API_KEY_REVOCADA',
-            'actor_id' => $cliente->uid,
+            'actor_id' => $cliente->usuario->id,
             'detalle' => ['prefijo' => $cliente->api_key_prefijo, 'origen' => 'dashboard'],
             'ip_origen' => request()->ip(),
         ]);

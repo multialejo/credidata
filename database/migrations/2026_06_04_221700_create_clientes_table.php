@@ -11,8 +11,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('clientes', function (Blueprint $table) {
-            $table->string('uid')->primary();
-            $table->foreign('uid')->references('uid')->on('usuarios')->onDelete('cascade');
+            $table->id();
+            $table->foreignId('usuario_id')->constrained('usuarios')->cascadeOnDelete()->unique();
             $table->decimal('saldo_creditos', 10, 2)->default(0);
             $table->string('metodo_pago_preferido')->default('paypal');
             $table->string('api_key_prefijo')->unique()->nullable();

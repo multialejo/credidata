@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('logs_actividad', function (Blueprint $table) {
             $table->id();
             $table->string('accion');
-            $table->string('actor_id')->nullable();
+            $table->unsignedBigInteger('actor_id')->nullable();
             $table->boolean('actor_sistema')->default(false);
             $table->json('detalle')->nullable();
             $table->string('ip_origen')->nullable();

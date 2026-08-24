@@ -17,11 +17,11 @@ class Aporte extends Model
 
     public function colaborador()
     {
-        return $this->belongsTo(Colaborador::class, 'colaborador_id', 'uid');
+        return $this->belongsTo(Colaborador::class, 'colaborador_id', 'id');
     }
 
     public function revisadoPor()
     {
-        return $this->belongsTo(Usuario::class, 'revisado_por', 'uid');
+        return $this->belongsTo(Usuario::class, 'revisado_por', 'id');
     }
 }

@@ -49,7 +49,7 @@ class ApiKeyController extends Controller
 
         LogActividad::create([
             'accion' => 'API_KEY_REVOCADA',
-            'actor_id' => $cliente->uid,
+            'actor_id' => $cliente->usuario->id,
             'detalle' => ['prefijo' => $cliente->api_key_prefijo],
             'ip_origen' => $request->ip(),
         ]);

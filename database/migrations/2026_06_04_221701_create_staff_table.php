@@ -11,8 +11,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('staff', function (Blueprint $table) {
-            $table->string('uid')->primary();
-            $table->foreign('uid')->references('uid')->on('usuarios')->onDelete('cascade');
+            $table->id();
+            $table->foreignId('usuario_id')->constrained('usuarios')->cascadeOnDelete()->unique();
             $table->string('rol_staff'); // admin | validator | support
             $table->timestamp('fecha_asignacion')->useCurrent();
             $table->timestamps();

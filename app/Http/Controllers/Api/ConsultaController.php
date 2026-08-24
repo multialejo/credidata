@@ -135,7 +135,7 @@ class ConsultaController extends Controller
     private function registrarConsulta(Cliente $cliente, string $cedula, int $creditosGastados, bool $exitosa, ?array $datos, string $ip): Consulta
     {
         return Consulta::create([
-            'cliente_id' => $cliente->uid,
+            'cliente_id' => $cliente->id,
             'tipo' => 'cedula',
             'identificador' => $cedula,
             'creditos_gastados' => $creditosGastados,
@@ -151,7 +151,7 @@ class ConsultaController extends Controller
     {
         LogActividad::create([
             'accion' => 'CONSULTA_CEDULA',
-            'actor_id' => $cliente->uid,
+            'actor_id' => $cliente->usuario->id,
             'detalle' => [
                 'consulta_id' => $consultaId,
                 'cedula' => $cedula,
