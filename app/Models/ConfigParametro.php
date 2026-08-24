@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class ConfigParametro extends Model
 {
     protected $primaryKey = ['modulo', 'clave'];
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [

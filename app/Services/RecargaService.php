@@ -38,8 +38,7 @@ class RecargaService
         string $metodoPago,
         ?string $evidenciaPath = null,
     ): Recarga {
-        $cliente = Cliente::whereHas('usuario', fn ($q) =>
-            $q->where('uid', $clienteUid)
+        $cliente = Cliente::whereHas('usuario', fn ($q) => $q->where('uid', $clienteUid)
         )->firstOrFail();
 
         if (Recarga::where('referencia_externa', $referenciaExterna)->where('estado', EstadoRecarga::Completada)->exists()) {

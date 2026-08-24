@@ -5,7 +5,6 @@ namespace Tests\Feature\Api;
 use App\Models\Cliente;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class ApiKeyGenerateCommandTest extends TestCase
@@ -50,8 +49,7 @@ class ApiKeyGenerateCommandTest extends TestCase
         $this->artisan('apikey:generate', ['uid' => 'test-cliente-uid'])
             ->assertExitCode(0);
 
-        $cliente = Cliente::whereHas('usuario', fn ($q) =>
-            $q->where('uid', 'test-cliente-uid')
+        $cliente = Cliente::whereHas('usuario', fn ($q) => $q->where('uid', 'test-cliente-uid')
         )->first();
 
         $this->assertNotNull($cliente->api_key_hash);

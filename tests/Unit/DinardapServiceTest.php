@@ -17,7 +17,7 @@ class DinardapServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new TestableDinardapService();
+        $this->service = new TestableDinardapService;
     }
 
     // --- normalizar() ---
@@ -36,7 +36,7 @@ class DinardapServiceTest extends TestCase
         $this->assertEquals('', $result['ubicacion']['parroquia']);
     }
 
-    public function test_normalizar_maps_camelCase_keys(): void
+    public function test_normalizar_maps_camel_case_keys(): void
     {
         $input = [
             'nombres' => 'Juan',
@@ -79,7 +79,7 @@ class DinardapServiceTest extends TestCase
         $this->assertEquals(2, $result['estadoCivilCodigo']);
     }
 
-    public function test_normalizar_maps_nombreCompleto_to_nombres(): void
+    public function test_normalizar_maps_nombre_completo_to_nombres(): void
     {
         $result = $this->service->publicNormalizar(['nombreCompleto' => 'Pedro Pablo']);
 

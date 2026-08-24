@@ -4,14 +4,12 @@ namespace Tests\Feature\Api;
 
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
-use App\Models\Consulta;
-use App\Models\LogActividad;
 use App\Models\Usuario;
 use App\Services\DinardapService;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class ConsultaErrorTest extends TestCase
@@ -19,7 +17,9 @@ class ConsultaErrorTest extends TestCase
     use RefreshDatabase;
 
     private string $validApiKey = 'cd_sk_testvalidkey1234567890abcd';
+
     private Cliente $cliente;
+
     private string $cedula = '1713175071';
 
     protected function setUp(): void
@@ -61,10 +61,10 @@ class ConsultaErrorTest extends TestCase
 
     public function test_timeout_returns_503(): void
     {
-        Http::fake(fn() => throw new ConnectionException('Timeout'));
+        Http::fake(fn () => throw new ConnectionException('Timeout'));
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -77,10 +77,10 @@ class ConsultaErrorTest extends TestCase
 
     public function test_timeout_does_not_deduct_credits(): void
     {
-        Http::fake(fn() => throw new ConnectionException('Timeout'));
+        Http::fake(fn () => throw new ConnectionException('Timeout'));
 
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -93,10 +93,10 @@ class ConsultaErrorTest extends TestCase
 
     public function test_timeout_creates_consulta_not_exitosa(): void
     {
-        Http::fake(fn() => throw new ConnectionException('Timeout'));
+        Http::fake(fn () => throw new ConnectionException('Timeout'));
 
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -110,10 +110,10 @@ class ConsultaErrorTest extends TestCase
 
     public function test_timeout_creates_log(): void
     {
-        Http::fake(fn() => throw new ConnectionException('Timeout'));
+        Http::fake(fn () => throw new ConnectionException('Timeout'));
 
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -129,7 +129,7 @@ class ConsultaErrorTest extends TestCase
         Http::fake(['*' => Http::response(['error' => 'no_encontrado'], 404)]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -144,7 +144,7 @@ class ConsultaErrorTest extends TestCase
         Http::fake(['*' => Http::response(['error' => 'no_encontrado'], 404)]);
 
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -160,7 +160,7 @@ class ConsultaErrorTest extends TestCase
         Http::fake(['*' => Http::response(['error' => 'no_encontrado'], 404)]);
 
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -177,7 +177,7 @@ class ConsultaErrorTest extends TestCase
         Http::fake(['*' => Http::response(['error' => 'no_encontrado'], 404)]);
 
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -193,7 +193,7 @@ class ConsultaErrorTest extends TestCase
         Http::fake(['*' => Http::response(null, 401)]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -207,7 +207,7 @@ class ConsultaErrorTest extends TestCase
         Http::fake(['*' => Http::response(null, 401)]);
 
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -223,7 +223,7 @@ class ConsultaErrorTest extends TestCase
         Http::fake(['*' => Http::response(null, 200)]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);

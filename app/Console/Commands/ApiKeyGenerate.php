@@ -11,19 +11,20 @@ use Illuminate\Support\Str;
 class ApiKeyGenerate extends Command
 {
     protected $signature = 'apikey:generate {uid}';
+
     protected $description = 'Genera una API key para un cliente';
 
     public function handle()
     {
-        $cliente = Cliente::whereHas('usuario', fn ($q) =>
-            $q->where('uid', $this->argument('uid'))
+        $cliente = Cliente::whereHas('usuario', fn ($q) => $q->where('uid', $this->argument('uid'))
         )->first();
-        if (!$cliente) {
+        if (! $cliente) {
             $this->error('Cliente no encontrado');
+
             return 1;
         }
 
-        $key = 'cd_sk_' . Str::random(32);
+        $key = 'cd_sk_'.Str::random(32);
 
         $cliente->update([
             'api_key_hash' => Hash::make($key),

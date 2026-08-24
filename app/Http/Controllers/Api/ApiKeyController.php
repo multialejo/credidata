@@ -13,7 +13,7 @@ class ApiKeyController extends Controller
     public function revocar(Request $request)
     {
         $bearer = $request->header('Authorization');
-        if (!$bearer || !str_starts_with($bearer, 'Bearer ')) {
+        if (! $bearer || ! str_starts_with($bearer, 'Bearer ')) {
             return response()->json([
                 'codigo' => 401, 'exito' => false,
                 'mensaje' => 'API Key requerida',
@@ -32,7 +32,7 @@ class ApiKeyController extends Controller
             }
         }
 
-        if (!$cliente) {
+        if (! $cliente) {
             return response()->json([
                 'codigo' => 401, 'exito' => false,
                 'mensaje' => 'API Key inválida',

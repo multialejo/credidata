@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class ConfigRateOverride extends Model
 {
     protected $primaryKey = 'cliente_id';
+
     public $incrementing = false;
+
     protected $keyType = 'int';
 
     protected $fillable = [

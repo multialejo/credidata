@@ -11,15 +11,16 @@ use Illuminate\Console\Command;
 class CreditoAsignar extends Command
 {
     protected $signature = 'credito:asignar {uid} {cantidad}';
+
     protected $description = 'Asigna créditos manualmente a un cliente';
 
     public function handle()
     {
-        $cliente = Cliente::whereHas('usuario', fn ($q) =>
-            $q->where('uid', $this->argument('uid'))
+        $cliente = Cliente::whereHas('usuario', fn ($q) => $q->where('uid', $this->argument('uid'))
         )->first();
-        if (!$cliente) {
+        if (! $cliente) {
             $this->error('Cliente no encontrado');
+
             return 1;
         }
 

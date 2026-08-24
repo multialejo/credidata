@@ -12,7 +12,7 @@ class ValidateApiKey
     public function handle(Request $request, Closure $next, ...$permisos)
     {
         $bearer = $request->header('Authorization');
-        if (!$bearer || !str_starts_with($bearer, 'Bearer ')) {
+        if (! $bearer || ! str_starts_with($bearer, 'Bearer ')) {
             return response()->json([
                 'codigo' => 401, 'exito' => false,
                 'mensaje' => 'API Key requerida',
@@ -31,7 +31,7 @@ class ValidateApiKey
             }
         }
 
-        if (!$cliente) {
+        if (! $cliente) {
             return response()->json([
                 'codigo' => 401, 'exito' => false,
                 'mensaje' => 'API Key inválida o revocada',
