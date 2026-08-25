@@ -25,10 +25,10 @@ class RoleNavigationTest extends TestCase
 
         $response->assertOk()
             ->assertSeeTextInOrder(['Clientes', 'Logs', 'Configuración', 'Registros', 'Recargas'])
-            ->assertDontSeeText('Saldo')
-            ->assertDontSeeText('Historial')
-            ->assertDontSeeText('API Key')
-            ->assertDontSeeText('Recibos')
+            ->assertDontSee('href="'.route('dashboard').'"', false)
+            ->assertDontSee('href="'.route('dashboard.consultas').'"', false)
+            ->assertDontSee('href="'.route('dashboard.api-key').'"', false)
+            ->assertDontSee('href="'.route('dashboard.recibos').'"', false)
             ->assertSee('data-testid="home-link" href="'.route('admin.clientes').'"', false);
     }
 

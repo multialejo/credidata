@@ -3,18 +3,33 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecargaPaypalReturnController;
 use App\Http\Controllers\RecargaPayphoneReturnController;
+use App\Livewire\ConfigGeneral;
+use App\Livewire\EditarRegistro;
 use App\Livewire\GestionApiKey;
+use App\Livewire\GestionClientes;
 use App\Livewire\HistorialConsultas;
+use App\Livewire\LogsActividad;
 use App\Livewire\PanelSaldo;
 use App\Livewire\Recargas;
 use App\Livewire\Recibos;
+use App\Livewire\ValidacionRecargas;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+// Admin routes — staff only
+Route::middleware(['auth', 'verified', 'staff.web'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/clientes', GestionClientes::class)->name('clientes');
+    Route::get('/logs', LogsActividad::class)->name('logs');
+    Route::get('/config', ConfigGeneral::class)->name('config');
+    Route::get('/registros', EditarRegistro::class)->name('registros');
+    Route::get('/recargas', ValidacionRecargas::class)->name('recargas');
+});
+
+// Cliente dashboard — requires Cliente profile; staff is redirected to /admin/clientes
+Route::middleware(['auth', 'verified', 'cliente.web'])->group(function () {
     Route::get('/dashboard', PanelSaldo::class)->name('dashboard');
     Route::get('/dashboard/recargas', Recargas::class)->name('dashboard.recargas');
     Route::get('/dashboard/consultas', HistorialConsultas::class)->name('dashboard.consultas');
