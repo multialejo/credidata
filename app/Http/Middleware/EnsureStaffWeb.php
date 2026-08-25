@@ -13,7 +13,7 @@ class EnsureStaffWeb
         $user = $request->user();
 
         if (! $user || ! $user->staff) {
-            abort(403);
+            abort(403, 'Acceso restringido a personal autorizado');
         }
 
         return $next($request);
