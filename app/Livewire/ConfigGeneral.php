@@ -4,81 +4,92 @@ namespace App\Livewire;
 
 use App\Models\ConfigParametro;
 use App\Models\LogActividad;
+use Closure;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class ConfigGeneral extends Component
 {
-    public $parametros = [];
+    public ?string $editando = null;
 
-    public $editando = [];
+    public string $valorEditando = '';
 
-    public $valores = [];
-
-    public function mount(): void
+    public function iniciarEdicion(string $modulo, string $clave): void
     {
-        $this->parametros = ConfigParametro::orderBy('modulo')->orderBy('clave')->get()->groupBy('modulo');
+        $param = ConfigParametro::where('modulo', $modulo)
+            ->where('clave', $clave)
+            ->firstOrFail();
 
-        foreach ($this->parametros as $modulo => $items) {
-            foreach ($items as $item) {
-                $key = "{$modulo}.{$item->clave}";
-                $this->editando[$key] = false;
-                $this->valores[$key] = $item->valor;
-            }
-        }
+        $this->editando = "{$modulo}.{$clave}";
+        $this->valorEditando = $param->valor;
     }
 
-    public function toggleEditar(string $modulo, string $clave): void
+    public function cancelarEdicion(): void
     {
-        $key = "{$modulo}.{$clave}";
-        $this->editando[$key] = ! $this->editando[$key];
+        $this->editando = null;
+        $this->valorEditando = '';
     }
 
     public function guardar(string $modulo, string $clave): void
     {
-        $key = "{$modulo}.{$clave}";
-        $parametro = ConfigParametro::where('modulo', $modulo)->where('clave', $clave)->first();
+        $this->validate([
+            'valorEditando' => ['required', function (string $attribute, mixed $value, Closure $fail): void {
+                $decoded = json_decode($value);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $fail('El valor debe ser JSON válido.');
 
-        if (! $parametro) {
-            return;
-        }
+                    return;
+                }
 
-        $valor = $this->valores[$key];
+                if (! is_scalar($decoded)) {
+                    $fail('El valor debe ser un escalar (string, int, float o bool).');
+                }
+            }],
+        ]);
 
-        if (! is_null(json_decode($valor, true)) || $valor === 'null') {
-            // JSON value is valid
-        } else {
-            $this->dispatch('config-error', message: 'El valor no es JSON válido.');
+        $param = ConfigParametro::where('modulo', $modulo)
+            ->where('clave', $clave)
+            ->firstOrFail();
 
-            return;
-        }
+        $valorAnterior = $param->valor;
+        $valorNuevo = json_encode(json_decode($this->valorEditando));
 
-        $valorAnterior = $parametro->valor;
-
-        DB::transaction(function () use ($parametro, $valor, $valorAnterior, $modulo, $clave) {
-            $parametro->update([
-                'valor' => $valor,
-                'actualizado_por' => auth()->id(),
-                'actualizado_en' => now(),
-            ]);
+        DB::transaction(function () use ($valorNuevo, $valorAnterior, $modulo, $clave): void {
+            ConfigParametro::where('modulo', $modulo)
+                ->where('clave', $clave)
+                ->update([
+                    'valor' => $valorNuevo,
+                    'actualizado_por' => auth()->user()->staff->id,
+                    'actualizado_en' => now(),
+                ]);
 
             LogActividad::create([
-                'actor_id' => auth()->id(),
                 'accion' => 'config.actualizada',
-                'detalle' => json_encode([
+                'actor_id' => auth()->id(),
+                'actor_sistema' => false,
+                'detalle' => [
                     'modulo' => $modulo,
                     'clave' => $clave,
-                    'valor_anterior' => $valorAnterior,
-                    'valor_nuevo' => $valor,
-                ]),
+                    'valor_anterior' => json_decode($valorAnterior),
+                    'valor_nuevo' => json_decode($valorNuevo),
+                ],
+                'ip_origen' => request()->ip(),
             ]);
         });
 
-        $this->editando[$key] = false;
+        $this->cancelarEdicion();
+
+        session()->flash('status', 'Parámetro actualizado correctamente.');
     }
 
     public function render()
     {
-        return view('livewire.config-general');
+        $parametros = ConfigParametro::query()
+            ->orderBy('modulo')
+            ->orderBy('clave')
+            ->get()
+            ->groupBy('modulo');
+
+        return view('livewire.config-general', ['parametros' => $parametros]);
     }
 }

@@ -1,46 +1,73 @@
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4">Configuración General</h3>
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ __('Configuración General') }}</h3>
 
-    @if(session()->has('config-error'))
-        <div class="mb-4 p-4 bg-red-50 text-red-700 rounded-md">{{ session('config-error') }}</div>
-    @endif
-
-    @foreach($parametros as $modulo => $items)
+    @forelse($parametros as $modulo => $items)
         <div class="mb-6">
-            <h4 class="text-md font-semibold text-gray-700 mb-2">{{ ucfirst($modulo) }}</h4>
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Clave</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($items as $item)
-                        @php $key = "{$modulo}.{$item->clave}"; @endphp
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $item->clave }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">
-                                @if($editando[$key])
-                                    <input type="text" wire:model.live="valores.{{ $key }}"
-                                        class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full" />
-                                @else
-                                    {{ $item->valor }}
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                @if($editando[$key])
-                                    <button wire:click="guardar('{{ $modulo }}', '{{ $item->clave }}')" class="text-green-600 hover:text-green-900 mr-2">Guardar</button>
-                                    <button wire:click="toggleEditar('{{ $modulo }}', '{{ $item->clave }}')" class="text-gray-600 hover:text-gray-900">Cancelar</button>
-                                @else
-                                    <button wire:click="toggleEditar('{{ $modulo }}', '{{ $item->clave }}')" class="text-indigo-600 hover:text-indigo-900">Editar</button>
-                                @endif
-                            </td>
+            <h4 class="text-md font-medium text-gray-700 mb-2 uppercase tracking-wide">{{ $modulo }}</h4>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-left">
+                            <th class="py-2 pr-4 font-medium text-gray-600">{{ __('Clave') }}</th>
+                            <th class="py-2 pr-4 font-medium text-gray-600">{{ __('Valor') }}</th>
+                            <th class="py-2 pr-4 font-medium text-gray-600">{{ __('Actualizado') }}</th>
+                            <th class="py-2 font-medium text-gray-600">{{ __('Acciones') }}</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($items as $param)
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-2 pr-4">
+                                    <span class="font-mono">{{ $param->clave }}</span>
+                                </td>
+                                <td class="py-2 pr-4">
+                                    @if($editando === $param->modulo . '.' . $param->clave)
+                                        <form id="form-{{ $param->modulo }}-{{ $param->clave }}"
+                                              wire:submit="guardar('{{ $param->modulo }}', '{{ $param->clave }}')">
+                                            <input type="text" wire:model="valorEditando"
+                                                class="w-full border-gray-300 rounded-md text-sm focus:border-indigo-500 focus:ring-indigo-500 font-mono">
+                                            @error('valorEditando')
+                                                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </form>
+                                    @else
+                                        <span class="font-mono">{{ json_decode($param->valor) }}</span>
+                                    @endif
+                                </td>
+                                <td class="py-2 pr-4 text-gray-700 whitespace-nowrap">
+                                    {{ $param->actualizado_en ? $param->actualizado_en->format('d/m/Y H:i') : '—' }}
+                                </td>
+                                <td class="py-2">
+                                    @if($editando === $param->modulo . '.' . $param->clave)
+                                        <div class="flex items-center gap-3">
+                                            <button type="submit" form="form-{{ $param->modulo }}-{{ $param->clave }}"
+                                                class="text-green-600 hover:text-green-800 text-sm font-medium">
+                                                {{ __('Guardar') }}
+                                            </button>
+                                            <button type="button" wire:click="cancelarEdicion"
+                                                class="text-gray-500 hover:text-gray-700 text-sm">
+                                                {{ __('Cancelar') }}
+                                            </button>
+                                        </div>
+                                    @else
+                                        <button wire:click="iniciarEdicion('{{ $param->modulo }}', '{{ $param->clave }}')"
+                                            class="text-indigo-600 hover:text-indigo-800 text-sm">
+                                            {{ __('Editar') }}
+                                        </button>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
-    @endforeach
+    @empty
+        <p class="text-center text-gray-500 py-8">{{ __('No hay parámetros de configuración.') }}</p>
+    @endforelse
+
+    @if (session('status'))
+        <p class="mt-4 text-sm text-green-600">{{ session('status') }}</p>
+    @endif
 </div>
