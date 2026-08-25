@@ -46,7 +46,7 @@
 
             <div class="flex items-center gap-3">
                 <button type="submit"
-                    class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     {{ __('Guardar cambios') }}
                 </button>
                 <button type="button" wire:click="nuevaBusqueda"
