@@ -23,6 +23,8 @@ class EditarRegistroTest extends TestCase
 
     private const CEDULA = '1713175071';
 
+    private const CEDULA_B = '1713175089';
+
     private Usuario $staffUsuario;
 
     private Staff $staff;
@@ -293,5 +295,68 @@ class EditarRegistroTest extends TestCase
             ->assertDontSee('fuentesUtilizadas')
             ->assertDontSee('ultimaActualizacion')
             ->assertDontSee('tipoIdentificador');
+    }
+
+    // --- Búsqueda secuencial: cambiar CI resetea el editor ---
+
+    public function test_cambiar_identificador_resetea_estado_cargado(): void
+    {
+        $this->mockDocumento(self::CEDULA, $this->documentoBase());
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(EditarRegistro::class)
+            ->set('identificador', self::CEDULA)
+            ->call('buscar')
+            ->assertSet('encontrado', true)
+            ->assertSet('telefonos', '0991234567')
+            ->set('identificador', self::CEDULA_B)
+            ->assertSet('encontrado', false)
+            ->assertSet('telefonos', '')
+            ->assertSet('emails', '')
+            ->assertSet('direcciones', '');
+    }
+
+    public function test_buscar_dos_veces_con_cis_distintas_carga_datos_nuevos(): void
+    {
+        $snapshot1 = Mockery::mock(DocumentSnapshot::class);
+        $snapshot1->shouldReceive('exists')->andReturn(true);
+        $snapshot1->shouldReceive('data')->andReturn($this->documentoBase([
+            'contacto' => ['telefonos' => ['0991111111'], 'emails' => ['a@test.com'], 'direcciones' => ['Dir A']],
+        ]));
+
+        $doc1 = Mockery::mock(DocumentReference::class);
+        $doc1->shouldReceive('snapshot')->andReturn($snapshot1);
+
+        $snapshot2 = Mockery::mock(DocumentSnapshot::class);
+        $snapshot2->shouldReceive('exists')->andReturn(true);
+        $snapshot2->shouldReceive('data')->andReturn($this->documentoBase([
+            'contacto' => ['telefonos' => ['0992222222'], 'emails' => ['b@test.com'], 'direcciones' => ['Dir B']],
+        ]));
+
+        $doc2 = Mockery::mock(DocumentReference::class);
+        $doc2->shouldReceive('snapshot')->andReturn($snapshot2);
+
+        $database = Mockery::mock(FirestoreClient::class);
+        $database->shouldReceive('document')
+            ->with('sujetos/'.self::CEDULA)->andReturn($doc1);
+        $database->shouldReceive('document')
+            ->with('sujetos/'.self::CEDULA_B)->andReturn($doc2);
+
+        $firestore = Mockery::mock(Firestore::class);
+        $firestore->shouldReceive('database')->andReturn($database);
+
+        Firebase::shouldReceive('firestore')->andReturn($firestore);
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(EditarRegistro::class)
+            ->set('identificador', self::CEDULA)
+            ->call('buscar')
+            ->assertSet('encontrado', true)
+            ->assertSet('telefonos', '0991111111')
+            ->set('identificador', self::CEDULA_B)
+            ->call('buscar')
+            ->assertSet('encontrado', true)
+            ->assertSet('telefonos', '0992222222')
+            ->assertSet('emails', 'b@test.com');
     }
 }
