@@ -120,7 +120,8 @@ class EditarRegistroTest extends TestCase
         $this->actingAs($this->staffUsuario)
             ->get('/admin/registros')
             ->assertOk()
-            ->assertSee('Identificador (cédula o RUC)');
+            ->assertSee('Identificador (cédula o RUC)')
+            ->assertDontSeeHtml('id="identificador" wire:model="identificador" placeholder="Ej. 1713175071" disabled');
     }
 
     public function test_cliente_no_staff_recibe_403(): void
