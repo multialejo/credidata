@@ -297,9 +297,9 @@ class EditarRegistroTest extends TestCase
             ->assertDontSee('tipoIdentificador');
     }
 
-    // --- Búsqueda secuencial: cambiar CI resetea el editor ---
+    // --- Bloqueo del campo de búsqueda al editar ---
 
-    public function test_cambiar_identificador_resetea_estado_cargado(): void
+    public function test_campo_identificador_y_boton_buscar_se_deshabilitan_tras_cargar_registro(): void
     {
         $this->mockDocumento(self::CEDULA, $this->documentoBase());
 
@@ -309,14 +309,28 @@ class EditarRegistroTest extends TestCase
             ->call('buscar')
             ->assertSet('encontrado', true)
             ->assertSet('telefonos', '0991234567')
-            ->set('identificador', self::CEDULA_B)
+            ->assertSeeHtml('disabled')
+            ->assertSeeHtml('cursor-not-allowed');
+    }
+
+    public function test_nueva_busqueda_desbloquea_y_limpia_el_campo(): void
+    {
+        $this->mockDocumento(self::CEDULA, $this->documentoBase());
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(EditarRegistro::class)
+            ->set('identificador', self::CEDULA)
+            ->call('buscar')
+            ->assertSet('encontrado', true)
+            ->call('nuevaBusqueda')
             ->assertSet('encontrado', false)
+            ->assertSet('identificador', '')
             ->assertSet('telefonos', '')
             ->assertSet('emails', '')
             ->assertSet('direcciones', '');
     }
 
-    public function test_buscar_dos_veces_con_cis_distintas_carga_datos_nuevos(): void
+    public function test_buscar_dos_veces_requiere_nueva_busqueda_entre_registros(): void
     {
         $snapshot1 = Mockery::mock(DocumentSnapshot::class);
         $snapshot1->shouldReceive('exists')->andReturn(true);
@@ -353,6 +367,7 @@ class EditarRegistroTest extends TestCase
             ->call('buscar')
             ->assertSet('encontrado', true)
             ->assertSet('telefonos', '0991111111')
+            ->call('nuevaBusqueda')
             ->set('identificador', self::CEDULA_B)
             ->call('buscar')
             ->assertSet('encontrado', true)

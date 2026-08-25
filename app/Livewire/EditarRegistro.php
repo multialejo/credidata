@@ -114,15 +114,6 @@ class EditarRegistro extends Component
         session()->flash('status', 'Registro actualizado correctamente.');
     }
 
-    public function updatedIdentificador(): void
-    {
-        if ($this->encontrado) {
-            $this->encontrado = false;
-            $this->reset(['telefonos', 'emails', 'direcciones']);
-            $this->resetValidation();
-        }
-    }
-
     public function nuevaBusqueda(): void
     {
         $this->reset(['identificador', 'encontrado', 'telefonos', 'emails', 'direcciones']);
