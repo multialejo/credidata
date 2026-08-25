@@ -1,59 +1,105 @@
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4">Log de Actividad</h3>
-
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
-        <input type="text" wire:model.live.debounce.300ms="accion" placeholder="Acción..."
-            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" />
-        <input type="text" wire:model.live.debounce.300ms="actor_email" placeholder="Email del actor..."
-            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" />
-        <input type="date" wire:model.live="fecha_desde"
-            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" />
-        <input type="date" wire:model.live="fecha_hasta"
-            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" />
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-900">Log de Trazabilidad</h3>
+        <button type="button" wire:click="resetFilters"
+            class="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+            {{ __('Limpiar filtros') }}
+        </button>
     </div>
 
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actor</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acción</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detalle</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @forelse($logs as $log)
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $log->fecha->format('d/m/Y H:i:s') }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ $log->actor_sistema ? 'Sistema' : ($log->actor?->email ?? '-') }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $log->accion }}</td>
-                        <td class="px-4 py-3 align-top">
-                            @if($log->detalle)
-                                <details class="group">
-                                    <summary class="cursor-pointer text-xs text-indigo-600 font-medium hover:underline list-none flex items-center gap-1">
-                                        <span class="transition group-open:rotate-90">▶</span>
-                                        Mostrar JSON
-                                    </summary>
-                                    <pre class="mt-2 text-[11px] font-mono bg-slate-50 border rounded p-2 text-slate-800 overflow-x-auto max-w-xs">{{ json_encode(is_array($log->detalle) ? $log->detalle : json_decode($log->detalle), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}</pre>
-                                </details>
-                            @else
-                                <span class="text-sm text-gray-900">-</span>
-                            @endif
-                        </td>
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
+        <div>
+            <label class="block text-xs text-gray-600 mb-1">{{ __('Acción') }}</label>
+            <select wire:model.live="accion"
+                class="w-full border-gray-300 rounded-md text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">{{ __('Todas las acciones') }}</option>
+                @foreach($accionesConocidas as $a)
+                    <option value="{{ $a }}">{{ $a }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs text-gray-600 mb-1">{{ __('Desde') }}</label>
+            <input type="date" wire:model.live="fechaDesde"
+                class="w-full border-gray-300 rounded-md text-sm focus:border-indigo-500 focus:ring-indigo-500">
+        </div>
+        <div>
+            <label class="block text-xs text-gray-600 mb-1">{{ __('Hasta') }}</label>
+            <input type="date" wire:model.live="fechaHasta"
+                class="w-full border-gray-300 rounded-md text-sm focus:border-indigo-500 focus:ring-indigo-500">
+        </div>
+        <div>
+            <label class="block text-xs text-gray-600 mb-1">{{ __('Actor') }}</label>
+            <input type="text" wire:model.live="actorEmail" placeholder="{{ __('Buscar actor por email') }}"
+                class="w-full border-gray-300 rounded-md text-sm focus:border-indigo-500 focus:ring-indigo-500">
+        </div>
+    </div>
+
+    @if($logs->isEmpty())
+        <p class="text-center text-gray-500 py-8">{{ __('No hay logs que coincidan con los filtros.') }}</p>
+    @else
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-200 text-left">
+                        <th class="py-2 pr-4 font-medium text-gray-600">{{ __('Fecha') }}</th>
+                        <th class="py-2 pr-4 font-medium text-gray-600">{{ __('Acción') }}</th>
+                        <th class="py-2 pr-4 font-medium text-gray-600">{{ __('Actor') }}</th>
+                        <th class="py-2 pr-4 font-medium text-gray-600">{{ __('IP Origen') }}</th>
+                        <th class="py-2 font-medium text-gray-600">{{ __('Detalle') }}</th>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No se encontraron logs.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    @foreach($logs as $log)
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-2 pr-4 text-gray-700 whitespace-nowrap">
+                                {{ $log->fecha->format('d/m/Y H:i') }}
+                            </td>
+                            <td class="py-2 pr-4">
+                                @php
+                                    $badgeClass = match (true) {
+                                        in_array($log->accion, ['API_KEY_GENERADA', 'API_KEY_REVOCADA', 'AUTH_TOKEN_EMITIDO', 'CREDITOS_ASIGNADOS', 'STAFF_CREADO', 'CLIENTE_REGISTRADO'], true)
+                                            => 'bg-indigo-100 text-indigo-800',
+                                        $log->accion === 'CONSULTA_CEDULA'
+                                            => 'bg-blue-100 text-blue-800',
+                                        $log->accion === 'recarga.acreditada'
+                                            => 'bg-green-100 text-green-800',
+                                        in_array($log->accion, ['recarga.fallida', 'recarga.rechazada'], true)
+                                            => 'bg-red-100 text-red-800',
+                                        default => 'bg-gray-100 text-gray-800',
+                                    };
+                                @endphp
+                                <span class="uppercase text-xs font-medium px-2 py-0.5 rounded {{ $badgeClass }}">
+                                    {{ $log->accion }}
+                                </span>
+                            </td>
+                            <td class="py-2 pr-4 text-gray-700">
+                                @if($log->actor_sistema)
+                                    <span class="text-gray-500 italic">{{ __('Sistema') }}</span>
+                                @else
+                                    {{ $log->actor?->email ?? '—' }}
+                                @endif
+                            </td>
+                            <td class="py-2 pr-4 font-mono text-xs text-gray-700">
+                                {{ $log->ip_origen ?? '—' }}
+                            </td>
+                            <td class="py-2">
+                                @if(is_array($log->detalle) && count($log->detalle) > 0)
+                                    <pre class="text-xs bg-gray-50 p-2 rounded overflow-x-auto">{{ json_encode($log->detalle, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                @else
+                                    <span class="text-gray-400">—</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 
-    <div class="mt-4">
-        {{ $logs->links() }}
-    </div>
+    @if($logs->hasPages())
+        <div class="mt-4">
+            {{ $logs->links() }}
+        </div>
+    @endif
 </div>

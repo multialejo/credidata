@@ -10,29 +10,84 @@ class LogsActividad extends Component
 {
     use WithPagination;
 
-    public $accion = '';
+    public string $accion = '';
 
-    public $actor_email = '';
+    public string $fechaDesde = '';
 
-    public $fecha_desde;
+    public string $fechaHasta = '';
 
-    public $fecha_hasta;
+    public string $actorEmail = '';
 
-    public function buscar(): void
+    /**
+     * Acciones conocidas en el sistema. Mantener sincronizadas con los
+     * `LogActividad::create(['accion' => ...])` repartidos por el código.
+     */
+    private const ACCIONES_CONOCIDAS = [
+        'API_KEY_GENERADA',
+        'API_KEY_REVOCADA',
+        'AUTH_TOKEN_EMITIDO',
+        'CLIENTE_REGISTRADO',
+        'CONSULTA_CEDULA',
+        'CREDITOS_ASIGNADOS',
+        'STAFF_CREADO',
+        'config.actualizada',
+        'recarga.acreditada',
+        'recarga.acreditada_manual',
+        'recarga.fallida',
+        'recarga.rechazada',
+        'recarga.rechazada_manual',
+        'registro.editado_por_staff',
+    ];
+
+    protected $queryString = [
+        'accion' => ['except' => ''],
+        'fechaDesde' => ['except' => ''],
+        'fechaHasta' => ['except' => ''],
+        'actorEmail' => ['except' => ''],
+    ];
+
+    public function updatingAccion(): void
     {
+        $this->resetPage();
+    }
+
+    public function updatingFechaDesde(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFechaHasta(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingActorEmail(): void
+    {
+        $this->resetPage();
+    }
+
+    public function resetFilters(): void
+    {
+        $this->reset(['accion', 'fechaDesde', 'fechaHasta', 'actorEmail']);
         $this->resetPage();
     }
 
     public function render()
     {
-        $logs = LogActividad::with('actor')
-            ->when($this->accion, fn ($q) => $q->where('accion', $this->accion))
-            ->when($this->actor_email, fn ($q) => $q->whereHas('actor', fn ($u) => $u->where('email', 'like', "%{$this->actor_email}%")))
-            ->when($this->fecha_desde, fn ($q) => $q->where('fecha', '>=', $this->fecha_desde))
-            ->when($this->fecha_hasta, fn ($q) => $q->where('fecha', '<=', $this->fecha_hasta.' 23:59:59'))
+        $logs = LogActividad::query()
+            ->with('actor')
+            ->when($this->accion !== '', fn ($q) => $q->where('accion', $this->accion))
+            ->when($this->fechaDesde !== '', fn ($q) => $q->whereDate('fecha', '>=', $this->fechaDesde))
+            ->when($this->fechaHasta !== '', fn ($q) => $q->whereDate('fecha', '<=', $this->fechaHasta))
+            ->when($this->actorEmail !== '', function ($q) {
+                $q->whereHas('actor', fn ($qu) => $qu->where('email', 'like', "%{$this->actorEmail}%"));
+            })
             ->latest('fecha')
             ->paginate(25);
 
-        return view('livewire.logs-actividad', ['logs' => $logs]);
+        return view('livewire.logs-actividad', [
+            'logs' => $logs,
+            'accionesConocidas' => self::ACCIONES_CONOCIDAS,
+        ]);
     }
 }
