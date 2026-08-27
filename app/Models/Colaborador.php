@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Colaborador extends Model
 {
+    protected $table = 'colaboradores';
+
     protected $fillable = [
         'usuario_id', 'creditos_ganados', 'creditos_acreditados',
         'total_aportes', 'aportes_aprobados', 'aportes_rechazados',

@@ -17,7 +17,9 @@ class ConsultaCacheTest extends TestCase
     use RefreshDatabase;
 
     private string $validApiKey = 'cd_sk_testvalidkey1234567890abcd';
+
     private Cliente $cliente;
+
     private string $cedula = '1713175071';
 
     private array $cachedData = [
@@ -97,7 +99,7 @@ class ConsultaCacheTest extends TestCase
         $this->mockDinardapCacheHit();
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -112,7 +114,7 @@ class ConsultaCacheTest extends TestCase
         $this->mockDinardapCacheHit();
 
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -128,7 +130,7 @@ class ConsultaCacheTest extends TestCase
         $this->mockDinardapCacheHit();
 
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -152,7 +154,7 @@ class ConsultaCacheTest extends TestCase
         $this->mockDinardapCacheHit();
 
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -169,7 +171,7 @@ class ConsultaCacheTest extends TestCase
         $this->mockDinardapCacheHit();
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);

@@ -14,7 +14,9 @@ class ApiKeyRevokeTest extends TestCase
     use RefreshDatabase;
 
     private string $validApiKey = 'cd_sk_testvalidkey1234567890abcd';
+
     private string $invalidApiKey = 'cd_sk_thiskeydoesnotexist123456';
+
     private Cliente $cliente;
 
     protected function setUp(): void
@@ -49,7 +51,7 @@ class ApiKeyRevokeTest extends TestCase
     public function test_revoke_valid_api_key(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/api-key/revocar');
 
         $response->assertStatus(200);
@@ -68,7 +70,7 @@ class ApiKeyRevokeTest extends TestCase
     public function test_revoke_creates_log_entry(): void
     {
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/api-key/revocar');
 
         $this->assertDatabaseHas('logs_actividad', [
@@ -94,7 +96,7 @@ class ApiKeyRevokeTest extends TestCase
     public function test_revoke_with_invalid_api_key(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->invalidApiKey,
+            'Authorization' => 'Bearer '.$this->invalidApiKey,
         ])->postJson('/api/v1/api-key/revocar');
 
         $response->assertStatus(401);
@@ -111,7 +113,7 @@ class ApiKeyRevokeTest extends TestCase
         $this->cliente->update(['api_key_revocada' => true]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/api-key/revocar');
 
         $response->assertStatus(401);

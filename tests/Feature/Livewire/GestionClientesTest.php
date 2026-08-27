@@ -63,13 +63,12 @@ class GestionClientesTest extends TestCase
             'nombre' => "Cliente {$i}",
             'roles' => json_encode(['cliente']),
         ], $overrides['usuario'] ?? []));
+
         return Cliente::create(array_merge([
             'usuario_id' => $usuario->id,
             'saldo_creditos' => 0,
         ], $overrides['cliente'] ?? []));
     }
-
-    // --- Acceso ---
 
     public function test_staff_puede_ver_la_pagina(): void
     {
@@ -90,8 +89,6 @@ class GestionClientesTest extends TestCase
         $this->get('/admin/clientes')
             ->assertRedirect(route('login'));
     }
-
-    // --- Filtros ---
 
     public function test_filtro_por_nombre(): void
     {
@@ -137,24 +134,19 @@ class GestionClientesTest extends TestCase
             ->assertDontSee('inactivo@test.com');
     }
 
-    // --- Columnas ---
-
     public function test_columnas_visibles(): void
     {
         Livewire::actingAs($this->staffUsuario)
             ->test(GestionClientes::class)
             ->assertSee('cliente@test.com')
             ->assertSee('Juan Cliente')
-            ->assertSee('50')  // saldo
+            ->assertSee('50')
             ->assertSee('Activo')
             ->assertSee('cd_sk_test1');
     }
 
-    // --- Paginación ---
-
     public function test_paginacion_diez_por_pagina(): void
     {
-        // Crear 15 clientes adicionales = 16 total
         for ($i = 0; $i < 15; $i++) {
             $this->crearClienteAdicional();
         }
@@ -165,8 +157,6 @@ class GestionClientesTest extends TestCase
                 return $clientes->count() === 10 && $clientes->total() === 16;
             });
     }
-
-    // --- Detalle ---
 
     public function test_detalle_expandible_muestra_consultas(): void
     {
@@ -237,8 +227,6 @@ class GestionClientesTest extends TestCase
             ->call('toggleDetalle', $this->cliente->id)
             ->assertSet('expandidoId', null);
     }
-
-    // --- Reset ---
 
     public function test_reset_filters_limpia_todo(): void
     {

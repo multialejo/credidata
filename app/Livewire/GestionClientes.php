@@ -55,7 +55,7 @@ class GestionClientes extends Component
                 $q->where(function ($q) {
                     $q->whereHas('usuario', function ($qu) {
                         $qu->where('nombre', 'like', "%{$this->buscar}%")
-                           ->orWhere('email', 'like', "%{$this->buscar}%");
+                            ->orWhere('email', 'like', "%{$this->buscar}%");
                     })->orWhere('api_key_prefijo', 'like', "%{$this->buscar}%");
                 });
             })

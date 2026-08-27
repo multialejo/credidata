@@ -23,7 +23,8 @@
                                 </td>
                                 <td class="py-2 pr-4">
                                     @if($editando === $param->modulo . '.' . $param->clave)
-                                        <form wire:submit="guardar('{{ $param->modulo }}', '{{ $param->clave }}')">
+                                        <form id="form-{{ $param->modulo }}-{{ $param->clave }}"
+                                              wire:submit="guardar('{{ $param->modulo }}', '{{ $param->clave }}')">
                                             <input type="text" wire:model="valorEditando"
                                                 class="w-full border-gray-300 rounded-md text-sm focus:border-indigo-500 focus:ring-indigo-500 font-mono">
                                             @error('valorEditando')

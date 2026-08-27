@@ -26,6 +26,7 @@ class FirebaseVacas extends Command
         } catch (Throwable $e) {
             $this->newLine();
             $this->components->error($e->getMessage());
+
             return 1;
         }
 
@@ -34,23 +35,24 @@ class FirebaseVacas extends Command
         if (empty($documents)) {
             $this->newLine();
             $this->components->warn('No se encontraron "vacas".');
+
             return 0;
         }
 
         $total = count($documents);
         $display = $all ? $documents : array_slice($documents, 0, $limit);
-        $hasMore = !$all && $total > $limit;
+        $hasMore = ! $all && $total > $limit;
 
         $rows = [];
 
         foreach ($display as $doc) {
-            if (!$doc->exists()) {
+            if (! $doc->exists()) {
                 continue;
             }
 
             $data = $doc->data() ?? [];
             $formatted = collect($data)
-                ->map(fn($v, $k) => is_scalar($v) ? "{$k}: {$v}" : "{$k}: " . json_encode($v))
+                ->map(fn ($v, $k) => is_scalar($v) ? "{$k}: {$v}" : "{$k}: ".json_encode($v))
                 ->implode(', ');
 
             $rows[] = [$doc->id(), $formatted];
@@ -60,6 +62,7 @@ class FirebaseVacas extends Command
 
         if (empty($rows)) {
             $this->components->warn('No se encontraron "vacas".');
+
             return 0;
         }
 

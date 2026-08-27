@@ -5,14 +5,13 @@ namespace App\Livewire;
 use App\Models\ConfigParametro;
 use App\Models\LogActividad;
 use Closure;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class ConfigGeneral extends Component
 {
-    /** Clave "modulo.clave" de la fila en edición, o null si ninguna. */
     public ?string $editando = null;
 
-    /** Valor JSON que se está editando. */
     public string $valorEditando = '';
 
     public function iniciarEdicion(string $modulo, string $clave): void
@@ -52,31 +51,31 @@ class ConfigGeneral extends Component
             ->where('clave', $clave)
             ->firstOrFail();
 
-        $valorAnterior = json_decode($param->valor);
-        $valorNuevo = json_decode($this->valorEditando);
+        $valorAnterior = $param->valor;
+        $valorNuevo = json_encode(json_decode($this->valorEditando));
 
-        // Usamos update() por query builder (no $model->save()) porque la PK es
-        // compuesta ['modulo','clave'] y este es el patrón probado en el proyecto.
-        ConfigParametro::where('modulo', $modulo)
-            ->where('clave', $clave)
-            ->update([
-                'valor' => json_encode($valorNuevo),
-                'actualizado_por' => auth()->user()->staff->id,
-                'actualizado_en' => now(),
+        DB::transaction(function () use ($valorNuevo, $valorAnterior, $modulo, $clave): void {
+            ConfigParametro::where('modulo', $modulo)
+                ->where('clave', $clave)
+                ->update([
+                    'valor' => $valorNuevo,
+                    'actualizado_por' => auth()->user()->staff->id,
+                    'actualizado_en' => now(),
+                ]);
+
+            LogActividad::create([
+                'accion' => 'config.actualizada',
+                'actor_id' => auth()->id(),
+                'actor_sistema' => false,
+                'detalle' => [
+                    'modulo' => $modulo,
+                    'clave' => $clave,
+                    'valor_anterior' => json_decode($valorAnterior),
+                    'valor_nuevo' => json_decode($valorNuevo),
+                ],
+                'ip_origen' => request()->ip(),
             ]);
-
-        LogActividad::create([
-            'accion' => 'config.actualizada',
-            'actor_id' => auth()->id(),
-            'actor_sistema' => false,
-            'detalle' => [
-                'modulo' => $modulo,
-                'clave' => $clave,
-                'valor_anterior' => $valorAnterior,
-                'valor_nuevo' => $valorNuevo,
-            ],
-            'ip_origen' => request()->ip(),
-        ]);
+        });
 
         $this->cancelarEdicion();
 

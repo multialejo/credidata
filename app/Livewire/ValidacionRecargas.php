@@ -3,167 +3,110 @@
 namespace App\Livewire;
 
 use App\Enums\EstadoRecarga;
-use App\Jobs\SendRecargaRechazadaEmail;
-use App\Models\LogActividad;
 use App\Models\Recarga;
 use App\Services\RecargaService;
-use App\StateTransitions\Exceptions\InvalidRecargaTransitionException;
 use App\StateTransitions\RecargaTransitions;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class ValidacionRecargas extends Component
 {
-    use WithPagination;
+    public $creditos = '';
 
-    /** Recarga cuya fila está en modo "Acreditar" (inline form). */
-    public ?int $acreditandoId = null;
+    public $motivo = '';
 
-    /** Créditos a acreditar (form inline de acreditación). */
-    public int $creditos = 1;
+    public $recargaSeleccionada;
 
-    /** Motivo de la acreditación (contexto auditoría, REQ §9.3). */
-    public string $motivo = '';
+    public $mostrarFormulario = false;
 
-    /** Recarga cuya fila está en modo "Rechazar" (inline form). */
-    public ?int $rechazandoId = null;
+    public $esAdmin = false;
 
-    /** Motivo del rechazo (flujo idéntico al endpoint del Sprint 5). */
-    public string $motivoRechazo = '';
-
-    public function toggleAcreditar(int $recargaId): void
+    public function mount(): void
     {
-        $this->acreditandoId = $this->acreditandoId === $recargaId ? null : $recargaId;
-        $this->rechazandoId = null;
-        $this->reset(['creditos', 'motivo']);
-        $this->resetValidation();
+        $this->esAdmin = auth()->user()?->staff?->rol_staff === 'admin';
     }
 
-    public function toggleRechazar(int $recargaId): void
+    public function seleccionarRecarga(Recarga $recarga): void
     {
-        $this->rechazandoId = $this->rechazandoId === $recargaId ? null : $recargaId;
-        $this->acreditandoId = null;
-        $this->reset(['motivoRechazo']);
-        $this->resetValidation();
+        $this->recargaSeleccionada = $recarga;
+        $this->mostrarFormulario = true;
+        $this->creditos = '';
+        $this->motivo = '';
     }
 
-    public function acreditar(int $recargaId): void
+    public function cerrarFormulario(): void
     {
-        if (! $this->esAdmin()) {
-            $this->addError('acreditacion', 'Solo el rol admin puede acreditar créditos.');
+        $this->mostrarFormulario = false;
+        $this->recargaSeleccionada = null;
+    }
 
+    public function acreditar(): void
+    {
+        if (! $this->esAdmin) {
             return;
         }
 
         $this->validate([
-            'creditos' => ['required', 'integer', 'min:1'],
-            'motivo' => ['required', 'string', 'max:500'],
+            'creditos' => 'required|integer|min:1',
+            'motivo' => 'required|string|min:1',
         ]);
 
-        $recarga = Recarga::findOrFail($recargaId);
+        $recarga = Recarga::lockForUpdate()->find($this->recargaSeleccionada->id);
 
-        try {
-            DB::transaction(function () use ($recarga) {
-                $locked = Recarga::lockForUpdate()->findOrFail($recarga->id);
+        RecargaTransitions::assert($recarga->estado, EstadoRecarga::Completada);
 
-                RecargaTransitions::assert($locked->estado, EstadoRecarga::Completada);
+        $service = app(RecargaService::class);
+        $service->procesar(
+            referenciaExterna: $recarga->referencia_externa,
+            clienteUid: $recarga->cliente->usuario->uid,
+            creditos: (int) $this->creditos,
+            metodo: $recarga->metodo,
+            evidenciaPath: $recarga->comprobante_url
+        );
 
-                app(RecargaService::class)->procesar(
-                    referenciaExterna: $locked->referencia_externa,
-                    clienteUid: $locked->cliente->usuario->uid,
-                    creditosObtenidos: $this->creditos,
-                    metodoPago: 'transferencia',
-                    evidenciaPath: $locked->comprobante_url,
-                );
-
-                LogActividad::create([
-                    'accion' => 'recarga.acreditada_manual',
-                    'actor_id' => auth()->id(),
-                    'actor_sistema' => false,
-                    'detalle' => [
-                        'recarga_id' => $locked->id,
-                        'creditos' => $this->creditos,
-                        'motivo' => $this->motivo,
-                    ],
-                    'ip_origen' => request()->ip(),
-                ]);
-            });
-        } catch (InvalidRecargaTransitionException) {
-            $this->addError('acreditacion', 'La recarga ya no puede acreditarse en su estado actual.');
-
-            return;
-        }
-
-        $this->toggleAcreditar($recargaId);
-        $this->resetPage();
-        session()->flash('status', 'Créditos acreditados correctamente.');
-    }
-
-    public function rechazar(int $recargaId): void
-    {
-        $this->validate([
-            'motivoRechazo' => ['required', 'string', 'min:10', 'max:500'],
+        LogActividad::create([
+            'actor_id' => auth()->id(),
+            'accion' => 'recarga.acreditada_manual',
+            'detalle' => json_encode([
+                'recarga_id' => $recarga->id,
+                'creditos' => $this->creditos,
+                'motivo' => $this->motivo,
+            ]),
         ]);
 
-        $recarga = Recarga::findOrFail($recargaId);
-
-        try {
-            DB::transaction(function () use ($recarga) {
-                $locked = Recarga::lockForUpdate()->findOrFail($recarga->id);
-
-                RecargaTransitions::assert($locked->estado, EstadoRecarga::Rechazada);
-
-                $locked->update([
-                    'estado' => EstadoRecarga::Rechazada,
-                    'motivo_rechazo' => $this->motivoRechazo,
-                    'rechazada_por' => auth()->id(),
-                    'rechazada_at' => now(),
-                ]);
-
-                LogActividad::create([
-                    'accion' => 'recarga.rechazada',
-                    'actor_id' => auth()->id(),
-                    'detalle' => [
-                        'recarga_id' => $locked->id,
-                        'motivo' => $this->motivoRechazo,
-                        'referencia_externa' => $locked->referencia_externa,
-                    ],
-                ]);
-            });
-        } catch (InvalidRecargaTransitionException) {
-            $this->addError('rechazo', 'La recarga ya no puede rechazarse en su estado actual.');
-
-            return;
-        }
-
-        $recarga->refresh();
-
-        DB::afterCommit(function () use ($recarga) {
-            dispatch(new SendRecargaRechazadaEmail($recarga));
-        });
-
-        $this->toggleRechazar($recargaId);
-        $this->resetPage();
-        session()->flash('status', 'Recarga rechazada correctamente.');
+        $this->mostrarFormulario = false;
+        $this->recargaSeleccionada = null;
     }
 
-    private function esAdmin(): bool
+    public function rechazar(): void
     {
-        return auth()->user()?->staff?->rol_staff === 'admin';
+        $this->validate(['motivo' => 'required|string|min:1']);
+
+        $recarga = Recarga::lockForUpdate()->find($this->recargaSeleccionada->id);
+
+        RecargaTransitions::assert($recarga->estado, EstadoRecarga::Rechazada);
+
+        $recarga->update(['estado' => EstadoRecarga::Rechazada]);
+
+        LogActividad::create([
+            'actor_id' => auth()->id(),
+            'accion' => 'recarga.rechazada_manual',
+            'detalle' => json_encode([
+                'recarga_id' => $recarga->id,
+                'motivo' => $this->motivo,
+            ]),
+        ]);
+
+        $this->mostrarFormulario = false;
+        $this->recargaSeleccionada = null;
     }
 
     public function render()
     {
-        $recargas = Recarga::query()
-            ->with(['cliente.usuario'])
-            ->where('estado', EstadoRecarga::Pendiente)
+        $pendientes = Recarga::where('estado', EstadoRecarga::Pendiente)
+            ->with('cliente.usuario')
             ->latest('fecha')
-            ->paginate(10);
+            ->paginate(15);
 
-        return view('livewire.validacion-recargas', [
-            'recargas' => $recargas,
-            'esAdmin' => $this->esAdmin(),
-        ]);
+        return view('livewire.validacion-recargas', ['pendientes' => $pendientes]);
     }
 }

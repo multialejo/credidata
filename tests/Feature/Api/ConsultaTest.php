@@ -5,7 +5,6 @@ namespace Tests\Feature\Api;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
 use App\Models\Consulta;
-use App\Models\LogActividad;
 use App\Models\Usuario;
 use App\Services\DinardapService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,8 +16,11 @@ class ConsultaTest extends TestCase
     use RefreshDatabase;
 
     private string $validApiKey = 'cd_sk_testvalidkey1234567890abcd';
+
     private string $invalidApiKey = 'cd_sk_thiskeydoesnotexist123456';
+
     private Cliente $cliente;
+
     private string $cedula = '1713175071';
 
     protected function setUp(): void
@@ -74,7 +76,7 @@ class ConsultaTest extends TestCase
     public function test_with_invalid_api_key(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->invalidApiKey,
+            'Authorization' => 'Bearer '.$this->invalidApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -93,7 +95,7 @@ class ConsultaTest extends TestCase
         $this->cliente->update(['api_key_revocada' => true]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -112,7 +114,7 @@ class ConsultaTest extends TestCase
         $this->cliente->update(['saldo_creditos' => 0]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -127,7 +129,7 @@ class ConsultaTest extends TestCase
     public function test_successfully(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -148,7 +150,7 @@ class ConsultaTest extends TestCase
     public function test_deducts_credits(): void
     {
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -162,7 +164,7 @@ class ConsultaTest extends TestCase
     public function test_creates_consulta_record(): void
     {
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -180,7 +182,7 @@ class ConsultaTest extends TestCase
     public function test_creates_log_entry(): void
     {
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -195,7 +197,7 @@ class ConsultaTest extends TestCase
     public function test_validates_cedula_format(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => 'abc',
         ]);
@@ -207,7 +209,7 @@ class ConsultaTest extends TestCase
     public function test_rejects_invalid_cedula_checksum(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => '1713175072',
         ]);
@@ -223,7 +225,7 @@ class ConsultaTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -236,7 +238,7 @@ class ConsultaTest extends TestCase
     public function test_updates_last_usage(): void
     {
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -248,7 +250,7 @@ class ConsultaTest extends TestCase
     public function test_returns_normalized_data_structure(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -281,7 +283,7 @@ class ConsultaTest extends TestCase
     public function test_response_omits_internal_cache_fields(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -297,7 +299,7 @@ class ConsultaTest extends TestCase
     public function test_metadatos_minimal_on_success(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -311,7 +313,7 @@ class ConsultaTest extends TestCase
     public function test_ruc_and_contacto_have_default_shape_when_no_data(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -328,7 +330,7 @@ class ConsultaTest extends TestCase
     public function test_creates_consulta_with_resultado_json(): void
     {
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -342,7 +344,7 @@ class ConsultaTest extends TestCase
     public function test_creates_consulta_with_fuentes_utilizadas(): void
     {
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);
@@ -356,7 +358,7 @@ class ConsultaTest extends TestCase
     public function test_response_has_unified_structure(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->validApiKey,
+            'Authorization' => 'Bearer '.$this->validApiKey,
         ])->postJson('/api/v1/consulta/cedula', [
             'cedula' => $this->cedula,
         ]);

@@ -16,7 +16,9 @@ class ConfigGeneralTest extends TestCase
     use RefreshDatabase;
 
     private Usuario $staffUsuario;
+
     private Staff $staff;
+
     private Usuario $clienteUsuario;
 
     protected function setUp(): void
@@ -191,5 +193,18 @@ class ConfigGeneralTest extends TestCase
             ->call('cancelarEdicion')
             ->assertSet('editando', null)
             ->assertSet('valorEditando', '');
+    }
+
+    // --- UI: form ID coherence ---
+
+    public function test_form_id_matches_submit_button(): void
+    {
+        $this->crearParametro();
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->call('iniciarEdicion', 'financiero', 'costoConsultaBase')
+            ->assertSeeHtml('id="form-financiero-costoConsultaBase"')
+            ->assertSeeHtml('form="form-financiero-costoConsultaBase"');
     }
 }

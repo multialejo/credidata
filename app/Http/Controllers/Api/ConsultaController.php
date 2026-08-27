@@ -23,12 +23,12 @@ class ConsultaController extends Controller
     public function consultaCedula(Request $request)
     {
         $request->validate([
-            'cedula' => ['required', 'string', new EcuadorianIdentificador()],
+            'cedula' => ['required', 'string', new EcuadorianIdentificador],
         ]);
 
         $cliente = $request->cliente_autenticado;
 
-        if (!$cliente) {
+        if (! $cliente) {
             return response()->json([
                 'codigo' => 401,
                 'exito' => false,

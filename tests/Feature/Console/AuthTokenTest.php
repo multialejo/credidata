@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Console;
 
-use App\Models\LogActividad;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;

@@ -41,7 +41,6 @@ class EnsureClienteTest extends TestCase
             'nombre' => 'Orphan',
             'roles' => json_encode([]),
         ]);
-        // No Cliente, No Staff.
 
         $this->actingAs($usuario)
             ->get('/dashboard')
@@ -61,7 +60,6 @@ class EnsureClienteTest extends TestCase
             'saldo_creditos' => 50,
         ]);
 
-        // Verificar via Livewire::test porque PanelSaldo es un componente Full-Page.
         Livewire::actingAs($usuario)
             ->test(PanelSaldo::class)
             ->assertSeeText('Saldo Actual');

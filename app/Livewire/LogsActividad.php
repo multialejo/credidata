@@ -30,12 +30,13 @@ class LogsActividad extends Component
         'CONSULTA_CEDULA',
         'CREDITOS_ASIGNADOS',
         'STAFF_CREADO',
+        'config.actualizada',
         'recarga.acreditada',
+        'recarga.acreditada_manual',
         'recarga.fallida',
         'recarga.rechazada',
-        'config.actualizada',
+        'recarga.rechazada_manual',
         'registro.editado_por_staff',
-        'recarga.acreditada_manual',
     ];
 
     protected $queryString = [

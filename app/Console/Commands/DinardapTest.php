@@ -10,6 +10,7 @@ use Throwable;
 class DinardapTest extends Command
 {
     protected $signature = 'dinardap:test {cedula : Número de cédula a consultar}';
+
     protected $description = 'Prueba la conectividad con la API de Dinardap';
 
     public function handle(DinardapService $dinardapService): int
@@ -36,7 +37,7 @@ class DinardapTest extends Command
                 $this->newLine();
                 $this->table(
                     ['Campo', 'Valor'],
-                    collect($cache)->map(fn($v, $k) => [$k, is_scalar($v) ? (string) $v : json_encode($v)])->toArray()
+                    collect($cache)->map(fn ($v, $k) => [$k, is_scalar($v) ? (string) $v : json_encode($v)])->toArray()
                 );
 
                 return 0;
@@ -101,7 +102,7 @@ class DinardapTest extends Command
 
         $this->table(
             ['Campo', 'Valor'],
-            collect($resultado['data'])->map(fn($v, $k) => [$k, is_scalar($v) ? (string) $v : json_encode($v)])->toArray()
+            collect($resultado['data'])->map(fn ($v, $k) => [$k, is_scalar($v) ? (string) $v : json_encode($v)])->toArray()
         );
 
         $this->newLine();

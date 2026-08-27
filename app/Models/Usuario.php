@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
+use LogicException;
 
 class Usuario extends Authenticatable
 {
@@ -13,7 +14,7 @@ class Usuario extends Authenticatable
     use Notifiable;
 
     protected $fillable = [
-        'uid', 'email', 'firebase_uid', 'password', 'nombre', 'estado', 'roles',
+        'uid', 'email', 'firebase_uid', 'password', 'nombre', 'estado', 'roles', 'tipo_acceso',
     ];
 
     protected $casts = [
@@ -29,7 +30,57 @@ class Usuario extends Authenticatable
             if (empty($usuario->uid)) {
                 $usuario->uid = (string) Str::uuid();
             }
+
+            $usuario->sincronizarTipoAcceso();
+            $usuario->assertRolesAccesoValidos();
         });
+
+        static::updating(function (Usuario $usuario): void {
+            if ($usuario->isDirty('roles')) {
+                $usuario->sincronizarTipoAcceso();
+            }
+
+            $usuario->assertRolesAccesoValidos();
+        });
+    }
+
+    private function sincronizarTipoAcceso(): void
+    {
+        $roles = $this->rolesNormalizados();
+        $esCliente = in_array('cliente', $roles, true);
+        $esStaff = in_array('staff', $roles, true);
+
+        $this->tipo_acceso = $esCliente ? 'cliente' : ($esStaff ? 'staff' : null);
+    }
+
+    private function assertRolesAccesoValidos(): void
+    {
+        $roles = $this->rolesNormalizados();
+        $esCliente = in_array('cliente', $roles, true);
+        $esStaff = in_array('staff', $roles, true);
+
+        if ($esCliente && $esStaff) {
+            throw new LogicException('Un usuario no puede tener simultáneamente los roles cliente y staff.');
+        }
+
+        if (! $this->exists) {
+            return;
+        }
+
+        if ($this->cliente()->exists() && (! $esCliente || $esStaff)) {
+            throw new LogicException('Los roles del usuario son incompatibles con su perfil cliente.');
+        }
+
+        if ($this->staff()->exists() && (! $esStaff || $esCliente)) {
+            throw new LogicException('Los roles del usuario son incompatibles con su perfil staff.');
+        }
+    }
+
+    public function rolesNormalizados(): array
+    {
+        $roles = $this->roles ?? [];
+
+        return is_string($roles) ? (json_decode($roles, true) ?? []) : $roles;
     }
 
     public function getNameAttribute()

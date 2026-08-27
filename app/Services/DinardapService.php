@@ -52,7 +52,7 @@ class DinardapService
 
         $body = $response->json();
 
-        if ($response->notFound() || ($body && !empty($body['error']) && $body['error'] === 'no_encontrado')) {
+        if ($response->notFound() || ($body && ! empty($body['error']) && $body['error'] === 'no_encontrado')) {
             return ['status' => 'not_found'];
         }
 
@@ -80,13 +80,13 @@ class DinardapService
                 ->document("sujetos/{$cedula}")
                 ->snapshot();
 
-            if (!$doc->exists()) {
+            if (! $doc->exists()) {
                 return null;
             }
 
             $data = $doc->data();
 
-            if (!$this->cacheEsValido($data)) {
+            if (! $this->cacheEsValido($data)) {
                 return null;
             }
 
@@ -195,7 +195,7 @@ class DinardapService
             $ultimaActualizacion = now()->parse($cache['ultimaActualizacion']);
         }
 
-        if (!$ultimaActualizacion) {
+        if (! $ultimaActualizacion) {
             return false;
         }
 

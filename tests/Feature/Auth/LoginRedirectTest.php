@@ -12,48 +12,94 @@ class LoginRedirectTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_cliente_es_redirigido_a_dashboard_despues_del_login(): void
+    public function test_staff_is_redirected_to_admin_after_login(): void
     {
         $usuario = Usuario::create([
-            'uid' => 'cliente-uid',
-            'email' => 'cliente@test.com',
-            'nombre' => 'Cliente',
-            'roles' => json_encode(['cliente']),
-            'password' => bcrypt('secret123'),
+            'email' => 'staff-login@test.com',
+            'nombre' => 'Staff Login',
+            'password' => bcrypt('password'),
+            'roles' => ['staff'],
         ]);
-        Cliente::create([
-            'usuario_id' => $usuario->id,
-            'saldo_creditos' => 0,
-        ]);
+        Staff::create(['usuario_id' => $usuario->id, 'rol_staff' => 'admin']);
 
         $response = $this->post('/login', [
-            'email' => 'cliente@test.com',
-            'password' => 'secret123',
+            'email' => 'staff-login@test.com',
+            'password' => 'password',
         ]);
 
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('admin.clientes'));
     }
 
-    public function test_staff_es_redirigido_a_admin_clientes_despues_del_login(): void
+    public function test_cliente_is_redirected_to_dashboard_after_login(): void
     {
         $usuario = Usuario::create([
-            'uid' => 'staff-uid',
-            'email' => 'staff@test.com',
-            'nombre' => 'Staff',
-            'roles' => json_encode(['staff']),
-            'password' => bcrypt('secret123'),
+            'email' => 'cliente-login@test.com',
+            'nombre' => 'Cliente Login',
+            'password' => bcrypt('password'),
+            'roles' => ['cliente'],
         ]);
-        Staff::create([
-            'usuario_id' => $usuario->id,
-            'rol_staff' => 'admin',
-            'fecha_asignacion' => now(),
-        ]);
+        Cliente::create(['usuario_id' => $usuario->id]);
 
         $response = $this->post('/login', [
-            'email' => 'staff@test.com',
-            'password' => 'secret123',
+            'email' => 'cliente-login@test.com',
+            'password' => 'password',
         ]);
 
-        $response->assertRedirect(route('admin.clientes', absolute: false));
+        $response->assertRedirect(route('dashboard'));
+    }
+
+    public function test_staff_cannot_access_dashboard(): void
+    {
+        $usuario = Usuario::create([
+            'email' => 'staff-dash@test.com',
+            'nombre' => 'Staff Dash',
+            'roles' => ['staff'],
+        ]);
+        Staff::create(['usuario_id' => $usuario->id, 'rol_staff' => 'admin']);
+
+        $response = $this->actingAs($usuario)->get(route('dashboard'));
+
+        $response->assertRedirect(route('admin.clientes'));
+    }
+
+    public function test_staff_can_access_admin_routes(): void
+    {
+        $usuario = Usuario::create([
+            'email' => 'staff-admin@test.com',
+            'nombre' => 'Staff Admin',
+            'roles' => ['staff'],
+        ]);
+        Staff::create(['usuario_id' => $usuario->id, 'rol_staff' => 'admin']);
+
+        $response = $this->actingAs($usuario)->get(route('admin.clientes'));
+
+        $response->assertOk();
+    }
+
+    public function test_cliente_cannot_access_admin_routes(): void
+    {
+        $usuario = Usuario::create([
+            'email' => 'cliente-admin@test.com',
+            'nombre' => 'Cliente Admin',
+            'roles' => ['cliente'],
+        ]);
+        Cliente::create(['usuario_id' => $usuario->id]);
+
+        $response = $this->actingAs($usuario)->get(route('admin.clientes'));
+
+        $response->assertForbidden();
+    }
+
+    public function test_non_staff_non_cliente_gets_403_on_dashboard(): void
+    {
+        $usuario = Usuario::create([
+            'email' => 'orphan@test.com',
+            'nombre' => 'Orphan',
+            'roles' => [],
+        ]);
+
+        $response = $this->actingAs($usuario)->get(route('dashboard'));
+
+        $response->assertForbidden();
     }
 }

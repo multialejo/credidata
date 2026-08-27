@@ -46,9 +46,6 @@ class LogsActividadTest extends TestCase
 
     private function crearLog(array $overrides = []): LogActividad
     {
-        // Si el override pide una fecha específica, la aplicamos vía forceFill
-        // para respetar el principio de que `fecha` NO está en $fillable:
-        // la auditoría temporal debe venir del server.
         $fechaCustom = $overrides['fecha'] ?? null;
         unset($overrides['fecha']);
 
@@ -97,10 +94,6 @@ class LogsActividadTest extends TestCase
         $this->crearLog(['accion' => 'CLIENTE_REGISTRADO']);
         $this->crearLog(['accion' => 'API_KEY_REVOCADA']);
 
-        // El <select> de filtro renderiza siempre las 10 acciones conocidas como
-        // <option>, por lo que `assertDontSee('CLIENTE_REGISTRADO')` sobre el HTML
-        // completo sería siempre falso. Verificamos el efecto del filtro
-        // contando filas en la tabla paginada.
         Livewire::actingAs($this->staffUsuario)
             ->test(LogsActividad::class)
             ->set('accion', 'API_KEY_GENERADA')
@@ -162,11 +155,6 @@ class LogsActividadTest extends TestCase
             'fecha' => now(),
         ]);
 
-        // El filtro combinado debe dejar exactamente 1 log: la API_KEY_GENERADA
-        // hecha por el staff en el rango de fechas reciente. Ni la revocada
-        // (fuera de rango) ni la del cliente (actor que no matchea staff@) deben
-        // pasar. Verificamos el contenido exacto de la fila resultante (el
-        // assertSee del email del actor) y el conteo.
         Livewire::actingAs($this->staffUsuario)
             ->test(LogsActividad::class)
             ->set('accion', 'API_KEY_GENERADA')
@@ -195,7 +183,7 @@ class LogsActividadTest extends TestCase
             });
     }
 
-    // --- Inmutabilidad (REQ §9.3) ---
+    // --- Inmutabilidad ---
 
     public function test_vista_no_expone_acciones_de_edicion(): void
     {
@@ -245,5 +233,20 @@ class LogsActividadTest extends TestCase
             ->assertSet('fechaDesde', '')
             ->assertSet('fechaHasta', '')
             ->assertSet('actorEmail', '');
+    }
+
+    // --- Detalle JSON ---
+
+    public function test_detalle_json_se_muestra_siempre_visible(): void
+    {
+        $this->crearLog([
+            'accion' => 'consulta.realizada',
+            'detalle' => ['identificador' => '0102030405', 'creditos' => 1],
+        ]);
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(LogsActividad::class)
+            ->assertSeeText('consulta.realizada')
+            ->assertSee('"identificador": "0102030405"');
     }
 }

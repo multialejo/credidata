@@ -10,6 +10,7 @@ use Google\Cloud\Firestore\DocumentReference;
 use Google\Cloud\Firestore\DocumentSnapshot;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Kreait\Firebase\Contract\Firestore;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 use Livewire\Livewire;
 use Mockery;
@@ -21,6 +22,8 @@ class EditarRegistroTest extends TestCase
     use RefreshDatabase;
 
     private const CEDULA = '1713175071';
+
+    private const CEDULA_B = '1713175089';
 
     private Usuario $staffUsuario;
 
@@ -102,7 +105,7 @@ class EditarRegistroTest extends TestCase
         $database = Mockery::mock(FirestoreClient::class);
         $database->shouldReceive('document')->with("sujetos/{$identificador}")->andReturn($document);
 
-        $firestore = Mockery::mock(\Kreait\Firebase\Contract\Firestore::class);
+        $firestore = Mockery::mock(Firestore::class);
         $firestore->shouldReceive('database')->andReturn($database);
 
         Firebase::shouldReceive('firestore')->andReturn($firestore);
@@ -117,7 +120,8 @@ class EditarRegistroTest extends TestCase
         $this->actingAs($this->staffUsuario)
             ->get('/admin/registros')
             ->assertOk()
-            ->assertSee('Identificador (cédula o RUC)');
+            ->assertSee('Identificador (cédula o RUC)')
+            ->assertDontSeeHtml('id="identificador" wire:model="identificador" placeholder="Ej. 1713175071" disabled');
     }
 
     public function test_cliente_no_staff_recibe_403(): void
@@ -292,5 +296,83 @@ class EditarRegistroTest extends TestCase
             ->assertDontSee('fuentesUtilizadas')
             ->assertDontSee('ultimaActualizacion')
             ->assertDontSee('tipoIdentificador');
+    }
+
+    // --- Bloqueo del campo de búsqueda al editar ---
+
+    public function test_campo_identificador_y_boton_buscar_se_deshabilitan_tras_cargar_registro(): void
+    {
+        $this->mockDocumento(self::CEDULA, $this->documentoBase());
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(EditarRegistro::class)
+            ->set('identificador', self::CEDULA)
+            ->call('buscar')
+            ->assertSet('encontrado', true)
+            ->assertSet('telefonos', '0991234567')
+            ->assertSeeHtml('disabled')
+            ->assertSeeHtml('cursor-not-allowed');
+    }
+
+    public function test_nueva_busqueda_desbloquea_y_limpia_el_campo(): void
+    {
+        $this->mockDocumento(self::CEDULA, $this->documentoBase());
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(EditarRegistro::class)
+            ->set('identificador', self::CEDULA)
+            ->call('buscar')
+            ->assertSet('encontrado', true)
+            ->call('nuevaBusqueda')
+            ->assertSet('encontrado', false)
+            ->assertSet('identificador', '')
+            ->assertSet('telefonos', '')
+            ->assertSet('emails', '')
+            ->assertSet('direcciones', '');
+    }
+
+    public function test_buscar_dos_veces_requiere_nueva_busqueda_entre_registros(): void
+    {
+        $snapshot1 = Mockery::mock(DocumentSnapshot::class);
+        $snapshot1->shouldReceive('exists')->andReturn(true);
+        $snapshot1->shouldReceive('data')->andReturn($this->documentoBase([
+            'contacto' => ['telefonos' => ['0991111111'], 'emails' => ['a@test.com'], 'direcciones' => ['Dir A']],
+        ]));
+
+        $doc1 = Mockery::mock(DocumentReference::class);
+        $doc1->shouldReceive('snapshot')->andReturn($snapshot1);
+
+        $snapshot2 = Mockery::mock(DocumentSnapshot::class);
+        $snapshot2->shouldReceive('exists')->andReturn(true);
+        $snapshot2->shouldReceive('data')->andReturn($this->documentoBase([
+            'contacto' => ['telefonos' => ['0992222222'], 'emails' => ['b@test.com'], 'direcciones' => ['Dir B']],
+        ]));
+
+        $doc2 = Mockery::mock(DocumentReference::class);
+        $doc2->shouldReceive('snapshot')->andReturn($snapshot2);
+
+        $database = Mockery::mock(FirestoreClient::class);
+        $database->shouldReceive('document')
+            ->with('sujetos/'.self::CEDULA)->andReturn($doc1);
+        $database->shouldReceive('document')
+            ->with('sujetos/'.self::CEDULA_B)->andReturn($doc2);
+
+        $firestore = Mockery::mock(Firestore::class);
+        $firestore->shouldReceive('database')->andReturn($database);
+
+        Firebase::shouldReceive('firestore')->andReturn($firestore);
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(EditarRegistro::class)
+            ->set('identificador', self::CEDULA)
+            ->call('buscar')
+            ->assertSet('encontrado', true)
+            ->assertSet('telefonos', '0991111111')
+            ->call('nuevaBusqueda')
+            ->set('identificador', self::CEDULA_B)
+            ->call('buscar')
+            ->assertSet('encontrado', true)
+            ->assertSet('telefonos', '0992222222')
+            ->assertSet('emails', 'b@test.com');
     }
 }
