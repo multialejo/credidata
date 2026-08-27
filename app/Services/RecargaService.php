@@ -7,6 +7,7 @@ use App\Jobs\SendRecargaEmail;
 use App\Models\Cliente;
 use App\Models\LogActividad;
 use App\Models\Recarga;
+use App\StateTransitions\RecargaTransitions;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -37,6 +38,7 @@ class RecargaService
         int $creditosObtenidos,
         string $metodoPago,
         ?string $evidenciaPath = null,
+        ?float $montoUsd = null,
     ): Recarga {
         $cliente = Cliente::whereHas('usuario', fn ($q) => $q->where('uid', $clienteUid)
         )->firstOrFail();
@@ -47,7 +49,7 @@ class RecargaService
 
         return DB::transaction(function () use (
             $referenciaExterna, $cliente, $creditosObtenidos,
-            $metodoPago, $evidenciaPath,
+            $metodoPago, $evidenciaPath, $montoUsd,
         ) {
             $recarga = Recarga::lockForUpdate()
                 ->where('referencia_externa', $referenciaExterna)
@@ -57,11 +59,15 @@ class RecargaService
                 return $recarga;
             }
 
+            if ($recarga !== null) {
+                RecargaTransitions::assert($recarga->estado, EstadoRecarga::Completada);
+            }
+
             if ($recarga === null) {
                 $recarga = Recarga::create([
                     'cliente_id' => $cliente->id,
                     'metodo' => $metodoPago,
-                    'monto_usd' => 0,
+                    'monto_usd' => $montoUsd ?? 0,
                     'creditos_obtenidos' => $creditosObtenidos,
                     'estado' => EstadoRecarga::Completada,
                     'referencia_externa' => $referenciaExterna,
@@ -72,6 +78,7 @@ class RecargaService
                 $recarga->update([
                     'cliente_id' => $cliente->id,
                     'metodo' => $metodoPago,
+                    'monto_usd' => $montoUsd ?? $recarga->monto_usd,
                     'creditos_obtenidos' => $creditosObtenidos,
                     'comprobante_url' => $evidenciaPath,
                     'estado' => EstadoRecarga::Completada,

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminRecargaController;
+use App\Http\Controllers\Api\AdminRecargaEvidenceController;
 use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\ConsultaController;
 use App\Http\Controllers\Api\RecargaPaypalController;
@@ -30,8 +31,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware(['staff'])->prefix('v1/admin')->group(function () {
         Route::get('recargas/pendientes', [AdminRecargaController::class, 'pendientes']);
+        Route::get('recargas/{recarga}/comprobante', AdminRecargaEvidenceController::class);
         Route::post('recargas/{recarga}/rechazar', [AdminRecargaController::class, 'rechazar']);
-        Route::post('recargas/{recarga}/acreditar', [AdminRecargaController::class, 'acreditar'])
+        Route::post('recargas/acreditar', [AdminRecargaController::class, 'acreditar'])
             ->middleware('staff.role:admin');
     });
 });

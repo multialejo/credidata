@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminRecargaEvidenceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecargaPaypalReturnController;
 use App\Http\Controllers\RecargaPayphoneReturnController;
@@ -26,6 +27,7 @@ Route::middleware(['auth', 'verified', 'staff.web'])->prefix('admin')->name('adm
     Route::get('/config', ConfigGeneral::class)->name('config');
     Route::get('/registros', EditarRegistro::class)->name('registros');
     Route::get('/recargas', ValidacionRecargas::class)->name('recargas');
+    Route::get('/recargas/{recarga}/comprobante', AdminRecargaEvidenceController::class)->name('recargas.comprobante');
 });
 
 // Cliente dashboard — requires Cliente profile; staff is redirected to /admin/clientes

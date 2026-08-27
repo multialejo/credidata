@@ -103,6 +103,16 @@ class RecargaPayphoneController extends Controller
             ], 403);
         }
 
+        if (in_array($existente->estado, [EstadoRecarga::Fallida, EstadoRecarga::Rechazada], true)) {
+            return response()->json([
+                'codigo' => 409,
+                'exito' => false,
+                'mensaje' => 'La recarga está en un estado terminal y no puede reintentarse',
+                'error' => ['tipo' => 'TRANSICION_INVALIDA', 'detalle' => $existente->estado->value],
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 409);
+        }
+
         if ($existente->estado === EstadoRecarga::Completada) {
             return response()->json([
                 'codigo' => 200,
