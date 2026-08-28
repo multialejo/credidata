@@ -84,12 +84,27 @@
                                 {{ $log->ip_origen ?? '—' }}
                             </td>
                             <td class="py-2">
-                                @if(is_array($log->detalle) && count($log->detalle) > 0)
-                                    <pre class="text-xs bg-gray-50 p-2 rounded overflow-x-auto">{{ json_encode($log->detalle, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
-                                @else
-                                    <span class="text-gray-400">—</span>
-                                @endif
-                            </td>
+    @if(is_array($log->detalle) && count($log->detalle) > 0)
+        <div x-data="{ open: false }" class="text-xs">
+            <button @click="open = !open"
+                    type="button"
+                    class="inline-flex items-center gap-1 font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none">
+                <span x-text="open ? '{{ __('Ocultar detalle') }}' : '{{ __('Ver detalle') }}'"></span>
+                <svg :class="open ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            <div x-show="open"
+                 x-collapse
+                 class="mt-2">
+                <pre class="bg-gray-50 border border-gray-200 p-2 rounded overflow-x-auto max-w-lg font-mono text-xs">{{ json_encode($log->detalle, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+            </div>
+        </div>
+    @else
+        <span class="text-gray-400">—</span>
+    @endif
+</td>
                         </tr>
                     @endforeach
                 </tbody>
