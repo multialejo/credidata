@@ -26,12 +26,15 @@ class GestionApiKey extends Component
 
     public string $ips = '';
 
+    public string $ipDetectada = '';
+
     public array $scopes = [];
 
     public $nuevaKey;
 
     public function mount()
     {
+        $this->ipDetectada = request()->ip() ?? '';
         $this->cargarDatos();
     }
 
