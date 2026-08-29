@@ -41,6 +41,27 @@ class ValidateApiKey
             ], 401);
         }
 
+        $alcance = $cliente->api_key_alcance ?? [];
+        $permitido = empty($permisos) || collect($permisos)->contains(fn (string $permiso) => in_array($permiso, $alcance, true) || in_array(strtok($permiso, ':').':*', $alcance, true)
+        );
+
+        if (! $permitido) {
+            return response()->json([
+                'codigo' => 403, 'exito' => false, 'mensaje' => 'Permiso insuficiente',
+                'error' => ['tipo' => 'PERMISO_INSUFICIENTE', 'detalle' => null], 'datos' => null,
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 403);
+        }
+
+        $ips = $cliente->api_key_ips_permitidas ?? [];
+        if ($ips !== [] && ! in_array($request->ip(), $ips, true)) {
+            return response()->json([
+                'codigo' => 403, 'exito' => false, 'mensaje' => 'IP no permitida',
+                'error' => ['tipo' => 'IP_NO_PERMITIDA', 'detalle' => null], 'datos' => null,
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 403);
+        }
+
         $request->merge(['cliente_autenticado' => $cliente]);
 
         return $next($request);

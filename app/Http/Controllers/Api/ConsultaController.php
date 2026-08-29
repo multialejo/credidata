@@ -4,20 +4,25 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ConsultaResource;
+use App\Http\Resources\ConsultaRucResource;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
 use App\Models\Consulta;
 use App\Models\LogActividad;
 use App\Rules\EcuadorianIdentificador;
+use App\Services\CatastroService;
 use App\Services\DinardapService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ConsultaController extends Controller
 {
     public function __construct(
         private DinardapService $dinardapService,
+        private CatastroService $catastroService,
     ) {}
 
     public function consultaCedula(Request $request)
@@ -115,6 +120,69 @@ class ConsultaController extends Controller
                 'fuente' => 'dinardap',
             ],
         ]);
+    }
+
+    public function consultaRuc(Request $request)
+    {
+        $request->validate([
+            'ruc' => ['required', 'string', 'size:13', 'regex:/^[0-9]+$/', new EcuadorianIdentificador],
+        ]);
+
+        $cliente = $request->cliente_autenticado;
+        $ruc = $request->string('ruc')->toString();
+        $costo = $this->getCostoConsulta();
+
+        if (! $cliente) {
+            return response()->json(['codigo' => 401, 'exito' => false, 'mensaje' => 'API Key inválida o revocada', 'datos' => null], 401);
+        }
+        if ($cliente->saldo_creditos < $costo) {
+            return response()->json([
+                'codigo' => 402, 'exito' => false, 'mensaje' => 'Saldo insuficiente para realizar la consulta.',
+                'error' => ['tipo' => 'SALDO_INSUFICIENTE', 'detalle' => null], 'datos' => null,
+                'metadatos' => ['timestamp' => now()->toIso8601String(), 'creditos_restantes' => (int) $cliente->saldo_creditos],
+            ], 402);
+        }
+
+        try {
+            $establecimientos = $this->catastroService->buscarEstablecimientos($ruc);
+        } catch (Throwable $e) {
+            Log::warning('Catastro Firestore no disponible', ['ruc' => $ruc, 'error' => $e->getMessage()]);
+
+            return response()->json([
+                'codigo' => 503, 'exito' => false,
+                'mensaje' => 'La fuente de datos externa no está disponible en este momento',
+                'error' => ['tipo' => 'FUENTE_EXTERNA_NO_DISPONIBLE', 'detalle' => null], 'datos' => null,
+                'metadatos' => ['timestamp' => now()->toIso8601String(), 'creditos_gastados' => 0, 'creditos_restantes' => (int) $cliente->saldo_creditos],
+            ], 503);
+        }
+
+        $encontrado = count($establecimientos) > 0;
+        DB::transaction(function () use ($cliente, $ruc, $costo, $establecimientos, $request, &$clienteBloqueado, &$consulta): void {
+            $clienteBloqueado = Cliente::query()->lockForUpdate()->findOrFail($cliente->id);
+            if ($clienteBloqueado->saldo_creditos < $costo) {
+                throw new \RuntimeException('Saldo insuficiente para realizar la consulta.');
+            }
+            $this->debitarCliente($clienteBloqueado, $costo);
+            $consulta = Consulta::create([
+                'cliente_id' => $clienteBloqueado->id, 'tipo' => 'ruc', 'identificador' => $ruc,
+                'creditos_gastados' => $costo, 'resultado_json' => ['ruc' => $ruc, 'establecimientos' => $establecimientos],
+                'fuentes_utilizadas' => ['catastro_sri'], 'exitosa' => true, 'ip_origen' => $request->ip(), 'origen' => 'api',
+            ]);
+            LogActividad::create([
+                'accion' => 'CONSULTA_RUC', 'actor_id' => $clienteBloqueado->usuario->id,
+                'detalle' => ['consulta_id' => $consulta->id, 'ruc' => $ruc, 'creditos_gastados' => $costo], 'ip_origen' => $request->ip(),
+            ]);
+        });
+
+        return response()->json([
+            'codigo' => $encontrado ? 200 : 404, 'exito' => true,
+            'mensaje' => $encontrado ? 'Consulta exitosa' : 'No se encontraron establecimientos para el RUC ingresado',
+            'datos' => new ConsultaRucResource(['ruc' => $ruc, 'establecimientos' => $establecimientos]),
+            'metadatos' => [
+                'timestamp' => now()->toIso8601String(), 'creditos_gastados' => $costo,
+                'creditos_restantes' => (int) $clienteBloqueado->saldo_creditos, 'fuente' => 'catastro_sri',
+            ],
+        ], $encontrado ? 200 : 404);
     }
 
     private function getCostoConsulta(): int

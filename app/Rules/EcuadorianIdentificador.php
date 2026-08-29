@@ -60,31 +60,44 @@ class EcuadorianIdentificador implements ValidationRule
 
     private function validarRUC(string $value): bool
     {
-        if (! $this->validarCedula(substr($value, 0, 10))) {
+        $type = (int) $value[2];
+        $province = (int) substr($value, 0, 2);
+        if ($province < 1 || $province > 24) {
             return false;
         }
 
-        if (substr($value, 10, 2) !== '00') {
-            return false;
+        if ($type <= 5) {
+            return $this->validarCedula(substr($value, 0, 10)) && substr($value, 10, 3) !== '000';
         }
 
-        $digits = str_split(substr($value, 0, 12));
+        if ($type === 9) {
+            if (substr($value, 10, 3) !== '001') {
+                return false;
+            }
+
+            return $this->mod11(substr($value, 0, 9), [4, 3, 2, 7, 6, 5, 4, 3, 2], (int) $value[9]);
+        }
+
+        if ($type === 6) {
+            if (substr($value, 10, 3) !== '001') {
+                return false;
+            }
+
+            return $this->mod11(substr($value, 0, 9), [3, 2, 7, 6, 5, 4, 3, 2, 1], (int) $value[9]);
+        }
+
+        return false;
+    }
+
+    private function mod11(string $digits, array $coefficients, int $expected): bool
+    {
         $sum = 0;
-
-        for ($i = 0; $i < 12; $i++) {
-            $sum += (int) $digits[$i] * self::RUC_MOD11_COEFFICIENTS[$i];
+        foreach (str_split($digits) as $index => $digit) {
+            $sum += (int) $digit * $coefficients[$index];
         }
+        $remainder = 11 - ($sum % 11);
+        $check = $remainder === 11 ? 0 : $remainder;
 
-        $dv = 11 - ($sum % 11);
-
-        if ($dv === 11) {
-            $dv = 0;
-        }
-
-        if ($dv === 10) {
-            return false;
-        }
-
-        return $dv === (int) $value[12];
+        return $check !== 10 && $check === $expected;
     }
 }

@@ -32,6 +32,7 @@ class ApiKeyGenerate extends Command
             'api_key_creada' => now(),
             'api_key_revocada' => false,
             'api_key_revocada_en' => null,
+            'api_key_alcance' => ['consulta:cedula', 'consulta:ruc'],
         ]);
 
         LogActividad::create([

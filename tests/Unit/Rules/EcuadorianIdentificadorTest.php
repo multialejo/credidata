@@ -32,7 +32,17 @@ class EcuadorianIdentificadorTest extends TestCase
 
     public function test_invalid_ruc_checksum(): void
     {
-        $this->assertFalse($this->validate('1713175071001'));
+        $this->assertFalse($this->validate('1713175071000'));
+    }
+
+    public function test_valid_private_company_ruc(): void
+    {
+        $this->assertTrue($this->validate('1790016919001'));
+    }
+
+    public function test_valid_public_entity_ruc(): void
+    {
+        $this->assertTrue($this->validate('1760001550001'));
     }
 
     public function test_rejects_short_length(): void

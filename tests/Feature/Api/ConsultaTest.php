@@ -43,6 +43,7 @@ class ConsultaTest extends TestCase
             'api_key_hash' => $apiKeyHash,
             'api_key_creada' => now(),
             'api_key_revocada' => false,
+            'api_key_alcance' => ['consulta:cedula'],
         ]);
 
         ConfigParametro::create([
