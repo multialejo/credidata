@@ -15,6 +15,10 @@
 
     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
         <div>
+            <dt class="text-gray-500 text-xs uppercase tracking-wider">Alias</dt>
+            <dd class="mt-1">{{ $alias ?: '—' }}</dd>
+        </div>
+        <div>
             <dt class="text-gray-500 text-xs uppercase tracking-wider">Prefijo</dt>
             <dd class="font-mono mt-1">{{ $prefijo ?? '—' }}</dd>
         </div>
@@ -40,6 +44,10 @@
             <dt class="text-gray-500 text-xs uppercase tracking-wider">Último uso</dt>
             <dd class="mt-1">{{ $ultimoUso ? $ultimoUso->format('d/m/Y H:i') : 'Nunca' }}</dd>
         </div>
+        <div>
+            <dt class="text-gray-500 text-xs uppercase tracking-wider">Rotación sugerida</dt>
+            <dd class="mt-1">{{ $rotacionSugerida ? $rotacionSugerida->format('d/m/Y') : '—' }}</dd>
+        </div>
     </dl>
 
     @if($alcance && count($alcance) > 0)
@@ -54,6 +62,24 @@
             </div>
         </div>
     @endif
+
+    <div class="mt-5 grid gap-4 sm:grid-cols-2">
+        <label class="text-sm">Alias
+            <input wire:model="alias" class="mt-1 w-full rounded border-gray-300" maxlength="100">
+        </label>
+        <label class="text-sm">IPs permitidas (una por línea)
+            <textarea wire:model="ips" rows="3" class="mt-1 w-full rounded border-gray-300"></textarea>
+        </label>
+        <fieldset class="text-sm sm:col-span-2">
+            <legend class="font-medium">Scopes</legend>
+            <div class="flex flex-wrap gap-4 mt-2">
+                @foreach(['consulta:cedula', 'consulta:ruc', 'consulta:*'] as $scope)
+                    <label><input type="checkbox" wire:model="scopes" value="{{ $scope }}"> {{ $scope }}</label>
+                @endforeach
+            </div>
+        </fieldset>
+        <button wire:click="guardarConfiguracion" class="w-fit px-4 py-2 bg-gray-800 text-white text-sm rounded-md">Guardar configuración</button>
+    </div>
 
     <div class="mt-6 flex gap-3">
         @if($revocada)

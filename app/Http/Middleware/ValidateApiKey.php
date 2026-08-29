@@ -2,17 +2,18 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Cliente;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Services\ApiKeyService;
 
 class ValidateApiKey
 {
+    public function __construct(private ApiKeyService $keys) {}
+
     public function handle(Request $request, Closure $next, ...$permisos)
     {
-        $bearer = $request->header('Authorization');
-        if (! $bearer || ! str_starts_with($bearer, 'Bearer ')) {
+        $cliente = $this->keys->authenticate($request);
+        if ($cliente === null) {
             return response()->json([
                 'codigo' => 401, 'exito' => false,
                 'mensaje' => 'API Key requerida',
@@ -21,20 +22,16 @@ class ValidateApiKey
                 'metadatos' => ['timestamp' => now()->toIso8601String()],
             ], 401);
         }
-        $apiKey = substr($bearer, 7);
-
-        $cliente = null;
-        foreach (Cliente::where('api_key_revocada', false)->whereNotNull('api_key_hash')->cursor() as $c) {
-            if (Hash::check($apiKey, $c->api_key_hash)) {
-                $cliente = $c;
-                break;
-            }
+        if ($cliente === 'revoked') {
+            return $this->error('API_KEY_REVOCADA', 'API Key revocada', 401);
         }
-
-        if (! $cliente) {
+        if ($cliente === 'inactive') {
+            return $this->error('CLIENTE_INACTIVO', 'La cuenta del cliente está inactiva o suspendida', 403);
+        }
+        if ($cliente === 'invalid') {
             return response()->json([
                 'codigo' => 401, 'exito' => false,
-                'mensaje' => 'API Key inválida o revocada',
+                'mensaje' => 'API Key inválida',
                 'error' => ['tipo' => 'API_KEY_INVALIDA', 'detalle' => null],
                 'datos' => null,
                 'metadatos' => ['timestamp' => now()->toIso8601String()],
@@ -65,5 +62,12 @@ class ValidateApiKey
         $request->merge(['cliente_autenticado' => $cliente]);
 
         return $next($request);
+    }
+
+    private function error(string $type, string $message, int $status)
+    {
+        return response()->json(['codigo' => $status, 'exito' => false, 'mensaje' => $message,
+            'error' => ['tipo' => $type, 'detalle' => null], 'datos' => null,
+            'metadatos' => ['timestamp' => now()->toIso8601String()]], $status);
     }
 }

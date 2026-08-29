@@ -3,56 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cliente;
-use App\Models\LogActividad;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Services\ApiKeyService;
 
 class ApiKeyController extends Controller
 {
     public function revocar(Request $request)
     {
-        $bearer = $request->header('Authorization');
-        if (! $bearer || ! str_starts_with($bearer, 'Bearer ')) {
-            return response()->json([
-                'codigo' => 401, 'exito' => false,
-                'mensaje' => 'API Key requerida',
-                'error' => ['tipo' => 'API_KEY_REQUERIDA', 'detalle' => null],
-                'datos' => null,
-                'metadatos' => ['timestamp' => now()->toIso8601String()],
-            ], 401);
-        }
-        $apiKey = substr($bearer, 7);
-
-        $cliente = null;
-        foreach (Cliente::where('api_key_revocada', false)->whereNotNull('api_key_hash')->cursor() as $c) {
-            if (Hash::check($apiKey, $c->api_key_hash)) {
-                $cliente = $c;
-                break;
-            }
-        }
-
-        if (! $cliente) {
-            return response()->json([
-                'codigo' => 401, 'exito' => false,
-                'mensaje' => 'API Key inválida',
-                'error' => ['tipo' => 'API_KEY_INVALIDA', 'detalle' => null],
-                'datos' => null,
-                'metadatos' => ['timestamp' => now()->toIso8601String()],
-            ], 401);
-        }
+        $cliente = $request->cliente_autenticado;
 
         $cliente->update([
             'api_key_revocada' => true,
             'api_key_revocada_en' => now(),
         ]);
 
-        LogActividad::create([
-            'accion' => 'API_KEY_REVOCADA',
-            'actor_id' => $cliente->usuario->id,
-            'detalle' => ['prefijo' => $cliente->api_key_prefijo],
-            'ip_origen' => $request->ip(),
-        ]);
+        app(ApiKeyService::class)->logRevocation($cliente, $request->user()?->id ?? $cliente->usuario_id, $request->ip());
 
         return response()->json([
             'codigo' => 200, 'exito' => true,
@@ -60,5 +25,20 @@ class ApiKeyController extends Controller
             'datos' => null,
             'metadatos' => ['timestamp' => now()->toIso8601String()],
         ]);
+    }
+
+    public function rotar(Request $request, ApiKeyService $keys)
+    {
+        $cliente = $request->cliente_autenticado;
+        $input = $request->all();
+        $input['scopes'] ??= $cliente->api_key_alcance;
+        $input['ips'] ??= $cliente->api_key_ips_permitidas;
+        $input['alias'] ??= $cliente->api_key_alias;
+        $options = $keys->validateOptions($input);
+        $key = $keys->rotate($cliente, $options, $cliente->usuario_id, $request->ip());
+
+        return response()->json(['codigo' => 200, 'exito' => true, 'mensaje' => 'API Key rotada exitosamente',
+            'datos' => ['api_key' => $key, 'prefijo' => $cliente->fresh()->api_key_prefijo],
+            'metadatos' => ['timestamp' => now()->toIso8601String()]]);
     }
 }

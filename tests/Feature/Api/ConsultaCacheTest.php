@@ -16,7 +16,7 @@ class ConsultaCacheTest extends TestCase
 {
     use RefreshDatabase;
 
-    private string $validApiKey = 'cd_sk_testvalidkey1234567890abcd';
+    private string $validApiKey = 'cd_sk_12345678_ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
 
     private Cliente $cliente;
 
@@ -43,7 +43,7 @@ class ConsultaCacheTest extends TestCase
     {
         parent::setUp();
 
-        $apiKeyHash = Hash::make($this->validApiKey);
+        $apiKeyHash = Hash::make(substr($this->validApiKey, 15));
 
         $this->app['config']->set('dinardap.mock', false);
 
@@ -57,7 +57,7 @@ class ConsultaCacheTest extends TestCase
         $this->cliente = Cliente::create([
             'usuario_id' => $usuario->id,
             'saldo_creditos' => 100,
-            'api_key_prefijo' => substr($this->validApiKey, 0, 12),
+            'api_key_prefijo' => substr($this->validApiKey, 6, 8),
             'api_key_hash' => $apiKeyHash,
             'api_key_creada' => now(),
             'api_key_revocada' => false,

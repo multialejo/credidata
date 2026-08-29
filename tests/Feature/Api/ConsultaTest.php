@@ -15,9 +15,9 @@ class ConsultaTest extends TestCase
 {
     use RefreshDatabase;
 
-    private string $validApiKey = 'cd_sk_testvalidkey1234567890abcd';
+    private string $validApiKey = 'cd_sk_12345678_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
-    private string $invalidApiKey = 'cd_sk_thiskeydoesnotexist123456';
+    private string $invalidApiKey = 'cd_sk_87654321_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 
     private Cliente $cliente;
 
@@ -27,7 +27,7 @@ class ConsultaTest extends TestCase
     {
         parent::setUp();
 
-        $apiKeyHash = Hash::make($this->validApiKey);
+        $apiKeyHash = Hash::make(substr($this->validApiKey, 15));
 
         $usuario = Usuario::create([
             'uid' => 'test-cliente-uid',
@@ -39,7 +39,7 @@ class ConsultaTest extends TestCase
         $this->cliente = Cliente::create([
             'usuario_id' => $usuario->id,
             'saldo_creditos' => 100,
-            'api_key_prefijo' => substr($this->validApiKey, 0, 12),
+            'api_key_prefijo' => substr($this->validApiKey, 6, 8),
             'api_key_hash' => $apiKeyHash,
             'api_key_creada' => now(),
             'api_key_revocada' => false,
@@ -86,7 +86,7 @@ class ConsultaTest extends TestCase
         $response->assertJson([
             'codigo' => 401,
             'exito' => false,
-            'mensaje' => 'API Key inválida o revocada',
+            'mensaje' => 'API Key inválida',
         ]);
         $response->assertJsonPath('error.tipo', 'API_KEY_INVALIDA');
     }
@@ -105,9 +105,9 @@ class ConsultaTest extends TestCase
         $response->assertJson([
             'codigo' => 401,
             'exito' => false,
-            'mensaje' => 'API Key inválida o revocada',
+            'mensaje' => 'API Key revocada',
         ]);
-        $response->assertJsonPath('error.tipo', 'API_KEY_INVALIDA');
+        $response->assertJsonPath('error.tipo', 'API_KEY_REVOCADA');
     }
 
     public function test_with_exhausted_credits(): void

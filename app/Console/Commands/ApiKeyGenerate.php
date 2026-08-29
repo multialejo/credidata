@@ -3,10 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Cliente;
-use App\Models\LogActividad;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use App\Services\ApiKeyService;
 
 class ApiKeyGenerate extends Command
 {
@@ -14,7 +12,7 @@ class ApiKeyGenerate extends Command
 
     protected $description = 'Genera una API key para un cliente';
 
-    public function handle()
+    public function handle(ApiKeyService $keys)
     {
         $cliente = Cliente::whereHas('usuario', fn ($q) => $q->where('uid', $this->argument('uid'))
         )->first();
@@ -24,23 +22,7 @@ class ApiKeyGenerate extends Command
             return 1;
         }
 
-        $key = 'cd_sk_'.Str::random(32);
-
-        $cliente->update([
-            'api_key_hash' => Hash::make($key),
-            'api_key_prefijo' => substr($key, 0, 12),
-            'api_key_creada' => now(),
-            'api_key_revocada' => false,
-            'api_key_revocada_en' => null,
-            'api_key_alcance' => ['consulta:cedula', 'consulta:ruc'],
-        ]);
-
-        LogActividad::create([
-            'accion' => 'API_KEY_GENERADA',
-            'actor_id' => $cliente->usuario->id,
-            'detalle' => ['prefijo' => $cliente->api_key_prefijo],
-            'ip_origen' => 'sistema',
-        ]);
+        $key = $keys->issue($cliente, ['scopes' => ['consulta:cedula', 'consulta:ruc'], 'ips' => []], null, 'sistema');
 
         $this->info("API key generada: {$key}");
         $this->warn('Guárdala, no se mostrará de nuevo.');

@@ -14,7 +14,10 @@ Route::post('/v1/consulta/cedula', [ConsultaController::class, 'consultaCedula']
 Route::post('/v1/consulta/ruc', [ConsultaController::class, 'consultaRuc'])
     ->middleware('api.key:consulta:ruc');
 
-Route::post('/v1/api-key/revocar', [ApiKeyController::class, 'revocar']);
+Route::middleware('api.key')->group(function () {
+    Route::post('/v1/api-key/revocar', [ApiKeyController::class, 'revocar']);
+    Route::post('/v1/api-key/rotar', [ApiKeyController::class, 'rotar']);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {

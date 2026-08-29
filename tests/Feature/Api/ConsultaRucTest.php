@@ -16,7 +16,7 @@ class ConsultaRucTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const API_KEY = 'cd_sk_ruc_test_key_1234567890';
+    private const API_KEY = 'cd_sk_abcdef12_cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc';
 
     private const RUC = '0100001437001';
 
@@ -32,7 +32,7 @@ class ConsultaRucTest extends TestCase
         ]);
         $this->cliente = Cliente::create([
             'usuario_id' => $usuario->id, 'saldo_creditos' => 10,
-            'api_key_hash' => Hash::make(self::API_KEY), 'api_key_prefijo' => substr(self::API_KEY, 0, 12),
+            'api_key_hash' => Hash::make(substr(self::API_KEY, 15)), 'api_key_prefijo' => substr(self::API_KEY, 6, 8),
             'api_key_revocada' => false, 'api_key_alcance' => ['consulta:ruc'],
         ]);
         ConfigParametro::create(['modulo' => 'consulta', 'clave' => 'costoConsultaBase', 'valor' => json_encode(1)]);

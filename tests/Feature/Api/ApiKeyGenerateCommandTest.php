@@ -54,8 +54,7 @@ class ApiKeyGenerateCommandTest extends TestCase
 
         $this->assertNotNull($cliente->api_key_hash);
         $this->assertNotNull($cliente->api_key_prefijo);
-        $this->assertStringStartsWith('cd_sk_', $cliente->api_key_prefijo);
-        $this->assertEquals(12, strlen($cliente->api_key_prefijo));
+        $this->assertEquals(8, strlen($cliente->api_key_prefijo));
 
         $this->assertNotNull($cliente->api_key_creada);
         $this->assertFalse($cliente->api_key_revocada);
