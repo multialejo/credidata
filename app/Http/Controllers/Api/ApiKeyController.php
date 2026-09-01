@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Api\RotateApiKeyRequest;
 use App\Services\ApiKeyService;
+use Illuminate\Http\Request;
 
 class ApiKeyController extends Controller
 {
@@ -27,10 +28,10 @@ class ApiKeyController extends Controller
         ]);
     }
 
-    public function rotar(Request $request, ApiKeyService $keys)
+    public function rotar(RotateApiKeyRequest $request, ApiKeyService $keys)
     {
         $cliente = $request->cliente_autenticado;
-        $input = $request->all();
+        $input = $request->validated();
         $input['scopes'] ??= $cliente->api_key_alcance;
         $input['ips'] ??= $cliente->api_key_ips_permitidas;
         $input['alias'] ??= $cliente->api_key_alias;

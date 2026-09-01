@@ -4,9 +4,10 @@ namespace App\Services;
 
 use App\Models\Cliente;
 use App\Models\LogActividad;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class ApiKeyService
@@ -15,26 +16,33 @@ class ApiKeyService
 
     public function issue(Cliente $cliente, array $options = [], ?int $actorId = null, string $ip = 'sistema', string $action = 'API_KEY_GENERADA'): string
     {
-        do {
-            $secret = bin2hex(random_bytes(32));
-            $prefix = substr($secret, 0, 8);
-            $publicPrefix = 'cd_sk_'.$prefix;
-        } while (Cliente::where('api_key_prefijo', $prefix)->exists());
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            try {
+                $secret = bin2hex(random_bytes(32));
+                $prefix = substr($secret, 0, 8);
+                $publicPrefix = 'cd_sk_'.$prefix;
+                $now = now();
 
-        $now = now();
-        $cliente->update([
-            'api_key_hash' => Hash::make($secret),
-            'api_key_prefijo' => $prefix,
-            'api_key_alias' => $options['alias'] ?? $cliente->api_key_alias,
-            'api_key_creada' => $now,
-            'api_key_revocada' => false,
-            'api_key_revocada_en' => null,
-            'api_key_ips_permitidas' => $options['ips'] ?? $cliente->api_key_ips_permitidas,
-            'api_key_alcance' => $options['scopes'] ?? ($cliente->api_key_alcance ?: ['consulta:cedula', 'consulta:ruc']),
-            'api_key_rotacion_sugerida_en' => $now->copy()->addDays($this->parameter('diasSugerenciaRotacion', 90)),
-            'api_key_notificacion_rotacion_enviada' => null,
-            'api_key_formato' => 'v2',
-        ]);
+                $cliente->update([
+                    'api_key_hash' => Hash::make($secret),
+                    'api_key_prefijo' => $prefix,
+                    'api_key_alias' => $options['alias'] ?? $cliente->api_key_alias,
+                    'api_key_creada' => $now,
+                    'api_key_revocada' => false,
+                    'api_key_revocada_en' => null,
+                    'api_key_ips_permitidas' => $options['ips'] ?? $cliente->api_key_ips_permitidas,
+                    'api_key_alcance' => $options['scopes'] ?? ($cliente->api_key_alcance ?: ['consulta:cedula', 'consulta:ruc']),
+                    'api_key_rotacion_sugerida_en' => $now->copy()->addDays($this->parameter('diasSugerenciaRotacion', 90)),
+                    'api_key_notificacion_rotacion_enviada' => null,
+                    'api_key_formato' => 'v2',
+                ]);
+                break;
+            } catch (UniqueConstraintViolationException $exception) {
+                if ($attempt === 2) {
+                    throw $exception;
+                }
+            }
+        }
 
         LogActividad::create([
             'accion' => $action,
@@ -91,6 +99,13 @@ class ApiKeyService
 
     public function validateOptions(array $data): array
     {
+        if (isset($data['scopes']) && ! is_array($data['scopes'])) {
+            throw ValidationException::withMessages(['scopes' => 'Los scopes deben ser un arreglo.']);
+        }
+        if (isset($data['ips']) && ! is_array($data['ips'])) {
+            throw ValidationException::withMessages(['ips' => 'Las IPs deben ser un arreglo.']);
+        }
+
         $scopes = array_values(array_unique($data['scopes'] ?? ['consulta:cedula', 'consulta:ruc']));
         foreach ($scopes as $scope) {
             if (! in_array($scope, self::SCOPES, true)) {
