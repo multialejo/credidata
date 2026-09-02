@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureCliente;
 use App\Http\Middleware\EnsureStaff;
 use App\Http\Middleware\EnsureStaffRole;
 use App\Http\Middleware\EnsureStaffWeb;
+use App\Http\Middleware\EnsureSwaggerAvailable;
 use App\Http\Middleware\ValidateApiKey;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'staff.role' => EnsureStaffRole::class,
             'staff.web' => EnsureStaffWeb::class,
             'cliente.web' => EnsureCliente::class,
+            'swagger.available' => EnsureSwaggerAvailable::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {

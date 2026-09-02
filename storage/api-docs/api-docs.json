@@ -1,0 +1,1027 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "CrediData API",
+        "description": "API para consultas de identidad y administración de créditos. Los ejemplos usan datos ficticios.",
+        "contact": {
+            "name": "Equipo CrediData"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/",
+            "description": "Servidor actual"
+        }
+    ],
+    "paths": {
+        "/api/v1/consulta/cedula": {
+            "post": {
+                "tags": [
+                    "Consultas"
+                ],
+                "summary": "Consulta una cédula",
+                "description": "Requiere API Key Bearer activa, IP permitida y scope consulta:cedula (o wildcard aplicable). Las respuestas 404 consumen créditos.",
+                "operationId": "a56ac79904f94020b51bec62eb2e66a9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "cedula"
+                                ],
+                                "properties": {
+                                    "cedula": {
+                                        "description": "Identificador ecuatoriano válido.",
+                                        "type": "string",
+                                        "example": "0912345678"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Consulta exitosa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Respuesta"
+                                        },
+                                        {
+                                            "properties": {
+                                                "datos": {
+                                                    "$ref": "#/components/schemas/ConsultaCedula"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "API Key inválida, revocada, sin scope o IP no permitida",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "402": {
+                        "description": "Saldo insuficiente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No se encontraron datos; es una consulta cobrable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Cédula inválida"
+                    },
+                    "503": {
+                        "description": "Dinardap no disponible",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/consulta/ruc": {
+            "post": {
+                "tags": [
+                    "Consultas"
+                ],
+                "summary": "Consulta establecimientos por RUC",
+                "description": "Requiere API Key Bearer activa, IP permitida y scope consulta:ruc (o wildcard aplicable). Un 404 sin establecimientos es exitoso y cobrable.",
+                "operationId": "97ffe377d918280eab1e8b4761681e44",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ruc"
+                                ],
+                                "properties": {
+                                    "ruc": {
+                                        "type": "string",
+                                        "pattern": "^[0-9]+$",
+                                        "example": "0991234567001",
+                                        "maxLength": 13,
+                                        "minLength": 13
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Establecimientos encontrados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "API Key no autorizada"
+                    },
+                    "402": {
+                        "description": "Saldo insuficiente"
+                    },
+                    "404": {
+                        "description": "No se encontraron establecimientos; datos contiene ruc y establecimientos vacío",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "RUC inválido"
+                    },
+                    "503": {
+                        "description": "Catastro SRI no disponible"
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/api-key/revocar": {
+            "post": {
+                "tags": [
+                    "API Key"
+                ],
+                "summary": "Revoca la API Key actual",
+                "description": "No recibe cuerpo. La key revocada deja de poder autenticarse.",
+                "operationId": "bc6542cffc93cb66f3e1f77a0bc09953",
+                "responses": {
+                    "200": {
+                        "description": "API Key revocada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "API Key inválida o revocada"
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/api-key/rotar": {
+            "post": {
+                "tags": [
+                    "API Key"
+                ],
+                "summary": "Rota la API Key actual",
+                "description": "Los campos omitidos conservan su valor actual. api_key solo se entrega en esta respuesta y no puede recuperarse.",
+                "operationId": "439048bacf21364e4306c5c6f56b0b98",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "alias": {
+                                        "type": "string",
+                                        "example": "Integración ERP",
+                                        "nullable": true,
+                                        "maxLength": 100
+                                    },
+                                    "scopes": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "enum": [
+                                                "consulta:cedula",
+                                                "consulta:ruc",
+                                                "*"
+                                            ]
+                                        }
+                                    },
+                                    "ips": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "ipv4",
+                                            "example": "203.0.113.10"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Nueva key entregada una sola vez",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "API Key no autorizada"
+                    },
+                    "422": {
+                        "description": "Alias, scopes o IPs inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/user": {
+            "get": {
+                "tags": [
+                    "Sesión"
+                ],
+                "summary": "Obtiene el usuario Sanctum autenticado",
+                "operationId": "7e64d1e5bbfb96c16fb210c91a282666",
+                "responses": {
+                    "200": {
+                        "description": "Usuario autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Usuario"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token Sanctum ausente o inválido"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/recargas/paypal/orden": {
+            "post": {
+                "tags": [
+                    "Recargas PayPal"
+                ],
+                "summary": "Crea una orden PayPal",
+                "description": "Requiere token Sanctum de cliente. El mínimo y la tasa de créditos se configuran en el servidor.",
+                "operationId": "4102c21d1e7ff3aca4ef3766dbd1b5d4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "monto_usd"
+                                ],
+                                "properties": {
+                                    "monto_usd": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10,
+                                        "minimum": 0.01
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Orden creada con order_id, approval_url y créditos calculados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token inválido"
+                    },
+                    "422": {
+                        "description": "Monto inválido o menor al mínimo"
+                    },
+                    "503": {
+                        "description": "PayPal no disponible"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/recargas/paypal/{order_id}/capturar": {
+            "post": {
+                "tags": [
+                    "Recargas PayPal"
+                ],
+                "summary": "Captura una orden PayPal",
+                "description": "Solo el cliente propietario puede capturarla. Repetir una captura completada es idempotente. Las órdenes fallidas o rechazadas devuelven 409.",
+                "operationId": "0b530f6dd8caea1c7d1d17b660067ea9",
+                "parameters": [
+                    {
+                        "name": "order_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "MOCK-ORDER-123"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recarga acreditada, ya procesada, o pago no completado (exito=false)"
+                    },
+                    "401": {
+                        "description": "Token inválido"
+                    },
+                    "403": {
+                        "description": "Orden de otro cliente"
+                    },
+                    "404": {
+                        "description": "Orden no encontrada"
+                    },
+                    "409": {
+                        "description": "Estado terminal"
+                    },
+                    "503": {
+                        "description": "PayPal no disponible"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/recargas/payphone/transaccion": {
+            "post": {
+                "tags": [
+                    "Recargas Payphone"
+                ],
+                "summary": "Crea una transacción Payphone",
+                "operationId": "b9d9d35df9985672aa7149e04b61afa1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "monto_usd"
+                                ],
+                                "properties": {
+                                    "monto_usd": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10,
+                                        "minimum": 0.01
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Transacción creada con recarga_id, client_transaction_id y URLs de pago",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token inválido"
+                    },
+                    "422": {
+                        "description": "Monto inválido"
+                    },
+                    "503": {
+                        "description": "Payphone no disponible"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/recargas/payphone/{id}/confirmar": {
+            "post": {
+                "tags": [
+                    "Recargas Payphone"
+                ],
+                "summary": "Confirma una transacción Payphone",
+                "description": "Solo el cliente propietario puede confirmarla. Repetir una recarga completada es idempotente.",
+                "operationId": "7a1ddb8af7c5252a730381c603e85e8b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "clientTransactionId"
+                                ],
+                                "properties": {
+                                    "clientTransactionId": {
+                                        "type": "string",
+                                        "example": "bs-ficticia-001",
+                                        "maxLength": 64
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Recarga acreditada, ya procesada, o pago no completado (exito=false)"
+                    },
+                    "401": {
+                        "description": "Token inválido"
+                    },
+                    "403": {
+                        "description": "Transacción de otro cliente"
+                    },
+                    "404": {
+                        "description": "Recarga no encontrada"
+                    },
+                    "409": {
+                        "description": "Estado terminal"
+                    },
+                    "422": {
+                        "description": "clientTransactionId inválido"
+                    },
+                    "503": {
+                        "description": "Payphone no disponible"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/recargas/pendientes": {
+            "get": {
+                "tags": [
+                    "Administración"
+                ],
+                "summary": "Lista recargas pendientes",
+                "description": "Requiere token Sanctum de staff. Devuelve 15 elementos por página.",
+                "operationId": "b37a0c90c509a1a9ad9c3b6adc0322d4",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recargas y paginación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token inválido"
+                    },
+                    "403": {
+                        "description": "Usuario sin rol staff"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/recargas/{recarga}/comprobante": {
+            "get": {
+                "tags": [
+                    "Administración"
+                ],
+                "summary": "Descarga el comprobante de una transferencia",
+                "description": "Requiere token Sanctum de staff. Solo hay comprobantes para recargas por transferencia con archivo disponible.",
+                "operationId": "966c2065f87d9448aa0915088731b561",
+                "parameters": [
+                    {
+                        "name": "recarga",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archivo de comprobante",
+                        "content": {
+                            "application/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token inválido"
+                    },
+                    "403": {
+                        "description": "Usuario sin rol staff"
+                    },
+                    "404": {
+                        "description": "Recarga, comprobante o archivo no disponible"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/recargas/{recarga}/rechazar": {
+            "post": {
+                "tags": [
+                    "Administración"
+                ],
+                "summary": "Rechaza una recarga de pasarela",
+                "description": "Requiere token Sanctum de staff. Solo PayPal y Payphone en estado que admita la transición.",
+                "operationId": "f096c3afbd9efe89a16366aa6634391a",
+                "parameters": [
+                    {
+                        "name": "recarga",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "motivo"
+                                ],
+                                "properties": {
+                                    "motivo": {
+                                        "type": "string",
+                                        "example": "Comprobante de pago inconsistente.",
+                                        "maxLength": 500,
+                                        "minLength": 10
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Recarga rechazada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token inválido"
+                    },
+                    "403": {
+                        "description": "Usuario sin rol staff"
+                    },
+                    "404": {
+                        "description": "Recarga no encontrada"
+                    },
+                    "409": {
+                        "description": "Método no autorizado o transición inválida"
+                    },
+                    "422": {
+                        "description": "Motivo inválido"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/recargas/acreditar": {
+            "post": {
+                "tags": [
+                    "Administración"
+                ],
+                "summary": "Acredita una transferencia manual",
+                "description": "Requiere token Sanctum con rol admin. La referencia bancaria hace la operación idempotente para el mismo cliente.",
+                "operationId": "e092e7ff0a95241d5fef229c9f417049",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "cliente_email",
+                                    "monto_usd",
+                                    "referencia_bancaria",
+                                    "motivo",
+                                    "comprobante"
+                                ],
+                                "properties": {
+                                    "cliente_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "cliente@example.test"
+                                    },
+                                    "monto_usd": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10,
+                                        "minimum": 0.01
+                                    },
+                                    "referencia_bancaria": {
+                                        "type": "string",
+                                        "example": "TRX-FICTICIA-001",
+                                        "maxLength": 100
+                                    },
+                                    "motivo": {
+                                        "type": "string",
+                                        "example": "Transferencia verificada manualmente.",
+                                        "maxLength": 500,
+                                        "minLength": 10
+                                    },
+                                    "comprobante": {
+                                        "description": "JPG, JPEG, PNG o PDF; máximo 10 MB.",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Recarga acreditada o resultado idempotente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Respuesta"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token inválido"
+                    },
+                    "403": {
+                        "description": "Usuario sin rol admin"
+                    },
+                    "409": {
+                        "description": "Referencia duplicada de otro cliente o transición inválida"
+                    },
+                    "422": {
+                        "description": "Formulario inválido o cliente inexistente"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Error": {
+                "required": [
+                    "tipo"
+                ],
+                "properties": {
+                    "tipo": {
+                        "type": "string",
+                        "example": "VALIDACION"
+                    },
+                    "detalle": {
+                        "type": "string",
+                        "example": "El campo monto_usd es obligatorio.",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Metadatos": {
+                "properties": {
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-09-02T16:00:00+00:00"
+                    },
+                    "creditos_gastados": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "creditos_restantes": {
+                        "type": "integer",
+                        "example": 24
+                    },
+                    "fuente": {
+                        "type": "string",
+                        "example": "dinardap"
+                    }
+                },
+                "type": "object"
+            },
+            "Respuesta": {
+                "required": [
+                    "codigo",
+                    "exito",
+                    "mensaje"
+                ],
+                "properties": {
+                    "codigo": {
+                        "type": "integer",
+                        "example": 200
+                    },
+                    "exito": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "mensaje": {
+                        "type": "string",
+                        "example": "Operación exitosa"
+                    },
+                    "datos": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "error": {
+                        "$ref": "#/components/schemas/Error"
+                    },
+                    "metadatos": {
+                        "$ref": "#/components/schemas/Metadatos"
+                    }
+                },
+                "type": "object"
+            },
+            "Usuario": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "uid": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "nombre": {
+                        "type": "string",
+                        "example": "Usuario de prueba"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "cliente@example.test"
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "example": "cliente"
+                        }
+                    },
+                    "tipo_acceso": {
+                        "type": "string",
+                        "example": "cliente"
+                    }
+                },
+                "type": "object"
+            },
+            "ConsultaCedula": {
+                "properties": {
+                    "cedula": {
+                        "type": "string",
+                        "example": "0912345678"
+                    },
+                    "nombres": {
+                        "type": "string",
+                        "example": "Persona Ficticia",
+                        "nullable": true
+                    },
+                    "profesion": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "fechaNacimiento": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "ubicacion": {
+                        "properties": {
+                            "provincia": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "canton": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "parroquia": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "ruc": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Establecimiento": {
+                "description": "Los campos provienen del Catastro SRI y pueden variar según la fuente.",
+                "type": "object",
+                "additionalProperties": true
+            },
+            "Recarga": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "estado": {
+                        "type": "string",
+                        "example": "pendiente",
+                        "enum": [
+                            "pendiente",
+                            "completada",
+                            "fallida",
+                            "rechazada"
+                        ]
+                    },
+                    "creditos_obtenidos": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "monto_usd": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
+                    },
+                    "referencia_externa": {
+                        "type": "string",
+                        "example": "MOCK-ORDER-123"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "ApiKeyBearer": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "API Key",
+                "description": "API Key de cliente con scopes e IP permitida."
+            },
+            "SanctumBearer": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "Sanctum token",
+                "description": "Token personal Laravel Sanctum del usuario autenticado."
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Consultas",
+            "description": "Consultas cobrables con API Key"
+        },
+        {
+            "name": "API Key",
+            "description": "Administración de la API Key autenticada"
+        },
+        {
+            "name": "Sesión",
+            "description": "Usuario autenticado"
+        },
+        {
+            "name": "Recargas PayPal",
+            "description": "Recargas de cliente con PayPal"
+        },
+        {
+            "name": "Recargas Payphone",
+            "description": "Recargas de cliente con Payphone"
+        },
+        {
+            "name": "Administración",
+            "description": "Operaciones para staff"
+        }
+    ]
+}
