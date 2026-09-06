@@ -13,7 +13,7 @@ set -euo pipefail
 VPS_HOST="${DEPLOY_HOST:?Set DEPLOY_HOST env var (e.g. user@1.2.3.4)}"
 VPS_PATH="/var/www/credidata"
 BRANCH="${DEPLOY_BRANCH:-main}"
-PHP="php8.3"
+PHP="php8.4"
 
 echo "==> Deploying $BRANCH to $VPS_HOST"
 

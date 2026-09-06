@@ -11,7 +11,7 @@ set -euo pipefail
 APP_NAME="credidata"
 APP_USER="deploy"
 APP_PATH="/var/www/$APP_NAME"
-PHP_VERSION="8.3"
+PHP_VERSION="8.4"
 MYSQL_DB="$APP_NAME"
 MYSQL_USER="$APP_NAME"
 CRED_FILE="/root/.mysql_credentials"
@@ -130,7 +130,8 @@ apt-get install -y -qq \
     php${PHP_VERSION}-bcmath \
     php${PHP_VERSION}-intl \
     php${PHP_VERSION}-soap \
-    php${PHP_VERSION}-swoole
+    php${PHP_VERSION}-swoole \
+    php${PHP_VERSION}-grpc
 
 # Configure PHP-FPM
 # NOTE: pm.max_children=20 is tight on 2GB RAM + MySQL + Redis.
@@ -284,6 +285,9 @@ if [ -d "$APP_PATH/.git" ]; then
     ln -sf /etc/nginx/sites-available/credidata /etc/nginx/sites-enabled/credidata
     rm -f /etc/nginx/sites-enabled/default
 
+    # Update nginx config with correct PHP version
+    sed -i "s|php8.3|php${PHP_VERSION}|g" /etc/nginx/sites-available/credidata
+
     echo "==> Deploying Supervisor configs..."
     cp "$APP_PATH/deploy/supervisor/horizon.conf" /etc/supervisor/conf.d/horizon.conf
 
@@ -336,6 +340,9 @@ QUEUE_CONNECTION=redis
 SANCTUM_STATEFUL_DOMAINS=${PUBLIC_IP}
 ENVEOF
     fi
+
+    # Ensure runtime dirs exist that git doesn't track (scp can't create them)
+    mkdir -p "$APP_PATH/storage/app/firebase"
 
     # Set permissions — deploy owns everything, www-data gets group write via ACL
     chown -R deploy:deploy "$APP_PATH"
