@@ -47,6 +47,10 @@ echo "==> Installing npm dependencies and building assets..."
 npm ci --ignore-scripts
 npm run build
 
+echo "==> Installing and validating Nginx configuration..."
+sudo install -o root -g root -m 644 deploy/nginx/credidata.conf /etc/nginx/sites-available/credidata
+sudo nginx -t
+
 echo "==> Entering maintenance mode..."
 $PHP artisan down --render="errors::503" --retry=60
 
@@ -71,6 +75,7 @@ sudo chmod 640 $VPS_PATH/.env
 echo "==> Restarting services..."
 sudo supervisorctl restart horizon
 sudo systemctl reload ${PHP}-fpm
+sudo systemctl reload nginx
 
 echo "==> Running health check..."
 sleep 2

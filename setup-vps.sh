@@ -90,6 +90,8 @@ echo "==> Writing sudoers for '$APP_USER'..."
 cat > "/etc/sudoers.d/$APP_USER" <<SUDOERS
 # CrediData deploy user — scoped to service restarts only
 ${APP_USER} ALL=(root) NOPASSWD: /usr/bin/systemctl reload nginx
+${APP_USER} ALL=(root) NOPASSWD: /usr/bin/install -o root -g root -m 644 /var/www/credidata/deploy/nginx/credidata.conf /etc/nginx/sites-available/credidata
+${APP_USER} ALL=(root) NOPASSWD: /usr/sbin/nginx -t
 ${APP_USER} ALL=(root) NOPASSWD: /usr/bin/systemctl restart php${PHP_VERSION}-fpm
 ${APP_USER} ALL=(root) NOPASSWD: /usr/bin/supervisorctl restart horizon
 ${APP_USER} ALL=(root) NOPASSWD: /usr/bin/supervisorctl reread
