@@ -6,6 +6,7 @@ use L5Swagger\Generator;
 
 return [
     'default' => 'default',
+    'public' => env('L5_SWAGGER_PUBLIC', false),
     'documentations' => [
         'default' => [
             'api' => [

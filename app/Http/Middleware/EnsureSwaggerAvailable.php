@@ -10,7 +10,10 @@ class EnsureSwaggerAvailable
 {
     public function handle(Request $request, Closure $next): Response
     {
-        abort_unless(app()->environment(['local', 'testing']), 404);
+        abort_unless(
+            config('l5-swagger.public') || app()->environment(['local', 'testing']),
+            404,
+        );
 
         return $next($request);
     }

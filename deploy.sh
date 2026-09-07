@@ -73,6 +73,10 @@ $PHP artisan migrate --force
 
 echo "==> Caching configuration..."
 $PHP artisan config:cache
+
+echo "==> Generating OpenAPI documentation..."
+$PHP artisan l5-swagger:generate
+
 $PHP artisan route:cache
 $PHP artisan view:cache
 $PHP artisan event:cache
