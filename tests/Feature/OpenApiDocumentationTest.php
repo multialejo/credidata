@@ -41,5 +41,11 @@ class OpenApiDocumentationTest extends TestCase
         $this->assertArrayHasKey('SanctumBearer', $specification['components']['securitySchemes']);
 
         $this->get('/api/documentation')->assertOk();
+        $this->get('/docs')->assertOk()->assertJsonPath('openapi', '3.0.0');
+        $css = $this->get('/docs/asset/swagger-ui.css')->assertOk();
+        $javascript = $this->get('/docs/asset/swagger-ui-bundle.js')->assertOk();
+
+        $this->assertStringStartsWith('text/css', (string) $css->headers->get('Content-Type'));
+        $this->assertStringStartsWith('application/javascript', (string) $javascript->headers->get('Content-Type'));
     }
 }
