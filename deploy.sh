@@ -21,13 +21,26 @@ echo "==> Deploying $BRANCH to $VPS_HOST"
 ssh "$VPS_HOST" bash <<REMOTE
 set -euo pipefail
 
-# --- Deploy lock (atomic mkdir) ---
+# --- Deploy lock (released automatically when this shell exits) ---
 LOCK="/tmp/credidata-deploy.lock"
-if ! mkdir "\$LOCK" 2>/dev/null; then
+exec 9>"\$LOCK"
+if ! flock -n 9; then
     echo "ERROR: Deploy already in progress. Aborting."
     exit 1
 fi
-trap 'rm -rf "\$LOCK"' EXIT
+
+IN_MAINTENANCE=false
+cleanup() {
+    status=\$?
+
+    if [ "\$IN_MAINTENANCE" = true ]; then
+        echo "==> Restoring application from maintenance mode..."
+        $PHP artisan up || echo "WARNING: Could not exit maintenance mode automatically." >&2
+    fi
+
+    exit "\$status"
+}
+trap cleanup EXIT
 
 cd $VPS_PATH
 
@@ -48,11 +61,12 @@ npm ci --ignore-scripts
 npm run build
 
 echo "==> Installing and validating Nginx configuration..."
-sudo install -o root -g root -m 644 deploy/nginx/credidata.conf /etc/nginx/sites-available/credidata
+sudo install -o root -g root -m 644 "$VPS_PATH/deploy/nginx/credidata.conf" /etc/nginx/sites-available/credidata
 sudo nginx -t
 
 echo "==> Entering maintenance mode..."
 $PHP artisan down --render="errors::503" --retry=60
+IN_MAINTENANCE=true
 
 echo "==> Running database migrations..."
 $PHP artisan migrate --force
@@ -65,12 +79,7 @@ $PHP artisan event:cache
 
 echo "==> Exiting maintenance mode..."
 $PHP artisan up
-
-echo "==> Setting permissions..."
-sudo chown -R deploy:www-data $VPS_PATH/storage $VPS_PATH/bootstrap/cache
-sudo chmod -R 775 $VPS_PATH/storage $VPS_PATH/bootstrap/cache
-sudo chown deploy:www-data $VPS_PATH/.env
-sudo chmod 640 $VPS_PATH/.env
+IN_MAINTENANCE=false
 
 echo "==> Restarting services..."
 sudo supervisorctl restart horizon
