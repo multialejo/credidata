@@ -1,11 +1,8 @@
 <?php
 
+use App\OpenApi\DocBlockAnalyser;
 use L5Swagger\CustomGeneratorInterface;
 use L5Swagger\Generator;
-use OpenApi\Analysers\AttributeAnnotationFactory;
-use OpenApi\Analysers\DocBlockAnnotationFactory;
-use OpenApi\Analysers\ReflectionAnalyser;
-use OpenApi\scan;
 
 return [
     'default' => 'default',
@@ -139,12 +136,9 @@ return [
             /**
              * analyser: defaults to \OpenApi\StaticAnalyser .
              *
-             * @see scan
+             * @see OpenApi\scan
              */
-            'analyser' => new ReflectionAnalyser([
-                new AttributeAnnotationFactory,
-                new DocBlockAnnotationFactory,
-            ]),
+            'analyser' => new DocBlockAnalyser,
 
             /**
              * analysis: defaults to a new \OpenApi\Analysis .
