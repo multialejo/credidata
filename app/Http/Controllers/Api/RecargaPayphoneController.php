@@ -53,6 +53,9 @@ class RecargaPayphoneController extends Controller
             'creditos_obtenidos' => $creditos,
             'estado' => EstadoRecarga::Pendiente,
             'referencia_externa' => $ctid,
+            'provider_payment_id' => $prepare['paymentId'],
+            'provider_status' => 'PREPARED',
+            'provider_currency' => config('payphone.currency'),
             'fecha' => now(),
         ]);
 
@@ -103,6 +106,16 @@ class RecargaPayphoneController extends Controller
             ], 403);
         }
 
+        if ((string) $existente->provider_payment_id !== $id) {
+            return response()->json([
+                'codigo' => 409,
+                'exito' => false,
+                'mensaje' => 'El pago Payphone no coincide con la recarga',
+                'error' => ['tipo' => 'PAGO_NO_VALIDO', 'detalle' => null],
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 409);
+        }
+
         if (in_array($existente->estado, [EstadoRecarga::Fallida, EstadoRecarga::Rechazada], true)) {
             return response()->json([
                 'codigo' => 409,
@@ -134,30 +147,52 @@ class RecargaPayphoneController extends Controller
 
         $status = $confirmacion['transactionStatus'] ?? 'Unknown';
 
-        if ($status !== 'Approved') {
-            $existente->update(['estado' => EstadoRecarga::Fallida]);
+        $existente->update([
+            'provider_transaction_id' => $confirmacion['transactionId'] ?? null,
+            'provider_authorization_code' => $confirmacion['authorizationCode'] ?? null,
+            'provider_status' => $status,
+        ]);
 
-            LogActividad::create([
-                'accion' => 'recarga.fallida',
-                'actor_id' => $cliente->usuario->id,
-                'detalle' => [
-                    'referencia_externa' => $ctid,
-                    'payphone_status' => $status,
-                    'payphone_message' => $confirmacion['message'] ?? null,
-                ],
-            ]);
+        if ($status !== 'Approved') {
+            if ($status === 'Canceled') {
+                $existente->update(['estado' => EstadoRecarga::Fallida]);
+            }
+
+            if ($existente->estado === EstadoRecarga::Fallida) {
+                LogActividad::create([
+                    'accion' => 'recarga.fallida',
+                    'actor_id' => $cliente->usuario->id,
+                    'detalle' => [
+                        'referencia_externa' => $ctid,
+                        'payphone_status' => $status,
+                        'payphone_message' => $confirmacion['message'] ?? null,
+                    ],
+                ]);
+            }
 
             return response()->json([
                 'codigo' => 200,
                 'exito' => false,
-                'mensaje' => 'Pago no completado, puede reintentar',
+                'mensaje' => $existente->estado === EstadoRecarga::Fallida ? 'Pago no completado, puede reintentar' : 'Pago pendiente de confirmación',
                 'error' => [
-                    'tipo' => 'PAGO_NO_COMPLETADO',
+                    'tipo' => $existente->estado === EstadoRecarga::Fallida ? 'PAGO_NO_COMPLETADO' : 'PAGO_PENDIENTE',
                     'detalle' => 'Estado Payphone: '.$status,
                 ],
                 'metadatos' => ['timestamp' => now()->toIso8601String()],
             ]);
         }
+
+        if (empty($confirmacion['transactionId'])) {
+            return response()->json([
+                'codigo' => 200,
+                'exito' => false,
+                'mensaje' => 'Pago pendiente de confirmación',
+                'error' => ['tipo' => 'PAGO_PENDIENTE', 'detalle' => 'Payphone no devolvió un identificador de transacción'],
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ]);
+        }
+
+        $existente->update(['provider_verified_at' => now()]);
 
         $this->recargaService->procesar(
             referenciaExterna: $ctid,

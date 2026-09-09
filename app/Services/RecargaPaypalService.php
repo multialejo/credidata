@@ -37,8 +37,8 @@ class RecargaPaypalService
                                 'user_action' => 'PAY_NOW',
                                 'shipping_preference' => 'NO_SHIPPING',
                                 'payment_method_preference' => 'IMMEDIATE_PAYMENT_REQUIRED',
-                                'return_url' => $this->callbackUrl('recargas.paypal.return', config('paypal.return_url')),
-                                'cancel_url' => $this->callbackUrl('recargas.paypal.cancel', config('paypal.cancel_url')),
+                                'return_url' => $this->callbackUrl(config('paypal.return_url')),
+                                'cancel_url' => $this->callbackUrl(config('paypal.cancel_url')),
                             ],
                         ],
                     ],
@@ -110,6 +110,50 @@ class RecargaPaypalService
         }
 
         return null;
+    }
+
+    /**
+     * Returns the verified capture evidence for this order, or null when the
+     * provider response cannot be safely associated with the local recharge.
+     */
+    public function obtenerEvidenciaCaptura(array $capture, string $orderId, string $montoUsd): ?array
+    {
+        if (($capture['status'] ?? null) !== 'COMPLETED' || ($capture['id'] ?? null) !== $orderId) {
+            return null;
+        }
+
+        $captures = [];
+        foreach ($capture['purchase_units'] ?? [] as $unit) {
+            foreach ($unit['payments']['captures'] ?? [] as $item) {
+                if (($item['status'] ?? null) === 'COMPLETED') {
+                    $captures[] = $item;
+                }
+            }
+        }
+
+        if (count($captures) !== 1) {
+            return null;
+        }
+
+        $completedCapture = $captures[0];
+        $amount = $completedCapture['amount'] ?? [];
+        $value = $amount['value'] ?? null;
+
+        if (empty($completedCapture['id'])
+            || ($amount['currency_code'] ?? null) !== 'USD'
+            || ! is_string($value)
+            || ! preg_match('/^\d+\.\d{2}$/', $value)
+            || $value !== number_format((float) $montoUsd, 2, '.', '')) {
+            return null;
+        }
+
+        return [
+            'provider_payment_id' => $completedCapture['id'],
+            'provider_status' => 'COMPLETED',
+            'provider_amount' => $value,
+            'provider_currency' => 'USD',
+            'provider_verified_at' => now(),
+        ];
     }
 
     private function getAccessToken(): string

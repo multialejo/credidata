@@ -79,6 +79,9 @@ class PayWithPayphone extends Component
             'creditos_obtenidos' => $creditos,
             'estado' => EstadoRecarga::Pendiente,
             'referencia_externa' => $ctid,
+            'provider_payment_id' => $prepared['paymentId'],
+            'provider_status' => 'PREPARED',
+            'provider_currency' => config('payphone.currency'),
             'fecha' => now(),
         ]);
 

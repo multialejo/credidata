@@ -104,6 +104,7 @@ class RecargaPayphoneTest extends TestCase
             'monto_usd' => 10.00,
             'creditos_obtenidos' => 100,
         ]);
+        $this->assertNotNull(Recarga::where('referencia_externa', $ctid)->value('provider_payment_id'));
     }
 
     public function test_crear_transaccion_usa_la_tasa_de_config_parametros(): void
@@ -195,7 +196,7 @@ class RecargaPayphoneTest extends TestCase
         $recarga = $this->crearRecargaPendiente($ctid, 100);
 
         $response = $this->actingAs($this->usuario, 'sanctum')
-            ->postJson("/api/v1/recargas/payphone/{$recarga->id}/confirmar", [
+            ->postJson('/api/v1/recargas/payphone/12345/confirmar', [
                 'clientTransactionId' => $ctid,
             ]);
 
@@ -219,6 +220,26 @@ class RecargaPayphoneTest extends TestCase
         Queue::assertPushed(SendRecargaEmail::class, function ($job) use ($ctid) {
             return $job->recarga->referencia_externa === $ctid;
         });
+
+        $evidencia = Recarga::where('referencia_externa', $ctid)->firstOrFail();
+        $this->assertSame('12345', $evidencia->provider_payment_id);
+        $this->assertNotNull($evidencia->provider_transaction_id);
+        $this->assertNotNull($evidencia->provider_verified_at);
+    }
+
+    public function test_confirmar_con_payment_id_distinto_no_llama_a_payphone(): void
+    {
+        $ctid = 'bs-payment-id-mismatch';
+        $this->crearRecargaPendiente($ctid, 100);
+
+        $response = $this->actingAs($this->usuario, 'sanctum')
+            ->postJson('/api/v1/recargas/payphone/99999/confirmar', [
+                'clientTransactionId' => $ctid,
+            ]);
+
+        $response->assertStatus(409);
+        $response->assertJsonPath('error.tipo', 'PAGO_NO_VALIDO');
+        $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
     }
 
     public function test_confirmar_dos_veces_con_misma_referencia_acredita_una_sola(): void
@@ -229,12 +250,12 @@ class RecargaPayphoneTest extends TestCase
         $recarga = $this->crearRecargaPendiente($ctid, 100);
 
         $primera = $this->actingAs($this->usuario, 'sanctum')
-            ->postJson("/api/v1/recargas/payphone/{$recarga->id}/confirmar", [
+            ->postJson('/api/v1/recargas/payphone/12345/confirmar', [
                 'clientTransactionId' => $ctid,
             ]);
 
         $segunda = $this->actingAs($this->usuario, 'sanctum')
-            ->postJson("/api/v1/recargas/payphone/{$recarga->id}/confirmar", [
+            ->postJson('/api/v1/recargas/payphone/12345/confirmar', [
                 'clientTransactionId' => $ctid,
             ]);
 
@@ -269,7 +290,7 @@ class RecargaPayphoneTest extends TestCase
         $recarga = $this->crearRecargaPendiente($ctid, 100);
 
         $response = $this->actingAs($this->usuario, 'sanctum')
-            ->postJson("/api/v1/recargas/payphone/{$recarga->id}/confirmar", [
+            ->postJson('/api/v1/recargas/payphone/12345/confirmar', [
                 'clientTransactionId' => $ctid,
             ]);
 
@@ -317,7 +338,7 @@ class RecargaPayphoneTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->usuario, 'sanctum')
-            ->postJson("/api/v1/recargas/payphone/{$recarga->id}/confirmar", [
+            ->postJson('/api/v1/recargas/payphone/12345/confirmar', [
                 'clientTransactionId' => $ctid,
             ]);
 
@@ -349,7 +370,7 @@ class RecargaPayphoneTest extends TestCase
         $recarga = $this->crearRecargaPendiente($ctid, 100);
 
         $response = $this->actingAs($this->usuario, 'sanctum')
-            ->postJson("/api/v1/recargas/payphone/{$recarga->id}/confirmar", [
+            ->postJson('/api/v1/recargas/payphone/12345/confirmar', [
                 'clientTransactionId' => $ctid,
             ]);
 
@@ -378,6 +399,7 @@ class RecargaPayphoneTest extends TestCase
             'creditos_obtenidos' => $creditos,
             'estado' => EstadoRecarga::Pendiente,
             'referencia_externa' => $ctid,
+            'provider_payment_id' => '12345',
             'fecha' => now(),
         ]);
     }

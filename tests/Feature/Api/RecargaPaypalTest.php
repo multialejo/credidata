@@ -135,24 +135,31 @@ class RecargaPaypalTest extends TestCase
         $response->assertStatus(401);
     }
 
-    public function test_capturar_con_order_id_inexistente_en_paypal_retorna_404(): void
+    public function test_capturar_sin_recarga_local_retorna_404_sin_llamar_a_paypal(): void
     {
         $this->partialMock(RecargaPaypalService::class, function ($mock) {
-            $mock->shouldReceive('captureOrder')->andReturn([
-                'status' => 'NOT_FOUND',
-                'order_id' => 'UNKNOWN-123',
-            ]);
+            $mock->shouldReceive('captureOrder')->never();
         });
 
         $response = $this->actingAs($this->usuario, 'sanctum')
             ->postJson('/api/v1/recargas/paypal/UNKNOWN-123/capturar');
 
         $response->assertStatus(404);
-        $response->assertJsonPath('error.tipo', 'ORDEN_NO_ENCONTRADA');
+        $response->assertJsonPath('error.tipo', 'RECARGA_NO_ENCONTRADA');
     }
 
     public function test_capturar_con_paypal_connection_exception_retorna_503(): void
     {
+        Recarga::create([
+            'cliente_id' => $this->cliente->id,
+            'metodo' => 'paypal',
+            'monto_usd' => 10.00,
+            'creditos_obtenidos' => 100,
+            'estado' => 'pendiente',
+            'referencia_externa' => 'MOCK-ORDER-X',
+            'fecha' => now(),
+        ]);
+
         $this->partialMock(RecargaPaypalService::class, function ($mock) {
             $mock->shouldReceive('captureOrder')->andThrow(new ConnectionException('timeout'));
         });
@@ -248,6 +255,46 @@ class RecargaPaypalTest extends TestCase
         ]);
     }
 
+    public function test_capturar_completed_con_monto_distinto_no_acredita(): void
+    {
+        $orderId = 'MOCK-ORDER-AMOUNT-MISMATCH';
+        Recarga::create([
+            'cliente_id' => $this->cliente->id,
+            'metodo' => 'paypal',
+            'monto_usd' => 10.00,
+            'creditos_obtenidos' => 100,
+            'estado' => 'pendiente',
+            'referencia_externa' => $orderId,
+            'fecha' => now(),
+        ]);
+
+        $this->partialMock(RecargaPaypalService::class, function ($mock) use ($orderId) {
+            $mock->shouldReceive('captureOrder')->with($orderId)->andReturn([
+                'id' => $orderId,
+                'status' => 'COMPLETED',
+                'purchase_units' => [[
+                    'payments' => ['captures' => [[
+                        'id' => 'CAP-AMOUNT-MISMATCH',
+                        'status' => 'COMPLETED',
+                        'amount' => ['currency_code' => 'USD', 'value' => '9.99'],
+                    ]]],
+                ]],
+            ]);
+        });
+
+        $response = $this->actingAs($this->usuario, 'sanctum')
+            ->postJson("/api/v1/recargas/paypal/{$orderId}/capturar");
+
+        $response->assertStatus(409);
+        $response->assertJsonPath('error.tipo', 'PAGO_NO_VALIDO');
+        $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
+        $this->assertDatabaseHas('recargas', [
+            'referencia_externa' => $orderId,
+            'estado' => 'fallida',
+            'provider_status' => 'COMPLETED_MISMATCH',
+        ]);
+    }
+
     public function test_capturar_doble_click_es_idempotente(): void
     {
         $orderId = 'MOCK-ORDER-DOUBLE';
@@ -265,6 +312,13 @@ class RecargaPaypalTest extends TestCase
             $mock->shouldReceive('captureOrder')->with($orderId)->andReturn([
                 'id' => $orderId,
                 'status' => 'COMPLETED',
+                'purchase_units' => [[
+                    'payments' => ['captures' => [[
+                        'id' => 'CAP-DOUBLE',
+                        'status' => 'COMPLETED',
+                        'amount' => ['currency_code' => 'USD', 'value' => '10.00'],
+                    ]]],
+                ]],
             ]);
         });
 

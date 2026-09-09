@@ -76,7 +76,27 @@ class RecargaPaypalController extends Controller
         $cliente = $request->user()->cliente;
 
         $existente = Recarga::where('referencia_externa', $orderId)->first();
-        if ($existente && $existente->estado === EstadoRecarga::Completada) {
+        if (! $existente) {
+            return response()->json([
+                'codigo' => 404,
+                'exito' => false,
+                'mensaje' => 'No existe una recarga para la orden PayPal',
+                'error' => ['tipo' => 'RECARGA_NO_ENCONTRADA', 'detalle' => null],
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 404);
+        }
+
+        if ($existente->cliente_id !== $cliente->id) {
+            return response()->json([
+                'codigo' => 403,
+                'exito' => false,
+                'mensaje' => 'La orden no pertenece al cliente autenticado',
+                'error' => ['tipo' => 'ORDEN_NO_AUTORIZADA', 'detalle' => null],
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 403);
+        }
+
+        if ($existente->estado === EstadoRecarga::Completada) {
             return response()->json([
                 'codigo' => 200,
                 'exito' => true,
@@ -89,17 +109,7 @@ class RecargaPaypalController extends Controller
             ]);
         }
 
-        if ($existente && $existente->cliente_id !== $cliente->id) {
-            return response()->json([
-                'codigo' => 403,
-                'exito' => false,
-                'mensaje' => 'La orden no pertenece al cliente autenticado',
-                'error' => ['tipo' => 'ORDEN_NO_AUTORIZADA', 'detalle' => null],
-                'metadatos' => ['timestamp' => now()->toIso8601String()],
-            ], 403);
-        }
-
-        if ($existente && in_array($existente->estado, [EstadoRecarga::Fallida, EstadoRecarga::Rechazada], true)) {
+        if (in_array($existente->estado, [EstadoRecarga::Fallida, EstadoRecarga::Rechazada], true)) {
             return response()->json([
                 'codigo' => 409,
                 'exito' => false,
@@ -126,31 +136,65 @@ class RecargaPaypalController extends Controller
         }
 
         if (($captura['status'] ?? null) !== 'COMPLETED') {
-            if ($existente) {
+            $providerStatus = $captura['status'] ?? 'unknown';
+            if (in_array($providerStatus, ['DECLINED', 'VOIDED', 'CANCELED', 'DENIED', 'EXPIRED'], true)) {
                 $existente->update(['estado' => EstadoRecarga::Fallida]);
+            } else {
+                $existente->update(['provider_status' => $providerStatus]);
             }
-            LogActividad::create([
-                'accion' => 'recarga.fallida',
-                'actor_id' => $cliente->usuario->id,
-                'detalle' => [
-                    'referencia_externa' => $orderId,
-                    'paypal_status' => $captura['status'] ?? 'unknown',
-                ],
-            ]);
+
+            if ($existente->estado === EstadoRecarga::Fallida) {
+                LogActividad::create([
+                    'accion' => 'recarga.fallida',
+                    'actor_id' => $cliente->usuario->id,
+                    'detalle' => [
+                        'referencia_externa' => $orderId,
+                        'paypal_status' => $providerStatus,
+                    ],
+                ]);
+            }
 
             return response()->json([
                 'codigo' => 200,
                 'exito' => false,
-                'mensaje' => 'Pago no completado, puede reintentar',
+                'mensaje' => $existente->estado === EstadoRecarga::Fallida ? 'Pago no completado, puede reintentar' : 'Pago pendiente de confirmación',
                 'error' => [
-                    'tipo' => 'PAGO_NO_COMPLETADO',
-                    'detalle' => 'Estado PayPal: '.($captura['status'] ?? 'unknown'),
+                    'tipo' => $existente->estado === EstadoRecarga::Fallida ? 'PAGO_NO_COMPLETADO' : 'PAGO_PENDIENTE',
+                    'detalle' => 'Estado PayPal: '.$providerStatus,
                 ],
                 'metadatos' => ['timestamp' => now()->toIso8601String()],
             ]);
         }
 
-        $creditos = (int) ($existente?->creditos_obtenidos ?? 0);
+        $evidencia = $this->paypal->obtenerEvidenciaCaptura(
+            $captura,
+            $existente->referencia_externa,
+            $existente->monto_usd,
+        );
+
+        if (! $evidencia) {
+            $existente->update([
+                'estado' => EstadoRecarga::Fallida,
+                'provider_status' => 'COMPLETED_MISMATCH',
+            ]);
+            LogActividad::create([
+                'accion' => 'recarga.fallida',
+                'actor_id' => $cliente->usuario->id,
+                'detalle' => ['referencia_externa' => $orderId, 'paypal_status' => 'COMPLETED_MISMATCH'],
+            ]);
+
+            return response()->json([
+                'codigo' => 409,
+                'exito' => false,
+                'mensaje' => 'El pago PayPal no coincide con la recarga',
+                'error' => ['tipo' => 'PAGO_NO_VALIDO', 'detalle' => null],
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 409);
+        }
+
+        $existente->update($evidencia);
+
+        $creditos = (int) $existente->creditos_obtenidos;
 
         $this->recargaService->procesar(
             referenciaExterna: $orderId,
