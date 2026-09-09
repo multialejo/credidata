@@ -23,6 +23,7 @@ class ExclusiveAccessRoleMysqlTest extends TestCase
         }
 
         DB::table('usuarios')->insert([
+            'uid' => 'test-dual-access-user',
             'email' => 'dual@test.com',
             'nombre' => 'Dual',
             'roles' => json_encode(['cliente', 'staff']),
@@ -52,6 +53,7 @@ class ExclusiveAccessRoleMysqlTest extends TestCase
         }
 
         DB::table('usuarios')->insert([
+            'uid' => 'test-cliente-staff-user',
             'email' => 'cliente-staff@test.com',
             'nombre' => 'ClienteStaff',
             'roles' => json_encode(['cliente']),
@@ -81,6 +83,7 @@ class ExclusiveAccessRoleMysqlTest extends TestCase
         }
 
         DB::table('usuarios')->insert([
+            'uid' => 'test-staff-cliente-user',
             'email' => 'staff-cliente@test.com',
             'nombre' => 'StaffCliente',
             'roles' => json_encode(['staff']),
