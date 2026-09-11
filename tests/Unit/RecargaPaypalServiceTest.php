@@ -6,6 +6,7 @@ use App\Services\RecargaPaypalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class RecargaPaypalServiceTest extends TestCase
@@ -87,5 +88,44 @@ class RecargaPaypalServiceTest extends TestCase
             return $request['payment_source']['paypal']['experience_context']['return_url'] === 'https://app.credidata.test/dashboard/recargas/paypal/return'
                 && $request['payment_source']['paypal']['experience_context']['cancel_url'] === 'https://app.credidata.test/dashboard/recargas/paypal/cancel';
         });
+    }
+
+    public function test_create_order_registra_detalles_del_error_del_proveedor(): void
+    {
+        config()->set('paypal.mock', false);
+
+        Log::shouldReceive('error')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return $message === 'PayPal createOrder: error'
+                    && $context['status'] === 422
+                    && $context['body']['details'][0]['issue'] === 'PAYEE_ACCOUNT_RESTRICTED';
+            });
+        Http::swap(new \Illuminate\Http\Client\Factory);
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), '/v1/oauth2/token')) {
+                return Http::response([
+                    'access_token' => 'fake-token',
+                ], 200);
+            }
+
+            return Http::response([
+                'name' => 'UNPROCESSABLE_ENTITY',
+                'details' => [[
+                    'issue' => 'PAYEE_ACCOUNT_RESTRICTED',
+                ]],
+            ], 422);
+        });
+
+        $exception = null;
+
+        try {
+            $this->service->createOrder(10.00);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            $exception = $e;
+        }
+
+        $this->assertInstanceOf(\Illuminate\Http\Client\ConnectionException::class, $exception);
+        Http::assertSentCount(2);
     }
 }
