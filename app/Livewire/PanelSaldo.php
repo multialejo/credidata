@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Consulta;
+use App\Models\Aporte;
 use App\Models\Recarga;
 use Livewire\Component;
 
@@ -36,7 +37,18 @@ class PanelSaldo extends Component
                 'estado' => $r->estado?->value,
             ]);
 
-        $this->ultimosMovimientos = $consultas->toBase()->concat($recargas)
+        $aportes = Aporte::query()
+            ->whereHas('colaborador', fn ($query) => $query->where('usuario_id', auth()->id()))
+            ->whereNotNull('recompensado_en')
+            ->latest('recompensado_en')->take(5)->get()
+            ->map(fn ($aporte) => [
+                'tipo' => 'colaboracion',
+                'descripcion' => "Recompensa por aporte de {$aporte->tipo_dato}",
+                'monto' => (int) $aporte->recompensa_creditos,
+                'fecha' => $aporte->recompensado_en,
+            ]);
+
+        $this->ultimosMovimientos = $consultas->toBase()->concat($recargas)->concat($aportes)
             ->sortByDesc('fecha')->take(5)->values();
     }
 

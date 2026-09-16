@@ -43,6 +43,11 @@
                                 @break
                             @endswitch
                         @endif
+                        @if(($mov['tipo'] ?? null) === 'colaboracion')
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                Colaboración
+                            </span>
+                        @endif
                         <span class="text-sm font-semibold {{ $mov['monto'] > 0 ? 'text-green-600' : 'text-red-600' }}">
                             {{ $mov['monto'] > 0 ? '+' : '' }}{{ number_format($mov['monto'], 0) }}
                         </span>
