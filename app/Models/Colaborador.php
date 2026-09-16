@@ -12,6 +12,7 @@ class Colaborador extends Model
         'usuario_id', 'creditos_ganados', 'creditos_acreditados',
         'total_aportes', 'aportes_aprobados', 'aportes_rechazados',
         'tasa_aprobacion', 'nivel_confianza', 'estado_colaborador', 'fecha_suspension',
+        'terminos_version', 'terminos_aceptados_en',
     ];
 
     protected $casts = [
@@ -22,6 +23,7 @@ class Colaborador extends Model
         'aportes_rechazados' => 'integer',
         'tasa_aprobacion' => 'decimal:2',
         'fecha_suspension' => 'datetime',
+        'terminos_aceptados_en' => 'datetime',
     ];
 
     public function usuario()

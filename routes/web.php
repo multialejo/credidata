@@ -5,6 +5,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecargaPaypalReturnController;
 use App\Http\Controllers\RecargaPayphoneReturnController;
 use App\Livewire\ConfigGeneral;
+use App\Livewire\ActivarColaborador;
+use App\Livewire\EnviarAporte;
 use App\Livewire\EditarRegistro;
 use App\Livewire\GestionApiKey;
 use App\Livewire\GestionClientes;
@@ -14,6 +16,7 @@ use App\Livewire\PanelSaldo;
 use App\Livewire\Recargas;
 use App\Livewire\Recibos;
 use App\Livewire\ValidacionRecargas;
+use App\Livewire\ValidacionAportes;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -27,6 +30,7 @@ Route::middleware(['auth', 'verified', 'staff.web'])->prefix('admin')->name('adm
     Route::get('/config', ConfigGeneral::class)->name('config');
     Route::get('/registros', EditarRegistro::class)->name('registros');
     Route::get('/recargas', ValidacionRecargas::class)->name('recargas');
+    Route::get('/aportes', ValidacionAportes::class)->name('aportes');
     Route::get('/recargas/{recarga}/comprobante', AdminRecargaEvidenceController::class)->name('recargas.comprobante');
 });
 
@@ -37,6 +41,8 @@ Route::middleware(['auth', 'verified', 'cliente.web'])->group(function () {
     Route::get('/dashboard/consultas', HistorialConsultas::class)->name('dashboard.consultas');
     Route::get('/dashboard/api-key', GestionApiKey::class)->name('dashboard.api-key');
     Route::get('/dashboard/recibos', Recibos::class)->name('dashboard.recibos');
+    Route::get('/dashboard/colaborador', ActivarColaborador::class)->name('dashboard.colaborador');
+    Route::get('/dashboard/colaborador/aportes/nuevo', EnviarAporte::class)->middleware('colaborador.activo')->name('dashboard.aportes.nuevo');
 });
 
 Route::middleware('auth')->group(function () {

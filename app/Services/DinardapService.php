@@ -129,10 +129,12 @@ class DinardapService
                 'ultimaConsulta' => now()->toIso8601String(),
             ];
 
-            Firebase::firestore()
-                ->database()
-                ->document("sujetos/{$cedula}")
-                ->set($document);
+            $reference = Firebase::firestore()->database()->document("sujetos/{$cedula}");
+            $existing = $reference->snapshot();
+            if ($existing->exists() && array_key_exists('contacto', $existing->data())) {
+                $document['contacto'] = $existing->data()['contacto'];
+            }
+            $reference->set($document);
 
             return true;
         } catch (Throwable $e) {

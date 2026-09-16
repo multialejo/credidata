@@ -28,6 +28,9 @@
                         <x-nav-link :href="route('admin.recargas')" :active="request()->routeIs('admin.recargas')">
                             {{ __('Recargas') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.aportes')" :active="request()->routeIs('admin.aportes')">
+                            {{ __('Aportes') }}
+                        </x-nav-link>
                     @else
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                             {{ __('Saldo') }}
@@ -41,6 +44,14 @@
                         <x-nav-link :href="route('dashboard.recibos')" :active="request()->routeIs('dashboard.recibos')">
                             {{ __('Recibos') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('dashboard.colaborador')" :active="request()->routeIs('dashboard.colaborador')">
+                            {{ __('Colaborador') }}
+                        </x-nav-link>
+                        @if(auth()->user()->colaborador?->estado_colaborador === 'activo')
+                            <x-nav-link :href="route('dashboard.aportes.nuevo')" :active="request()->routeIs('dashboard.aportes.nuevo')">
+                                {{ __('Aportar') }}
+                            </x-nav-link>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -110,6 +121,9 @@
                     <x-responsive-nav-link :href="route('admin.recargas')" :active="request()->routeIs('admin.recargas')">
                         {{ __('Recargas') }}
                     </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.aportes')" :active="request()->routeIs('admin.aportes')">
+                        {{ __('Aportes') }}
+                    </x-responsive-nav-link>
                 @else
                     <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Saldo') }}
@@ -123,6 +137,14 @@
                     <x-responsive-nav-link :href="route('dashboard.recibos')" :active="request()->routeIs('dashboard.recibos')">
                         {{ __('Recibos') }}
                     </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('dashboard.colaborador')" :active="request()->routeIs('dashboard.colaborador')">
+                        {{ __('Colaborador') }}
+                    </x-responsive-nav-link>
+                    @if(auth()->user()->colaborador?->estado_colaborador === 'activo')
+                        <x-responsive-nav-link :href="route('dashboard.aportes.nuevo')" :active="request()->routeIs('dashboard.aportes.nuevo')">
+                            {{ __('Aportar') }}
+                        </x-responsive-nav-link>
+                    @endif
                 @endif
             </div>
 

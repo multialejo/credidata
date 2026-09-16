@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\AdminRecargaController;
 use App\Http\Controllers\Api\AdminRecargaEvidenceController;
 use App\Http\Controllers\Api\ApiKeyController;
+use App\Http\Controllers\Api\AdminAporteController;
+use App\Http\Controllers\Api\ColaboradorController;
 use App\Http\Controllers\Api\ConsultaController;
 use App\Http\Controllers\Api\RecargaPaypalController;
 use App\Http\Controllers\Api\RecargaPayphoneController;
@@ -34,7 +36,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/confirmar', [RecargaPayphoneController::class, 'confirmar']);
     });
 
+    Route::post('v1/colaboradores/registro', [ColaboradorController::class, 'registro']);
+    Route::middleware('colaborador.activo')->prefix('v1/colaboradores')->group(function () {
+        Route::post('datos', [ColaboradorController::class, 'datos']);
+        Route::get('aportes/{aporte}', [ColaboradorController::class, 'show']);
+    });
+
     Route::middleware(['staff'])->prefix('v1/admin')->group(function () {
+        Route::get('aportes/pendientes', [AdminAporteController::class, 'pendientes']);
+        Route::post('aportes/{aporte}/aprobar', [AdminAporteController::class, 'aprobar']);
+        Route::post('aportes/{aporte}/rechazar', [AdminAporteController::class, 'rechazar']);
         Route::get('recargas/pendientes', [AdminRecargaController::class, 'pendientes']);
         Route::get('recargas/{recarga}/comprobante', AdminRecargaEvidenceController::class);
         Route::post('recargas/{recarga}/rechazar', [AdminRecargaController::class, 'rechazar']);

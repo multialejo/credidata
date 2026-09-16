@@ -35,7 +35,8 @@ class OpenApiDocumentationTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
 
-        $this->assertCount(13, $specification['paths']);
+        $this->assertCount(19, $specification['paths']);
+        $this->assertArrayHasKey('/api/v1/colaboradores/datos', $specification['paths']);
         $this->assertArrayHasKey('/api/v1/admin/recargas/{recarga}/comprobante', $specification['paths']);
         $this->assertArrayHasKey('ApiKeyBearer', $specification['components']['securitySchemes']);
         $this->assertArrayHasKey('SanctumBearer', $specification['components']['securitySchemes']);

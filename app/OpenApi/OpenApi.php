@@ -21,6 +21,7 @@ use OpenApi\Annotations as OA;
  * @OA\Tag(name="Recargas PayPal", description="Recargas de cliente con PayPal")
  * @OA\Tag(name="Recargas Payphone", description="Recargas de cliente con Payphone")
  * @OA\Tag(name="Administración", description="Operaciones para staff")
+ * @OA\Tag(name="Colaboradores", description="Activación y aportes de clientes colaboradores")
  *
  * @OA\Schema(schema="Error", type="object", required={"tipo"}, @OA\Property(property="tipo", type="string", example="VALIDACION"), @OA\Property(property="detalle", type="string", nullable=true, example="El campo monto_usd es obligatorio."))
  * @OA\Schema(schema="Metadatos", type="object", @OA\Property(property="timestamp", type="string", format="date-time", example="2026-09-02T16:00:00+00:00"), @OA\Property(property="creditos_gastados", type="integer", example=1), @OA\Property(property="creditos_restantes", type="integer", example=24), @OA\Property(property="fuente", type="string", example="dinardap"))
@@ -32,6 +33,28 @@ use OpenApi\Annotations as OA;
  */
 class OpenApi
 {
+    /**
+     * @OA\Post(path="/api/v1/colaboradores/registro", tags={"Colaboradores"}, summary="Activa un colaborador", security={{"SanctumBearer":{}}}, @OA\RequestBody(required=true, @OA\JsonContent(required={"acepta_terminos"}, @OA\Property(property="acepta_terminos", type="boolean", example=true))), @OA\Response(response=201, description="Perfil creado"), @OA\Response(response=200, description="Perfil ya activo"), @OA\Response(response=403, description="No es cliente"), @OA\Response(response=422, description="Términos no aceptados"))
+     */
+    public function activarColaborador(): void {}
+
+    /**
+     * @OA\Post(path="/api/v1/colaboradores/datos", tags={"Colaboradores"}, summary="Registra un aporte", description="Requiere colaborador cliente activo. Un campo sin valor se aprueba automáticamente; una reescritura queda pendiente.", security={{"SanctumBearer":{}}}, @OA\RequestBody(required=true, @OA\JsonContent(required={"identificador","tipo_dato","valor"}, @OA\Property(property="identificador", type="string", example="1713175071"), @OA\Property(property="tipo_dato", type="string", enum={"telefono","email","direccion"}), @OA\Property(property="valor", type="string"))), @OA\Response(response=201, description="Aporte aprobado o pendiente"), @OA\Response(response=403, description="Colaborador inactivo"), @OA\Response(response=422, description="Datos inválidos o destino inexistente"))
+     */
+    public function registrarAporte(): void {}
+
+    /** @OA\Get(path="/api/v1/colaboradores/aportes/{aporte}", tags={"Colaboradores"}, summary="Consulta un aporte propio", security={{"SanctumBearer":{}}}, @OA\Parameter(name="aporte", in="path", required=true, @OA\Schema(type="integer")), @OA\Response(response=200, description="Aporte"), @OA\Response(response=403, description="Aporte de otro colaborador"), @OA\Response(response=404, description="No existe")) */
+    public function verAporte(): void {}
+
+    /** @OA\Get(path="/api/v1/admin/aportes/pendientes", tags={"Administración"}, summary="Lista aportes pendientes", security={{"SanctumBearer":{}}}, @OA\Response(response=200, description="Bandeja paginada"), @OA\Response(response=403, description="No es staff")) */
+    public function aportesPendientes(): void {}
+
+    /** @OA\Post(path="/api/v1/admin/aportes/{aporte}/aprobar", tags={"Administración"}, summary="Aprueba un aporte", description="Idempotente para decisiones terminales.", security={{"SanctumBearer":{}}}, @OA\Parameter(name="aporte", in="path", required=true, @OA\Schema(type="integer")), @OA\RequestBody(@OA\JsonContent(@OA\Property(property="comentario", type="string", maxLength=500))), @OA\Response(response=200, description="Aporte resuelto"), @OA\Response(response=403, description="No es staff")) */
+    public function aprobarAporte(): void {}
+
+    /** @OA\Post(path="/api/v1/admin/aportes/{aporte}/rechazar", tags={"Administración"}, summary="Rechaza un aporte", description="Idempotente para decisiones terminales.", security={{"SanctumBearer":{}}}, @OA\Parameter(name="aporte", in="path", required=true, @OA\Schema(type="integer")), @OA\RequestBody(@OA\JsonContent(@OA\Property(property="comentario", type="string", maxLength=500))), @OA\Response(response=200, description="Aporte resuelto"), @OA\Response(response=403, description="No es staff")) */
+    public function rechazarAporte(): void {}
+
     /**
      * @OA\Post(
      *   path="/api/v1/consulta/cedula", tags={"Consultas"}, summary="Consulta una cédula",

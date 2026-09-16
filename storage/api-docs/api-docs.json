@@ -15,6 +15,264 @@
         }
     ],
     "paths": {
+        "/api/v1/colaboradores/registro": {
+            "post": {
+                "tags": [
+                    "Colaboradores"
+                ],
+                "summary": "Activa un colaborador",
+                "operationId": "b80f52404138c6e19f27d8464e6a5d60",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "acepta_terminos"
+                                ],
+                                "properties": {
+                                    "acepta_terminos": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Perfil creado"
+                    },
+                    "200": {
+                        "description": "Perfil ya activo"
+                    },
+                    "403": {
+                        "description": "No es cliente"
+                    },
+                    "422": {
+                        "description": "Términos no aceptados"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/colaboradores/datos": {
+            "post": {
+                "tags": [
+                    "Colaboradores"
+                ],
+                "summary": "Registra un aporte",
+                "description": "Requiere colaborador cliente activo. Un campo sin valor se aprueba automáticamente; una reescritura queda pendiente.",
+                "operationId": "51d5571d215158d7383974472f9bfd87",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "identificador",
+                                    "tipo_dato",
+                                    "valor"
+                                ],
+                                "properties": {
+                                    "identificador": {
+                                        "type": "string",
+                                        "example": "1713175071"
+                                    },
+                                    "tipo_dato": {
+                                        "type": "string",
+                                        "enum": [
+                                            "telefono",
+                                            "email",
+                                            "direccion"
+                                        ]
+                                    },
+                                    "valor": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Aporte aprobado o pendiente"
+                    },
+                    "403": {
+                        "description": "Colaborador inactivo"
+                    },
+                    "422": {
+                        "description": "Datos inválidos o destino inexistente"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/colaboradores/aportes/{aporte}": {
+            "get": {
+                "tags": [
+                    "Colaboradores"
+                ],
+                "summary": "Consulta un aporte propio",
+                "operationId": "15b0ea51236cfe6be9aa1103216c353b",
+                "parameters": [
+                    {
+                        "name": "aporte",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Aporte"
+                    },
+                    "403": {
+                        "description": "Aporte de otro colaborador"
+                    },
+                    "404": {
+                        "description": "No existe"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/aportes/pendientes": {
+            "get": {
+                "tags": [
+                    "Administración"
+                ],
+                "summary": "Lista aportes pendientes",
+                "operationId": "2b47865d13d58ba42900701c3b6bbfad",
+                "responses": {
+                    "200": {
+                        "description": "Bandeja paginada"
+                    },
+                    "403": {
+                        "description": "No es staff"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/aportes/{aporte}/aprobar": {
+            "post": {
+                "tags": [
+                    "Administración"
+                ],
+                "summary": "Aprueba un aporte",
+                "description": "Idempotente para decisiones terminales.",
+                "operationId": "40b64752bd98b4d1029688b9516a7d8f",
+                "parameters": [
+                    {
+                        "name": "aporte",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "comentario": {
+                                        "type": "string",
+                                        "maxLength": 500
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Aporte resuelto"
+                    },
+                    "403": {
+                        "description": "No es staff"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/aportes/{aporte}/rechazar": {
+            "post": {
+                "tags": [
+                    "Administración"
+                ],
+                "summary": "Rechaza un aporte",
+                "description": "Idempotente para decisiones terminales.",
+                "operationId": "cf41b7769a367b375e8b76552ff130de",
+                "parameters": [
+                    {
+                        "name": "aporte",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "comentario": {
+                                        "type": "string",
+                                        "maxLength": 500
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Aporte resuelto"
+                    },
+                    "403": {
+                        "description": "No es staff"
+                    }
+                },
+                "security": [
+                    {
+                        "SanctumBearer": []
+                    }
+                ]
+            }
+        },
         "/api/v1/consulta/cedula": {
             "post": {
                 "tags": [
@@ -1022,6 +1280,10 @@
         {
             "name": "Administración",
             "description": "Operaciones para staff"
+        },
+        {
+            "name": "Colaboradores",
+            "description": "Activación y aportes de clientes colaboradores"
         }
     ]
 }
