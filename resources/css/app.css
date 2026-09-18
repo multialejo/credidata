@@ -1,3 +1,42 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --canvas: 247 245 239;
+        --ink: 20 33 61;
+        --cobalt: 49 85 217;
+    }
+
+    body {
+        background: rgb(var(--canvas));
+        color: rgb(var(--ink));
+    }
+
+    ::selection {
+        background: rgb(var(--cobalt) / 0.18);
+    }
+}
+
+@layer components {
+    .ui-card {
+        @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_35px_-24px_rgba(20,33,61,0.45)];
+    }
+
+    .ui-eyebrow {
+        @apply text-[0.68rem] font-bold uppercase tracking-[0.16em] text-slate-500;
+    }
+
+    .ui-primary-button {
+        @apply inline-flex items-center justify-center rounded-xl bg-[#3155d9] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2647c2] focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .ui-secondary-button {
+        @apply inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-[#14213d] transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .ui-input {
+        @apply rounded-xl border-slate-300 bg-white text-sm shadow-sm placeholder:text-slate-400 focus:border-[#3155d9] focus:ring-[#3155d9];
+    }
+}
