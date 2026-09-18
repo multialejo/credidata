@@ -80,6 +80,6 @@ class PanelSaldoPaypalBadgeTest extends TestCase
     {
         Livewire::actingAs($this->usuario)
             ->test(PanelSaldo::class)
-            ->assertSee('Sin movimientos recientes.');
+            ->assertSee('Aún no tienes movimientos.');
     }
 }

@@ -62,7 +62,7 @@ class EnsureClienteTest extends TestCase
 
         Livewire::actingAs($usuario)
             ->test(PanelSaldo::class)
-            ->assertSeeText('Saldo Actual');
+            ->assertSeeText('Saldo disponible');
     }
 
     public function test_staff_tambien_es_redirigido_en_subrutas_de_dashboard(): void

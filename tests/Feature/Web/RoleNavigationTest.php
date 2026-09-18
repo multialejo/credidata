@@ -44,7 +44,7 @@ class RoleNavigationTest extends TestCase
         $response = $this->actingAs($usuario)->get(route('dashboard'));
 
         $response->assertOk()
-            ->assertSeeTextInOrder(['Saldo', 'Historial', 'API Key', 'Recibos'])
+            ->assertSeeTextInOrder(['Resumen', 'Historial', 'API Key', 'Recibos'])
             ->assertDontSee('href="'.route('admin.logs').'"', false)
             ->assertDontSee('href="'.route('admin.config').'"', false)
             ->assertDontSee('href="'.route('admin.registros').'"', false)

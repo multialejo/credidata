@@ -55,8 +55,9 @@ class RecargasTest extends TestCase
             ->assertSeeText('PayPhone')
             ->assertSeeText('Transferencia')
             ->assertSeeText('Próximamente')
-            ->assertSeeText('Seleccionado')
-            ->assertSee('Pagar con PayPal');
+            ->assertSee('role="radio"', false)
+            ->assertSee('aria-checked="true"', false)
+            ->assertSee('Continuar con PayPal');
     }
 
     public function test_recargas_paypal_y_payphone_son_seleccionables_transferencia_no(): void
