@@ -3,42 +3,83 @@
 <div x-data="{ sidebarOpen: false }">
 
     {{-- Desktop sidebar (lg+) --}}
-    <aside class="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:flex lg:w-64 lg:flex-col" aria-label="Menú de navegación">
-        <div class="flex grow flex-col gap-y-6 overflow-y-auto bg-[#14213d] px-4 pb-6 pt-6 shadow-[4px_0_24px_-10px_rgba(20,33,61,0.35)]">
+    <aside class="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:flex lg:h-full lg:w-64 lg:flex-col" aria-label="Menú de navegación">
+        <div class="flex h-full flex-col overflow-hidden bg-[#14213d] shadow-[4px_0_24px_-10px_rgba(20,33,61,0.35)]">
             {{-- Logo --}}
-            <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-3 rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#14213d]">
+            <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-3 px-6 py-6 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#14213d]">
                 <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#3155d9] text-sm font-black tracking-tight text-white">C</span>
-                <span class="text-base font-bold tracking-tight text-white">Credidata</span>
+                <span class="text-lg font-bold tracking-tight text-white">Credidata</span>
             </a>
 
-            {{-- Navigation --}}
-            <nav class="flex flex-1 flex-col gap-y-1">
-                @include('partials.sidebar-items', ['variant' => 'desktop'])
-            </nav>
+            @if(!auth()->user()->staff)
+                {{-- Balance card (clients only) --}}
+                <div class="mx-4 mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-[0_12px_35px_-24px_rgba(20,33,61,0.45)]">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Saldo disponible</p>
+                    <div class="mt-2 flex items-end justify-between">
+                        <p class="text-2xl font-bold tracking-tight text-[#14213d]">{{ number_format(auth()->user()->cliente?->saldo_creditos ?? 0, 0) }} <span class="ml-1 text-base font-medium text-slate-500">créditos</span></p>
+                        <x-icons.credit-card class="h-5 w-5 shrink-0 text-slate-400" />
+                    </div>
+                    <a href="{{ route('dashboard.recargas') }}" class="mt-3 inline-flex items-center text-xs font-semibold text-[#3155d9] transition hover:text-[#2647c2] focus:outline-none focus:underline">
+                        Recargar saldo
+                        <span class="ml-1" aria-hidden="true">&rarr;</span>
+                    </a>
+                </div>
+            @endif
 
-            {{-- User section --}}
-            <div class="flex items-center gap-3 border-t border-white/10 px-3 pt-4">
-                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
-                    {{ str(Auth::user()->name)->substr(0, 1)->upper() }}
+            {{-- User card --}}
+            @if(!auth()->user()->staff)
+                <x-dropdown align="top-right" width="48">
+                    <x-slot name="trigger">
+                        <div class="mx-4 mb-3 cursor-pointer rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
+                            <div class="flex items-center gap-3">
+                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
+                                    {{ str(Auth::user()->name)->substr(0, 1)->upper() }}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="truncate text-base font-medium text-slate-300">{{ Auth::user()->name }}</p>
+                                    <p class="truncate text-xs text-slate-400">{{ Auth::user()->email }}</p>
+                                </div>
+                                <x-icons.ellipsis-vertical class="h-4 w-4 shrink-0 text-slate-400" />
+                            </div>
+                        </div>
+                    </x-slot>
+                    <x-slot name="content">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">Cerrar sesión</x-dropdown-link>
+                        </form>
+                    </x-slot>
+                </x-dropdown>
+            @else
+                {{-- Staff user section --}}
+                <x-dropdown align="top-right" width="48">
+                    <x-slot name="trigger">
+                        <div class="flex cursor-pointer items-center gap-3 border-t border-white/10 px-5 py-4 transition hover:bg-white/10">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
+                                {{ str(Auth::user()->name)->substr(0, 1)->upper() }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="truncate text-base font-medium text-slate-300">{{ Auth::user()->name }}</p>
+                                <p class="truncate text-xs text-slate-400">{{ Auth::user()->email }}</p>
+                            </div>
+                            <x-icons.chevron-down class="h-4 w-4 shrink-0 text-slate-400" />
+                        </div>
+                    </x-slot>
+                    <x-slot name="content">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">Cerrar sesión</x-dropdown-link>
+                        </form>
+                    </x-slot>
+                </x-dropdown>
+            @endif
+
+            {{-- Scrollable sidebar body --}}
+            <nav class="flex-1 overflow-y-auto scrollbar-none px-4 pb-4">
+                <div class="flex flex-col gap-y-1">
+                    @include('partials.sidebar-items', ['variant' => 'desktop'])
                 </div>
-                <div class="flex flex-1 items-center justify-between min-w-0">
-                    <span class="truncate text-sm font-medium text-slate-300">{{ Auth::user()->name }}</span>
-                    <x-dropdown align="left" width="48">
-                        <x-slot name="trigger">
-                            <button class="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" aria-label="Menú de usuario">
-                                <x-icons.chevron-down class="h-4 w-4" />
-                            </button>
-                        </x-slot>
-                        <x-slot name="content">
-                            <x-dropdown-link :href="route('profile.edit')">Perfil</x-dropdown-link>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">Cerrar sesión</x-dropdown-link>
-                            </form>
-                        </x-slot>
-                    </x-dropdown>
-                </div>
-            </div>
+            </nav>
         </div>
     </aside>
 
@@ -71,27 +112,71 @@
                 </button>
             </div>
 
-            {{-- Navigation --}}
-            <nav class="flex flex-1 flex-col gap-y-1 overflow-y-auto px-3 pb-4 pt-2">
+            @if(!auth()->user()->staff)
+                {{-- Balance card (mobile, clients only) --}}
+                <div class="mx-3 mb-2 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_12px_35px_-24px_rgba(20,33,61,0.45)]">
+                    <p class="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-slate-500">Saldo disponible</p>
+                    <div class="mt-1.5 flex items-end justify-between">
+                        <p class="text-xl font-bold tracking-tight text-[#14213d]">{{ number_format(auth()->user()->cliente?->saldo_creditos ?? 0, 0) }} <span class="ml-1 text-sm font-medium text-slate-500">créditos</span></p>
+                        <x-icons.credit-card class="h-5 w-5 shrink-0 text-slate-400" />
+                    </div>
+                    <a href="{{ route('dashboard.recargas') }}" class="mt-2 inline-flex items-center text-xs font-semibold text-[#3155d9] transition hover:text-[#2647c2] focus:outline-none focus:underline">
+                        Recargar saldo
+                        <span class="ml-1" aria-hidden="true">&rarr;</span>
+                    </a>
+                </div>
+            @endif
+
+            {{-- User card --}}
+            @if(!auth()->user()->staff)
+                <x-dropdown align="top-right" width="48">
+                    <x-slot name="trigger">
+                        <div class="mx-3 mb-2 flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
+                                {{ str(Auth::user()->name)->substr(0, 1)->upper() }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="truncate text-base font-medium text-slate-300">{{ Auth::user()->name }}</p>
+                                <p class="truncate text-xs text-slate-400">{{ Auth::user()->email }}</p>
+                            </div>
+                            <x-icons.ellipsis-vertical class="h-4 w-4 shrink-0 text-slate-400" />
+                        </div>
+                    </x-slot>
+                    <x-slot name="content">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">Cerrar sesión</x-dropdown-link>
+                        </form>
+                    </x-slot>
+                </x-dropdown>
+            @else
+                {{-- Staff user section --}}
+                <x-dropdown align="top-right" width="48">
+                    <x-slot name="trigger">
+                        <div class="flex cursor-pointer items-center gap-3 px-3 py-2 transition hover:bg-white/10">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
+                                {{ str(Auth::user()->name)->substr(0, 1)->upper() }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="truncate text-base font-medium text-slate-300">{{ Auth::user()->name }}</p>
+                                <p class="truncate text-xs text-slate-400">{{ Auth::user()->email }}</p>
+                            </div>
+                            <x-icons.chevron-down class="h-4 w-4 shrink-0 text-slate-400" />
+                        </div>
+                    </x-slot>
+                    <x-slot name="content">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">Cerrar sesión</x-dropdown-link>
+                        </form>
+                    </x-slot>
+                </x-dropdown>
+            @endif
+
+            {{-- Scrollable body --}}
+            <nav class="flex flex-1 flex-col gap-y-1 overflow-y-auto scrollbar-none px-3 pb-4 pt-2">
                 @include('partials.sidebar-items', ['variant' => 'mobile'])
             </nav>
-
-            {{-- User section --}}
-            <div class="border-t border-white/10 px-4 py-4">
-                <div class="flex items-center gap-3">
-                    <div class="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
-                        {{ str(Auth::user()->name)->substr(0, 1)->upper() }}
-                    </div>
-                    <span class="truncate text-sm font-medium text-slate-300">{{ Auth::user()->name }}</span>
-                </div>
-                <div class="mt-3 flex flex-col gap-y-1">
-                    <x-responsive-nav-link :href="route('profile.edit')">Perfil</x-responsive-nav-link>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <x-responsive-nav-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">Cerrar sesión</x-responsive-nav-link>
-                    </form>
-                </div>
-            </div>
         </aside>
     </div>
 </div>
