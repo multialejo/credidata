@@ -14,7 +14,7 @@ class Usuario extends Authenticatable
     use Notifiable;
 
     protected $fillable = [
-        'uid', 'email', 'firebase_uid', 'password', 'nombre', 'estado', 'roles', 'tipo_acceso',
+        'uid', 'email', 'firebase_uid', 'password', 'nombre', 'name', 'estado', 'roles', 'tipo_acceso',
     ];
 
     protected $casts = [
@@ -86,6 +86,11 @@ class Usuario extends Authenticatable
     public function getNameAttribute()
     {
         return $this->nombre;
+    }
+
+    public function setNameAttribute(string $value): void
+    {
+        $this->attributes['nombre'] = $value;
     }
 
     public function cliente()
