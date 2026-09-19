@@ -13,17 +13,17 @@
 
             @if(!auth()->user()->staff)
                 {{-- Balance card (clients only) --}}
-                <div class="mx-4 mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-[0_12px_35px_-24px_rgba(20,33,61,0.45)]">
+                <a href="{{ route('dashboard.recargas') }}" class="group mx-4 mb-4 block rounded-xl border border-slate-200 bg-white p-4 shadow-[0_12px_35px_-24px_rgba(20,33,61,0.45)] transition hover:border-[#3155d9]/50 hover:shadow-[0_18px_50px_-24px_rgba(49,85,217,0.5)] focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2 focus:ring-offset-[#14213d]" aria-label="Recargar saldo">
                     <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Saldo disponible</p>
                     <div class="mt-2 flex items-end justify-between">
                         <p class="text-2xl font-bold tracking-tight text-[#14213d]">{{ number_format(auth()->user()->cliente?->saldo_creditos ?? 0, 0) }} <span class="ml-1 text-base font-medium text-slate-500">créditos</span></p>
-                        <x-icons.credit-card class="h-5 w-5 shrink-0 text-slate-400" />
+                        <x-icons.credit-card class="h-5 w-5 shrink-0 text-slate-400 transition group-hover:text-[#3155d9]" />
                     </div>
-                    <a href="{{ route('dashboard.recargas') }}" class="mt-3 inline-flex items-center text-xs font-semibold text-[#3155d9] transition hover:text-[#2647c2] focus:outline-none focus:underline">
+                    <p class="mt-3 inline-flex items-center text-sm font-semibold text-[#3155d9]">
                         Recargar saldo
-                        <span class="ml-1" aria-hidden="true">&rarr;</span>
-                    </a>
-                </div>
+                        <span class="ml-1 transition group-hover:translate-x-0.5" aria-hidden="true">&rarr;</span>
+                    </p>
+                </a>
             @endif
 
             {{-- User card --}}
@@ -37,7 +37,7 @@
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <p class="truncate text-base font-medium text-slate-300">{{ Auth::user()->name }}</p>
-                                    <p class="truncate text-xs text-slate-400">{{ Auth::user()->email }}</p>
+                                    <p class="truncate text-sm text-slate-400">{{ Auth::user()->email }}</p>
                                 </div>
                                 <x-icons.ellipsis-vertical class="h-4 w-4 shrink-0 text-slate-400" />
                             </div>
@@ -60,7 +60,7 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="truncate text-base font-medium text-slate-300">{{ Auth::user()->name }}</p>
-                                <p class="truncate text-xs text-slate-400">{{ Auth::user()->email }}</p>
+                                <p class="truncate text-sm text-slate-400">{{ Auth::user()->email }}</p>
                             </div>
                             <x-icons.chevron-down class="h-4 w-4 shrink-0 text-slate-400" />
                         </div>
@@ -114,17 +114,17 @@
 
             @if(!auth()->user()->staff)
                 {{-- Balance card (mobile, clients only) --}}
-                <div class="mx-3 mb-2 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_12px_35px_-24px_rgba(20,33,61,0.45)]">
+                <a href="{{ route('dashboard.recargas') }}" class="group mx-3 mb-2 block rounded-xl border border-slate-200 bg-white p-3 shadow-[0_12px_35px_-24px_rgba(20,33,61,0.45)] transition hover:border-[#3155d9]/50 hover:shadow-[0_18px_50px_-24px_rgba(49,85,217,0.5)] focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2 focus:ring-offset-[#14213d]" aria-label="Recargar saldo">
                     <p class="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-slate-500">Saldo disponible</p>
                     <div class="mt-1.5 flex items-end justify-between">
                         <p class="text-xl font-bold tracking-tight text-[#14213d]">{{ number_format(auth()->user()->cliente?->saldo_creditos ?? 0, 0) }} <span class="ml-1 text-sm font-medium text-slate-500">créditos</span></p>
-                        <x-icons.credit-card class="h-5 w-5 shrink-0 text-slate-400" />
+                        <x-icons.credit-card class="h-5 w-5 shrink-0 text-slate-400 transition group-hover:text-[#3155d9]" />
                     </div>
-                    <a href="{{ route('dashboard.recargas') }}" class="mt-2 inline-flex items-center text-xs font-semibold text-[#3155d9] transition hover:text-[#2647c2] focus:outline-none focus:underline">
+                    <p class="mt-2 inline-flex items-center text-sm font-semibold text-[#3155d9]">
                         Recargar saldo
-                        <span class="ml-1" aria-hidden="true">&rarr;</span>
-                    </a>
-                </div>
+                        <span class="ml-1 transition group-hover:translate-x-0.5" aria-hidden="true">&rarr;</span>
+                    </p>
+                </a>
             @endif
 
             {{-- User card --}}
@@ -137,7 +137,7 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="truncate text-base font-medium text-slate-300">{{ Auth::user()->name }}</p>
-                                <p class="truncate text-xs text-slate-400">{{ Auth::user()->email }}</p>
+                                <p class="truncate text-sm text-slate-400">{{ Auth::user()->email }}</p>
                             </div>
                             <x-icons.ellipsis-vertical class="h-4 w-4 shrink-0 text-slate-400" />
                         </div>
@@ -159,7 +159,7 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="truncate text-base font-medium text-slate-300">{{ Auth::user()->name }}</p>
-                                <p class="truncate text-xs text-slate-400">{{ Auth::user()->email }}</p>
+                                <p class="truncate text-sm text-slate-400">{{ Auth::user()->email }}</p>
                             </div>
                             <x-icons.chevron-down class="h-4 w-4 shrink-0 text-slate-400" />
                         </div>
