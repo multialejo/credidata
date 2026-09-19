@@ -26,8 +26,17 @@ Credidata is an operations workspace, not a generic admin template. Use a warm p
 - Status badges must include readable text, not color alone.
 - Empty, loading, and error states should be explicit.
 
+## Navigation
+
+- Primary navigation is a fixed left sidebar (`w-64`) in ink `#14213d`, visible from the `lg` breakpoint up.
+- Each nav item pairs a Heroicons outline icon (h-5, `stroke-width="1.5"`) with a label in sentence-case.
+- The active item uses `bg-white/12 text-white` with a bold weight; inactive items use `text-slate-300` with `hover:bg-white/10 hover:text-white`.
+- User identity is pinned to the sidebar footer with a chevron-down dropdown for Perfil / Cerrar sesión.
+- On mobile (`<lg`): a thin ink header bar shows a hamburger icon and the Credidata logo; tapping it opens an off-canvas drawer from the left with a backdrop overlay.
+- The drawer contains the same nav items, a close button, and the user section at the bottom.
+
 ## Responsive behavior
 
 - Keep the primary action visible on small screens.
-- Navigation collapses into a menu below the `sm` breakpoint.
+- On mobile, a sticky ink header replaces the sidebar; navigation slides in as a left-edge drawer with a dark backdrop.
 - Data rows may scroll horizontally, but controls and headings must remain understandable without horizontal scrolling.

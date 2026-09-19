@@ -19,19 +19,22 @@
         <div class="min-h-screen bg-[#f7f5ef]">
             @include('layouts.navigation')
 
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="border-b border-slate-200/80 bg-[#f7f5ef]">
-                    <div class="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endisset
+            {{-- Main content area — offset by sidebar width on desktop --}}
+            <div class="lg:pl-64">
+                {{-- Page Heading --}}
+                @isset($header)
+                    <header class="border-b border-slate-200/80 bg-[#f7f5ef]">
+                        <div class="px-4 py-7 sm:px-6 lg:px-8">
+                            {{ $header }}
+                        </div>
+                    </header>
+                @endisset
 
-            <!-- Page Content -->
-            <main class="pb-12">
-                {{ $slot }}
-            </main>
+                {{-- Page Content --}}
+                <main class="pb-12">
+                    {{ $slot }}
+                </main>
+            </div>
         </div>
 
         @livewireScripts
