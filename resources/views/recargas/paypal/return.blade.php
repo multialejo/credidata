@@ -21,12 +21,12 @@
                             <p class="mt-2 text-sm text-gray-600">
                                 Tu recarga por
                                 <span class="font-semibold text-green-600">
-                                    {{ number_format((int) $recarga->creditos_obtenidos, 0) }}
+                                    {{ number_format((int) ($recarga?->creditos_obtenidos ?? $intencion?->creditos_estimados ?? 0), 0) }}
                                 </span>
                                 créditos fue procesada con éxito.
                             </p>
-                            <p class="mt-1 text-xs text-gray-500">
-                                Orden: {{ $recarga->referencia_externa }}
+                            <p class="mt-1 text-xs text-gray-500 font-mono">
+                                Orden: {{ $recarga?->referencia_externa ?? $intencion?->order_id }}
                             </p>
                             <a href="{{ route('dashboard') }}" class="mt-6 inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded">
                                 Volver al Panel de Saldo
@@ -46,7 +46,7 @@
                             </div>
                             <h3 class="mt-4 text-lg font-semibold text-gray-900">Pendiente</h3>
                             <p class="mt-2 text-sm text-gray-600">
-                                Tu orden <span class="font-mono">{{ $recarga->referencia_externa }}</span>
+                                Tu orden <span class="font-mono">{{ $intencion?->order_id }}</span>
                                 está pendiente de acreditación.
                             </p>
                             @auth
@@ -74,26 +74,6 @@
                             <h3 class="mt-4 text-lg font-semibold text-gray-900">Pago no completado</h3>
                             <p class="mt-2 text-sm text-gray-600">
                                 Tu orden no pudo ser procesada por PayPal. Podés reintentar la recarga.
-                            </p>
-                            <a href="{{ route('dashboard') }}" class="mt-6 inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded">
-                                Volver al Panel de Saldo
-                                <svg class="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                </svg>
-                            </a>
-                        </div>
-                    @break
-
-                    @case('rechazada')
-                        <div class="text-center">
-                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100">
-                                <svg class="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
-                                </svg>
-                            </div>
-                            <h3 class="mt-4 text-lg font-semibold text-gray-900">Recarga rechazada</h3>
-                            <p class="mt-2 text-sm text-gray-600">
-                                Tu recarga fue rechazada. Contactá a soporte para más información.
                             </p>
                             <a href="{{ route('dashboard') }}" class="mt-6 inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded">
                                 Volver al Panel de Saldo

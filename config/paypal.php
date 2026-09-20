@@ -8,4 +8,5 @@ return [
     'timeout' => (int) env('PAYPAL_TIMEOUT', 10),
     'return_url' => env('PAYPAL_RETURN_URL') ?: null,
     'cancel_url' => env('PAYPAL_CANCEL_URL') ?: null,
+    'intencion_ttl_minutes' => (int) env('PAYPAL_INTENCION_TTL_MINUTES', 15),
 ];

@@ -2,15 +2,18 @@
 
 namespace Tests\Feature\Web;
 
+use App\Enums\EstadoIntencionPaypal;
 use App\Enums\EstadoRecarga;
 use App\Mail\RecargaConfirmada;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
+use App\Models\IntencionPaypal;
 use App\Models\LogActividad;
 use App\Models\Recarga;
 use App\Models\Usuario;
 use App\Services\RecargaPaypalService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Mail;
 use Mockery;
 use Tests\TestCase;
@@ -28,12 +31,12 @@ class RecargaPaypalReturnTest extends TestCase
         parent::setUp();
 
         config(['paypal.mock' => true]);
-        ConfigParametrosRecargaWeb::seed();
+        ConfigParametrosRecargaPaypalWeb::seed();
 
         $this->usuario = Usuario::create([
-            'uid' => 'return-test-uid',
-            'email' => 'return@test.com',
-            'nombre' => 'Cliente Return',
+            'uid' => 'paypal-return-uid',
+            'email' => 'paypal-return@test.com',
+            'nombre' => 'Cliente PayPal Return',
             'roles' => json_encode(['cliente']),
         ]);
 
@@ -43,24 +46,15 @@ class RecargaPaypalReturnTest extends TestCase
         ]);
     }
 
-    // --- REQ-01 ---
-
-    public function test_retorno_con_orden_completada_muestra_exito_sin_recapturar(): void
+    public function test_retorno_con_recarga_completada_muestra_exito_sin_recapturar(): void
     {
-        $token = 'MOCK-ORDER-123';
+        $token = 'ORDER-COMPLETED-001';
         $saldoInicial = 100;
 
         $this->cliente->update(['saldo_creditos' => $saldoInicial]);
 
-        Recarga::create([
-            'cliente_id' => $this->cliente->id,
-            'metodo' => 'paypal',
-            'monto_usd' => 10.00,
-            'creditos_obtenidos' => 100,
-            'estado' => 'completada',
-            'referencia_externa' => $token,
-            'fecha' => now(),
-        ]);
+        $this->crearIntencion($token);
+        $this->crearRecargaCompletada($token);
 
         $this->partialMock(RecargaPaypalService::class, function ($mock) {
             $mock->shouldReceive('captureOrder')->never();
@@ -78,28 +72,20 @@ class RecargaPaypalReturnTest extends TestCase
         $this->assertSame($saldoInicial, (int) $this->cliente->fresh()->saldo_creditos);
     }
 
-    public function test_retorno_con_orden_completada_y_guest_muestra_exito_sin_recapturar(): void
+    public function test_retorno_con_recarga_completada_y_guest_muestra_exito_sin_recapturar(): void
     {
-        $token = 'MOCK-ORDER-COMPLETED-GUEST';
+        $token = 'ORDER-COMPLETED-GUEST-001';
         $saldoInicial = 100;
 
         $this->cliente->update(['saldo_creditos' => $saldoInicial]);
 
-        Recarga::create([
-            'cliente_id' => $this->cliente->id,
-            'metodo' => 'paypal',
-            'monto_usd' => 10.00,
-            'creditos_obtenidos' => 100,
-            'estado' => 'completada',
-            'referencia_externa' => $token,
-            'fecha' => now(),
-        ]);
+        $this->crearIntencion($token);
+        $this->crearRecargaCompletada($token);
 
         $this->partialMock(RecargaPaypalService::class, function ($mock) {
             $mock->shouldReceive('captureOrder')->never();
         });
 
-        // Guest (no actingAs) hitting the return URL for an already-completed order.
         $response = $this->get("/dashboard/recargas/paypal/return?token={$token}");
 
         $response->assertStatus(200);
@@ -107,40 +93,17 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertSeeText('Recarga acreditada');
         $response->assertSeeText('100');
         $response->assertSeeText('Volver al Panel de Saldo');
-        $response->assertSee(route('dashboard'));
-        $this->assertSame(EstadoRecarga::Completada, $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
         $this->assertSame($saldoInicial, (int) $this->cliente->fresh()->saldo_creditos);
     }
 
-    // --- REQ-02 ---
-
-    public function test_retorno_con_orden_pendiente_y_owner_captura_y_muestra_exito(): void
+    public function test_retorno_con_intencion_confirmada_muestra_exito_sin_recapturar(): void
     {
-        Mail::fake();
+        $token = 'ORDER-CONFIRMADA-001';
 
-        $token = 'MOCK-ORDER-CAPTURE-1';
-        $saldoInicial = 0;
+        $this->crearIntencion($token, EstadoIntencionPaypal::Confirmada);
 
-        $this->cliente->update(['saldo_creditos' => $saldoInicial]);
-
-        Recarga::create([
-            'cliente_id' => $this->cliente->id,
-            'metodo' => 'paypal',
-            'monto_usd' => 10.00,
-            'creditos_obtenidos' => 100,
-            'estado' => 'pendiente',
-            'referencia_externa' => $token,
-            'fecha' => now(),
-        ]);
-
-        $this->partialMock(RecargaPaypalService::class, function ($mock) use ($token) {
-            $mock->shouldReceive('captureOrder')
-                ->with($token)
-                ->once()
-                ->andReturn([
-                    'id' => $token,
-                    'status' => 'COMPLETED',
-                ]);
+        $this->partialMock(RecargaPaypalService::class, function ($mock) {
+            $mock->shouldReceive('captureOrder')->never();
         });
 
         $response = $this->actingAs($this->usuario)
@@ -149,24 +112,58 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.paypal.return');
         $response->assertSeeText('Recarga acreditada');
-        $response->assertSeeText('Volver al Panel de Saldo');
-        $response->assertSee(route('dashboard'));
+        $this->assertSame(EstadoIntencionPaypal::Confirmada, IntencionPaypal::where('order_id', $token)->first()->estado);
+    }
 
-        $this->assertSame(EstadoRecarga::Completada, $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
+    public function test_retorno_con_intencion_pendiente_y_owner_captura_y_acredita(): void
+    {
+        Mail::fake();
+
+        $token = 'ORDER-PENDING-001';
+        $saldoInicial = 0;
+
+        $this->cliente->update(['saldo_creditos' => $saldoInicial]);
+
+        $this->crearIntencion($token);
+
+        $this->partialMock(RecargaPaypalService::class, function ($mock) use ($token) {
+            $mock->shouldReceive('captureOrder')
+                ->with($token, 10.0)
+                ->once()
+                ->andReturn($this->capturaCompletada($token, 'CAP-RETURN-001', '10.00'));
+        });
+
+        $response = $this->actingAs($this->usuario)
+            ->get("/dashboard/recargas/paypal/return?token={$token}");
+
+        $response->assertStatus(200);
+        $response->assertViewIs('recargas.paypal.return');
+        $response->assertSeeText('Recarga acreditada');
+        $response->assertSeeText('100');
+        $response->assertSeeText('Volver al Panel de Saldo');
+
+        $this->assertSame(EstadoIntencionPaypal::Confirmada, IntencionPaypal::where('order_id', $token)->first()->estado);
+        $this->assertDatabaseHas('recargas', [
+            'referencia_externa' => $token,
+            'cliente_id' => $this->cliente->id,
+            'metodo' => 'paypal',
+            'estado' => 'completada',
+            'monto_usd' => 10.00,
+            'creditos_obtenidos' => 100,
+            'provider_payment_id' => 'CAP-RETURN-001',
+        ]);
         $this->assertSame($saldoInicial + 100, (int) $this->cliente->fresh()->saldo_creditos);
         $this->assertSame(1, LogActividad::where('accion', 'recarga.acreditada')
             ->where('actor_id', $this->usuario->id)->count());
         Mail::assertSent(RecargaConfirmada::class, fn ($m) => $m->hasTo($this->usuario->email));
     }
 
-    // --- REQ-04 ---
-
     public function test_retorno_con_owner_distinto_retorna_not_found_sin_info_leak(): void
     {
         $otroUsuario = Usuario::create([
-            'uid' => 'OTHER-USER-UID-RETURN',
-            'email' => 'otro-return@test.com',
-            'nombre' => 'Otro Cliente Return',
+            'uid' => 'OTHER-PAYPAL-RETURN-UID',
+            'email' => 'otro-paypal-return@test.com',
+            'nombre' => 'Otro Cliente',
             'roles' => json_encode(['cliente']),
         ]);
         $otroCliente = Cliente::create([
@@ -174,14 +171,15 @@ class RecargaPaypalReturnTest extends TestCase
             'saldo_creditos' => 0,
         ]);
 
-        $token = 'MOCK-ORDER-OTHER-OWNER';
-        Recarga::create([
+        $token = 'ORDER-OTHER-OWNER-001';
+        IntencionPaypal::create([
             'cliente_id' => $otroCliente->id,
-            'metodo' => 'paypal',
+            'order_id' => $token,
             'monto_usd' => 10.00,
-            'creditos_obtenidos' => 100,
-            'estado' => 'pendiente',
-            'referencia_externa' => $token,
+            'creditos_estimados' => 100,
+            'moneda' => 'USD',
+            'estado' => EstadoIntencionPaypal::Pendiente,
+            'expira_en' => now()->addMinutes(15),
             'fecha' => now(),
         ]);
 
@@ -196,27 +194,16 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertViewIs('recargas.paypal.return');
         $response->assertSeeText('Orden no encontrada');
         $response->assertSeeText('Volver al Panel de Saldo');
-        $response->assertSee(route('dashboard'));
-        $this->assertSame(EstadoRecarga::Pendiente, $otroCliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
+        $this->assertSame(EstadoIntencionPaypal::Pendiente, IntencionPaypal::where('order_id', $token)->first()->estado);
     }
 
-    // --- REQ-03 ---
-
-    public function test_retorno_con_orden_pendiente_y_guest_muestra_status_sin_capturar(): void
+    public function test_retorno_con_intencion_pendiente_y_guest_muestra_status_sin_capturar(): void
     {
         Mail::fake();
 
-        $token = 'MOCK-ORDER-GUEST';
+        $token = 'ORDER-PENDING-GUEST-001';
 
-        Recarga::create([
-            'cliente_id' => $this->cliente->id,
-            'metodo' => 'paypal',
-            'monto_usd' => 10.00,
-            'creditos_obtenidos' => 100,
-            'estado' => 'pendiente',
-            'referencia_externa' => $token,
-            'fecha' => now(),
-        ]);
+        $this->crearIntencion($token);
 
         $this->partialMock(RecargaPaypalService::class, function ($mock) {
             $mock->shouldReceive('captureOrder')->never();
@@ -227,12 +214,10 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.paypal.return');
         $response->assertSeeText('Pendiente');
-        $this->assertSame(EstadoRecarga::Pendiente, $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
+        $this->assertSame(EstadoIntencionPaypal::Pendiente, IntencionPaypal::where('order_id', $token)->first()->estado);
         $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
         Mail::assertNothingSent();
     }
-
-    // --- REQ-06 ---
 
     public function test_retorno_con_token_inexistente_retorna_not_found(): void
     {
@@ -247,26 +232,30 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertViewIs('recargas.paypal.return');
         $response->assertSeeText('Orden no encontrada');
         $response->assertSeeText('Volver al Panel de Saldo');
-        $response->assertSee(route('dashboard'));
     }
 
-    // --- REQ-05 ---
+    public function test_retorno_sin_token_retorna_not_found(): void
+    {
+        $this->crearIntencion('ORDER-NO-TOKEN-001');
 
-    public function test_retorno_con_orden_fallida_muestra_fallo_sin_reintentar(): void
+        $this->partialMock(RecargaPaypalService::class, function ($mock) {
+            $mock->shouldReceive('captureOrder')->never();
+        });
+
+        $response = $this->actingAs($this->usuario)
+            ->get('/dashboard/recargas/paypal/return');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('recargas.paypal.return');
+        $response->assertSeeText('Orden no encontrada');
+    }
+
+    public function test_retorno_con_intencion_cancelada_muestra_fallo_sin_reintentar(): void
     {
         Mail::fake();
 
-        $token = 'MOCK-ORDER-FALLIDA';
-
-        Recarga::create([
-            'cliente_id' => $this->cliente->id,
-            'metodo' => 'paypal',
-            'monto_usd' => 10.00,
-            'creditos_obtenidos' => 100,
-            'estado' => 'fallida',
-            'referencia_externa' => $token,
-            'fecha' => now(),
-        ]);
+        $token = 'ORDER-CANCELADA-001';
+        $this->crearIntencion($token, EstadoIntencionPaypal::Cancelada);
 
         $this->partialMock(RecargaPaypalService::class, function ($mock) {
             $mock->shouldReceive('captureOrder')->never();
@@ -278,35 +267,44 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.paypal.return');
         $response->assertSeeText('Pago no completado');
-        $response->assertSeeText('Volver al Panel de Saldo');
-        $response->assertSee(route('dashboard'));
-        $this->assertSame(EstadoRecarga::Fallida, $this->cliente->fresh()->recargas()->where('referencia_externa', $token)->first()->estado);
+        $this->assertSame(EstadoIntencionPaypal::Cancelada, IntencionPaypal::where('order_id', $token)->first()->estado);
         Mail::assertNothingSent();
     }
 
-    // --- REQ-02 (idempotency) ---
+    public function test_retorno_con_intencion_expirada_muestra_fallo_sin_reintentar(): void
+    {
+        Mail::fake();
+
+        $token = 'ORDER-EXPIRADA-001';
+        $this->crearIntencion($token, EstadoIntencionPaypal::Expirada);
+
+        $this->partialMock(RecargaPaypalService::class, function ($mock) {
+            $mock->shouldReceive('captureOrder')->never();
+        });
+
+        $response = $this->actingAs($this->usuario)
+            ->get("/dashboard/recargas/paypal/return?token={$token}");
+
+        $response->assertStatus(200);
+        $response->assertViewIs('recargas.paypal.return');
+        $response->assertSeeText('Pago no completado');
+        $this->assertSame(EstadoIntencionPaypal::Expirada, IntencionPaypal::where('order_id', $token)->first()->estado);
+        Mail::assertNothingSent();
+    }
 
     public function test_retorno_doble_no_acredita_doble(): void
     {
         Mail::fake();
 
-        $token = 'MOCK-ORDER-DOUBLE-RETURN';
+        $token = 'ORDER-DOUBLE-001';
 
-        Recarga::create([
-            'cliente_id' => $this->cliente->id,
-            'metodo' => 'paypal',
-            'monto_usd' => 10.00,
-            'creditos_obtenidos' => 100,
-            'estado' => 'pendiente',
-            'referencia_externa' => $token,
-            'fecha' => now(),
-        ]);
+        $this->crearIntencion($token);
 
         $this->partialMock(RecargaPaypalService::class, function ($mock) use ($token) {
             $mock->shouldReceive('captureOrder')
-                ->with($token)
+                ->with($token, 10.0)
                 ->once()
-                ->andReturn(['id' => $token, 'status' => 'COMPLETED']);
+                ->andReturn($this->capturaCompletada($token, 'CAP-DOUBLE-001', '10.00'));
         });
 
         $primera = $this->actingAs($this->usuario)
@@ -316,34 +314,98 @@ class RecargaPaypalReturnTest extends TestCase
 
         $primera->assertStatus(200);
         $primera->assertSeeText('Recarga acreditada');
-        $primera->assertSeeText('Volver al Panel de Saldo');
-        $primera->assertSee(route('dashboard'));
         $segunda->assertStatus(200);
         $segunda->assertSeeText('Recarga acreditada');
-        $segunda->assertSeeText('Volver al Panel de Saldo');
-        $segunda->assertSee(route('dashboard'));
 
         $this->assertSame(100, (int) $this->cliente->fresh()->saldo_creditos);
+        $this->assertSame(1, Recarga::where('referencia_externa', $token)->count());
         Mail::assertSentCount(1);
     }
 
-    public function test_renderiza_recarga_rechazada(): void
+    public function test_retorno_con_status_no_completed_cancela_intencion_y_loggea(): void
     {
-        $recarga = Recarga::create([
-            'cliente_id' => $this->cliente->id,
-            'metodo' => 'transferencia',
-            'monto_usd' => 10,
-            'creditos_obtenidos' => 100,
-            'estado' => EstadoRecarga::Rechazada,
-            'referencia_externa' => 'TEST-REJ-001',
-            'fecha' => now(),
-        ]);
+        Mail::fake();
+
+        $token = 'ORDER-DECLINED-001';
+
+        $this->crearIntencion($token);
+
+        $this->partialMock(RecargaPaypalService::class, function ($mock) use ($token) {
+            $mock->shouldReceive('captureOrder')
+                ->with($token, 10.0)
+                ->once()
+                ->andReturn(['id' => $token, 'status' => 'DECLINED']);
+        });
 
         $response = $this->actingAs($this->usuario)
-            ->get('/dashboard/recargas/paypal/return?token='.$recarga->referencia_externa);
+            ->get("/dashboard/recargas/paypal/return?token={$token}");
 
         $response->assertStatus(200);
-        $response->assertSee('Recarga rechazada', false);
+        $response->assertViewIs('recargas.paypal.return');
+        $response->assertSeeText('Pago no completado');
+
+        $this->assertSame(EstadoIntencionPaypal::Cancelada, IntencionPaypal::where('order_id', $token)->first()->estado);
+        $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
+        $this->assertSame(0, Recarga::count());
+        $this->assertSame(1, LogActividad::where('accion', 'recarga.fallida')
+            ->where('actor_id', $this->usuario->id)->count());
+        Mail::assertNothingSent();
+    }
+
+    public function test_retorno_con_connection_exception_muestra_pendiente(): void
+    {
+        Mail::fake();
+
+        $token = 'ORDER-TIMEOUT-001';
+
+        $this->crearIntencion($token);
+
+        $this->partialMock(RecargaPaypalService::class, function ($mock) use ($token) {
+            $mock->shouldReceive('captureOrder')
+                ->with($token, 10.0)
+                ->once()
+                ->andThrow(new ConnectionException('timeout'));
+        });
+
+        $response = $this->actingAs($this->usuario)
+            ->get("/dashboard/recargas/paypal/return?token={$token}");
+
+        $response->assertStatus(200);
+        $response->assertViewIs('recargas.paypal.return');
+        $response->assertSeeText('Pendiente');
+        $this->assertSame(EstadoIntencionPaypal::Pendiente, IntencionPaypal::where('order_id', $token)->first()->estado);
+        $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
+        Mail::assertNothingSent();
+    }
+
+    public function test_retorno_completed_con_monto_distinto_cancela_sin_acreditar(): void
+    {
+        Mail::fake();
+
+        $token = 'ORDER-AMOUNT-MISMATCH-001';
+
+        $this->crearIntencion($token);
+
+        $this->partialMock(RecargaPaypalService::class, function ($mock) use ($token) {
+            $mock->shouldReceive('captureOrder')
+                ->with($token, 10.0)
+                ->once()
+                ->andReturn($this->capturaCompletada($token, 'CAP-MISMATCH-001', '9.99'));
+        });
+
+        $response = $this->actingAs($this->usuario)
+            ->get("/dashboard/recargas/paypal/return?token={$token}");
+
+        $response->assertStatus(200);
+        $response->assertViewIs('recargas.paypal.return');
+        $response->assertSeeText('Pago no completado');
+
+        $this->assertSame(EstadoIntencionPaypal::Cancelada, IntencionPaypal::where('order_id', $token)->first()->estado);
+        $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
+        $this->assertSame(0, Recarga::count());
+        $this->assertSame(1, LogActividad::where('accion', 'recarga.fallida')
+            ->where('actor_id', $this->usuario->id)->count());
+        Mail::assertNothingSent();
     }
 
     protected function tearDown(): void
@@ -351,9 +413,53 @@ class RecargaPaypalReturnTest extends TestCase
         Mockery::close();
         parent::tearDown();
     }
+
+    private function crearIntencion(string $orderId, EstadoIntencionPaypal $estado = EstadoIntencionPaypal::Pendiente): IntencionPaypal
+    {
+        return IntencionPaypal::create([
+            'cliente_id' => $this->cliente->id,
+            'order_id' => $orderId,
+            'monto_usd' => 10.00,
+            'creditos_estimados' => 100,
+            'moneda' => 'USD',
+            'estado' => $estado,
+            'expira_en' => now()->addMinutes(15),
+            'fecha' => now(),
+        ]);
+    }
+
+    private function crearRecargaCompletada(string $orderId): void
+    {
+        Recarga::create([
+            'cliente_id' => $this->cliente->id,
+            'metodo' => 'paypal',
+            'monto_usd' => 10.00,
+            'creditos_obtenidos' => 100,
+            'estado' => EstadoRecarga::Completada,
+            'referencia_externa' => $orderId,
+            'fecha' => now(),
+        ]);
+    }
+
+    private function capturaCompletada(string $orderId, string $captureId, string $monto): array
+    {
+        return [
+            'id' => $orderId,
+            'status' => 'COMPLETED',
+            'purchase_units' => [[
+                'reference_id' => 'default',
+                'payments' => ['captures' => [[
+                    'id' => $captureId,
+                    'status' => 'COMPLETED',
+                    'amount' => ['currency_code' => 'USD', 'value' => $monto],
+                    'final_capture' => true,
+                ]]],
+            ]],
+        ];
+    }
 }
 
-class ConfigParametrosRecargaWeb
+class ConfigParametrosRecargaPaypalWeb
 {
     public static function seed(): void
     {

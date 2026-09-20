@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\EstadoIntencionPaypal;
 use App\Enums\EstadoRecarga;
 use App\Http\Controllers\Concerns\InteractsWithFinancieroConfig;
 use App\Http\Controllers\Controller;
+use App\Models\Cliente;
+use App\Models\IntencionPaypal;
 use App\Models\LogActividad;
 use App\Models\Recarga;
 use App\Services\RecargaPaypalService;
 use App\Services\RecargaService;
+use App\StateTransitions\IntencionPaypalTransitions;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class RecargaPaypalController extends Controller
 {
@@ -45,15 +51,21 @@ class RecargaPaypalController extends Controller
             return $this->respondFuenteNoDisponible($e);
         }
 
+        $orderId = $order['id'] ?? null;
         $approvalUrl = $this->paypal->obtenerApprovalUrl($order);
 
-        Recarga::create([
+        if (! $orderId || ! $approvalUrl) {
+            return $this->respondFuenteIncompleta();
+        }
+
+        $intencion = IntencionPaypal::create([
             'cliente_id' => $cliente->id,
-            'metodo' => 'paypal',
+            'order_id' => $orderId,
             'monto_usd' => $monto,
-            'creditos_obtenidos' => $creditos,
-            'estado' => EstadoRecarga::Pendiente,
-            'referencia_externa' => $order['id'],
+            'creditos_estimados' => $creditos,
+            'moneda' => 'USD',
+            'estado' => EstadoIntencionPaypal::Pendiente,
+            'expira_en' => now()->addMinutes((int) config('paypal.intencion_ttl_minutes', 15)),
             'fecha' => now(),
         ]);
 
@@ -62,7 +74,8 @@ class RecargaPaypalController extends Controller
             'exito' => true,
             'mensaje' => 'Orden PayPal creada',
             'datos' => [
-                'order_id' => $order['id'],
+                'intencion_id' => $intencion->id,
+                'order_id' => $orderId,
                 'approval_url' => $approvalUrl,
                 'monto_usd' => $monto,
                 'creditos_calculados' => $creditos,
@@ -75,8 +88,9 @@ class RecargaPaypalController extends Controller
     {
         $cliente = $request->user()->cliente;
 
-        $existente = Recarga::where('referencia_externa', $orderId)->first();
-        if (! $existente) {
+        $intencion = IntencionPaypal::where('order_id', $orderId)->first();
+
+        if ($intencion === null) {
             return response()->json([
                 'codigo' => 404,
                 'exito' => false,
@@ -86,7 +100,7 @@ class RecargaPaypalController extends Controller
             ], 404);
         }
 
-        if ($existente->cliente_id !== $cliente->id) {
+        if ($intencion->cliente_id !== $cliente->id) {
             return response()->json([
                 'codigo' => 403,
                 'exito' => false,
@@ -96,31 +110,39 @@ class RecargaPaypalController extends Controller
             ], 403);
         }
 
-        if ($existente->estado === EstadoRecarga::Completada) {
+        $recargaCompletada = Recarga::where('referencia_externa', $orderId)
+            ->where('estado', EstadoRecarga::Completada)
+            ->first();
+
+        if ($recargaCompletada) {
+            return $this->respondYaProcesada($recargaCompletada, $cliente);
+        }
+
+        if (in_array($intencion->estado, [EstadoIntencionPaypal::Cancelada, EstadoIntencionPaypal::Expirada], true)) {
+            return response()->json([
+                'codigo' => 409,
+                'exito' => false,
+                'mensaje' => 'La intención está en un estado terminal y no puede reintentarse',
+                'error' => ['tipo' => 'TRANSICION_INVALIDA', 'detalle' => $intencion->estado->value],
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 409);
+        }
+
+        if ($intencion->estado === EstadoIntencionPaypal::Confirmada) {
             return response()->json([
                 'codigo' => 200,
                 'exito' => true,
                 'mensaje' => 'Recarga ya procesada',
                 'datos' => [
-                    'creditos_acreditados' => (int) $existente->creditos_obtenidos,
+                    'creditos_acreditados' => (int) $intencion->creditos_estimados,
                     'saldo_actual' => (int) $cliente->fresh()->saldo_creditos,
                 ],
                 'metadatos' => ['timestamp' => now()->toIso8601String()],
             ]);
         }
 
-        if (in_array($existente->estado, [EstadoRecarga::Fallida, EstadoRecarga::Rechazada], true)) {
-            return response()->json([
-                'codigo' => 409,
-                'exito' => false,
-                'mensaje' => 'La recarga está en un estado terminal y no puede reintentarse',
-                'error' => ['tipo' => 'TRANSICION_INVALIDA', 'detalle' => $existente->estado->value],
-                'metadatos' => ['timestamp' => now()->toIso8601String()],
-            ], 409);
-        }
-
         try {
-            $captura = $this->paypal->captureOrder($orderId);
+            $captura = $this->paypal->captureOrder($orderId, (float) $intencion->monto_usd);
         } catch (ConnectionException $e) {
             return $this->respondFuenteNoDisponible($e);
         }
@@ -135,31 +157,17 @@ class RecargaPaypalController extends Controller
             ], 404);
         }
 
-        if (($captura['status'] ?? null) !== 'COMPLETED') {
-            $providerStatus = $captura['status'] ?? 'unknown';
-            if (in_array($providerStatus, ['DECLINED', 'VOIDED', 'CANCELED', 'DENIED', 'EXPIRED'], true)) {
-                $existente->update(['estado' => EstadoRecarga::Fallida]);
-            } else {
-                $existente->update(['provider_status' => $providerStatus]);
-            }
+        $providerStatus = $captura['status'] ?? 'unknown';
 
-            if ($existente->estado === EstadoRecarga::Fallida) {
-                LogActividad::create([
-                    'accion' => 'recarga.fallida',
-                    'actor_id' => $cliente->usuario->id,
-                    'detalle' => [
-                        'referencia_externa' => $orderId,
-                        'paypal_status' => $providerStatus,
-                    ],
-                ]);
-            }
+        if ($providerStatus !== 'COMPLETED') {
+            $this->marcarCancelada($intencion, $cliente, $orderId, $providerStatus);
 
             return response()->json([
                 'codigo' => 200,
                 'exito' => false,
-                'mensaje' => $existente->estado === EstadoRecarga::Fallida ? 'Pago no completado, puede reintentar' : 'Pago pendiente de confirmación',
+                'mensaje' => 'Pago no completado, puede reintentar',
                 'error' => [
-                    'tipo' => $existente->estado === EstadoRecarga::Fallida ? 'PAGO_NO_COMPLETADO' : 'PAGO_PENDIENTE',
+                    'tipo' => 'PAGO_NO_COMPLETADO',
                     'detalle' => 'Estado PayPal: '.$providerStatus,
                 ],
                 'metadatos' => ['timestamp' => now()->toIso8601String()],
@@ -168,20 +176,12 @@ class RecargaPaypalController extends Controller
 
         $evidencia = $this->paypal->obtenerEvidenciaCaptura(
             $captura,
-            $existente->referencia_externa,
-            $existente->monto_usd,
+            $intencion->order_id,
+            (string) $intencion->monto_usd,
         );
 
         if (! $evidencia) {
-            $existente->update([
-                'estado' => EstadoRecarga::Fallida,
-                'provider_status' => 'COMPLETED_MISMATCH',
-            ]);
-            LogActividad::create([
-                'accion' => 'recarga.fallida',
-                'actor_id' => $cliente->usuario->id,
-                'detalle' => ['referencia_externa' => $orderId, 'paypal_status' => 'COMPLETED_MISMATCH'],
-            ]);
+            $this->marcarCancelada($intencion, $cliente, $orderId, 'COMPLETED_MISMATCH');
 
             return response()->json([
                 'codigo' => 409,
@@ -192,16 +192,33 @@ class RecargaPaypalController extends Controller
             ], 409);
         }
 
-        $existente->update($evidencia);
+        try {
+            $recarga = $this->recargaService->procesar(
+                referenciaExterna: $orderId,
+                clienteUid: $cliente->usuario->uid,
+                creditosObtenidos: (int) $intencion->creditos_estimados,
+                metodoPago: 'paypal',
+                montoUsd: (float) $intencion->monto_usd,
+            );
+        } catch (Throwable $e) {
+            Log::error('API procesar failed (PayPal)', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage(),
+            ]);
 
-        $creditos = (int) $existente->creditos_obtenidos;
+            return response()->json([
+                'codigo' => 503,
+                'exito' => false,
+                'mensaje' => 'Pago pendiente de confirmación, reintentá luego',
+                'error' => ['tipo' => 'PAGO_PENDIENTE', 'detalle' => 'No se pudo acreditar el saldo'],
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 503);
+        }
 
-        $this->recargaService->procesar(
-            referenciaExterna: $orderId,
-            clienteUid: $cliente->usuario->uid,
-            creditosObtenidos: $creditos,
-            metodoPago: 'paypal',
-        );
+        $recarga->forceFill($evidencia)->save();
+
+        IntencionPaypalTransitions::assert($intencion->estado, EstadoIntencionPaypal::Confirmada);
+        $intencion->update(['estado' => EstadoIntencionPaypal::Confirmada]);
 
         $saldo = (int) $cliente->fresh()->saldo_creditos;
 
@@ -210,10 +227,39 @@ class RecargaPaypalController extends Controller
             'exito' => true,
             'mensaje' => 'Recarga acreditada',
             'datos' => [
-                'creditos_acreditados' => $creditos,
+                'creditos_acreditados' => (int) $recarga->creditos_obtenidos,
                 'saldo_actual' => $saldo,
             ],
             'metadatos' => ['timestamp' => now()->toIso8601String()],
+        ]);
+    }
+
+    private function respondYaProcesada(Recarga $recarga, Cliente $cliente): JsonResponse
+    {
+        return response()->json([
+            'codigo' => 200,
+            'exito' => true,
+            'mensaje' => 'Recarga ya procesada',
+            'datos' => [
+                'creditos_acreditados' => (int) $recarga->creditos_obtenidos,
+                'saldo_actual' => (int) $cliente->fresh()->saldo_creditos,
+            ],
+            'metadatos' => ['timestamp' => now()->toIso8601String()],
+        ]);
+    }
+
+    private function marcarCancelada(IntencionPaypal $intencion, Cliente $cliente, string $orderId, string $status): void
+    {
+        IntencionPaypalTransitions::assert($intencion->estado, EstadoIntencionPaypal::Cancelada);
+        $intencion->update(['estado' => EstadoIntencionPaypal::Cancelada]);
+
+        LogActividad::create([
+            'accion' => 'recarga.fallida',
+            'actor_id' => $cliente->usuario->id,
+            'detalle' => [
+                'referencia_externa' => $orderId,
+                'paypal_status' => $status,
+            ],
         ]);
     }
 
@@ -229,6 +275,17 @@ class RecargaPaypalController extends Controller
             ],
             'metadatos' => ['timestamp' => now()->toIso8601String()],
         ], 503);
+    }
+
+    private function respondFuenteIncompleta(): JsonResponse
+    {
+        return response()->json([
+            'codigo' => 502,
+            'exito' => false,
+            'mensaje' => 'La pasarela de pago devolvió una respuesta incompleta',
+            'error' => ['tipo' => 'FUENTE_EXTERNA_INCOMPLETA', 'detalle' => null],
+            'metadatos' => ['timestamp' => now()->toIso8601String()],
+        ], 502);
     }
 
     private function respondValidationError(ValidationException $e, float $minimo): JsonResponse

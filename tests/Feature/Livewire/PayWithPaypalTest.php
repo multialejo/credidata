@@ -5,6 +5,7 @@ namespace Tests\Feature\Livewire;
 use App\Livewire\PayWithPaypal;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
+use App\Models\IntencionPaypal;
 use App\Models\Recarga;
 use App\Models\Usuario;
 use App\Services\RecargaPaypalService;
@@ -27,12 +28,12 @@ class PayWithPaypalTest extends TestCase
         parent::setUp();
 
         config(['paypal.mock' => true]);
-        ConfigParametrosRecarga::seed();
+        ConfigParametrosRecargaPaypalLivewire::seed();
 
         $this->usuario = Usuario::create([
-            'uid' => 'test-paywith-uid',
-            'email' => 'paywith@test.com',
-            'nombre' => 'Cliente PayWith',
+            'uid' => 'test-paywith-paypal-uid',
+            'email' => 'paywith-paypal@test.com',
+            'nombre' => 'Cliente PayWith PayPal',
             'roles' => json_encode(['cliente']),
         ]);
 
@@ -48,10 +49,10 @@ class PayWithPaypalTest extends TestCase
             ->call('pay')
             ->assertRedirectToRoute('login');
 
-        $this->assertSame(0, Recarga::count());
+        $this->assertSame(0, IntencionPaypal::count());
     }
 
-    public function test_pay_with_paypal_con_monto_valido_persiste_pendiente_y_redirige_a_approval_url(): void
+    public function test_pay_with_paypal_con_monto_valido_persiste_intencion_y_redirige_a_approval_url(): void
     {
         $orderId = 'PAYPAL-ORDER-123';
         $approvalUrl = "https://www.sandbox.paypal.com/checkoutnow?token={$orderId}";
@@ -73,14 +74,16 @@ class PayWithPaypalTest extends TestCase
             ->call('pay')
             ->assertRedirect($approvalUrl);
 
-        $this->assertDatabaseHas('recargas', [
-            'referencia_externa' => $orderId,
+        $this->assertDatabaseHas('intenciones_paypal', [
+            'order_id' => $orderId,
             'cliente_id' => $this->cliente->id,
-            'metodo' => 'paypal',
             'estado' => 'pendiente',
+            'moneda' => 'USD',
             'monto_usd' => 50.00,
-            'creditos_obtenidos' => 500,
+            'creditos_estimados' => 500,
         ]);
+        $this->assertNotNull(IntencionPaypal::where('order_id', $orderId)->value('expira_en'));
+        $this->assertSame(0, Recarga::count());
     }
 
     public function test_pay_with_paypal_con_monto_bajo_minimo_retorna_error_de_validacion_sin_persistir(): void
@@ -94,7 +97,7 @@ class PayWithPaypalTest extends TestCase
             ->call('pay')
             ->assertHasErrors(['monto']);
 
-        $this->assertSame(0, Recarga::count());
+        $this->assertSame(0, IntencionPaypal::count());
     }
 
     public function test_pay_with_paypal_con_paypal_503_retorna_error_sin_persistir(): void
@@ -110,7 +113,23 @@ class PayWithPaypalTest extends TestCase
             ->call('pay')
             ->assertSet('errorMessage', 'PayPal no disponible, intenta nuevamente.');
 
-        $this->assertSame(0, Recarga::count());
+        $this->assertSame(0, IntencionPaypal::count());
+    }
+
+    public function test_pay_with_paypal_con_respuesta_sin_approval_url_retorna_error_sin_persistir(): void
+    {
+        $this->partialMock(RecargaPaypalService::class, function ($mock) {
+            $mock->shouldReceive('createOrder')
+                ->with(50.0)
+                ->andReturn(['id' => 'PAYPAL-ORDER-NO-LINK', 'status' => 'CREATED', 'links' => []]);
+        });
+
+        Livewire::actingAs($this->usuario)
+            ->test(PayWithPaypal::class, ['monto' => 50.0])
+            ->call('pay')
+            ->assertSet('errorMessage', 'No se pudo obtener la URL de aprobación de PayPal.');
+
+        $this->assertSame(0, IntencionPaypal::count());
     }
 
     public function test_pay_with_paypal_sin_monto_en_prop_no_persiste_y_falla_validacion(): void
@@ -120,7 +139,7 @@ class PayWithPaypalTest extends TestCase
             ->call('pay')
             ->assertHasErrors(['monto']);
 
-        $this->assertSame(0, Recarga::count());
+        $this->assertSame(0, IntencionPaypal::count());
     }
 
     public function test_pay_with_paypal_sincroniza_monto_via_evento_monto_updated(): void
@@ -141,7 +160,7 @@ class PayWithPaypalTest extends TestCase
     }
 }
 
-class ConfigParametrosRecarga
+class ConfigParametrosRecargaPaypalLivewire
 {
     public static function seed(): void
     {

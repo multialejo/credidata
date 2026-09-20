@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
-use App\Enums\EstadoRecarga;
+use App\Enums\EstadoIntencionPaypal;
 use App\Http\Controllers\Concerns\InteractsWithFinancieroConfig;
-use App\Models\Recarga;
+use App\Models\IntencionPaypal;
 use App\Services\RecargaPaypalService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
@@ -70,13 +70,14 @@ class PayWithPaypal extends Component
 
         $creditos = (int) floor($this->monto * $this->getTasaCambioUsdCreditos());
 
-        Recarga::create([
+        IntencionPaypal::create([
             'cliente_id' => auth()->user()->cliente->id,
-            'metodo' => 'paypal',
+            'order_id' => $orderId,
             'monto_usd' => $this->monto,
-            'creditos_obtenidos' => $creditos,
-            'estado' => EstadoRecarga::Pendiente,
-            'referencia_externa' => $orderId,
+            'creditos_estimados' => $creditos,
+            'moneda' => 'USD',
+            'estado' => EstadoIntencionPaypal::Pendiente,
+            'expira_en' => now()->addMinutes((int) config('paypal.intencion_ttl_minutes', 15)),
             'fecha' => now(),
         ]);
 

@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Web;
 
-use App\Enums\EstadoRecarga;
+use App\Enums\EstadoIntencionPaypal;
 use App\Models\Cliente;
-use App\Models\Recarga;
+use App\Models\IntencionPaypal;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -22,9 +22,9 @@ class RecargaPaypalCancelTest extends TestCase
         parent::setUp();
 
         $this->usuario = Usuario::create([
-            'uid' => 'cancel-test-uid',
-            'email' => 'cancel@test.com',
-            'nombre' => 'Cliente Cancel',
+            'uid' => 'paypal-cancel-uid',
+            'email' => 'paypal-cancel@test.com',
+            'nombre' => 'Cliente PayPal Cancel',
             'roles' => json_encode(['cliente']),
         ]);
 
@@ -34,10 +34,10 @@ class RecargaPaypalCancelTest extends TestCase
         ]);
     }
 
-    public function test_cancel_con_token_muestra_vista_informativa_sin_escribir_db(): void
+    public function test_cancel_con_intencion_pendiente_la_cancela_y_muestra_vista(): void
     {
-        $token = 'MOCK-ORDER-CANCEL-1';
-        $countBefore = Recarga::count();
+        $token = 'ORDER-CANCEL-001';
+        $this->crearIntencionPendiente($token);
 
         $response = $this->actingAs($this->usuario)
             ->get("/dashboard/recargas/paypal/cancel?token={$token}");
@@ -45,12 +45,28 @@ class RecargaPaypalCancelTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.paypal.cancel');
         $response->assertSeeText('Has cancelado el pago');
-        $this->assertSame($countBefore, Recarga::count());
+        $response->assertSeeText($token);
+
+        $this->assertSame(EstadoIntencionPaypal::Cancelada, IntencionPaypal::where('order_id', $token)->first()->estado);
+        $this->assertDatabaseMissing('recargas', ['referencia_externa' => $token]);
+    }
+
+    public function test_cancel_con_token_inexistente_muestra_vista_sin_escribir_db(): void
+    {
+        $countBefore = IntencionPaypal::count();
+
+        $response = $this->actingAs($this->usuario)
+            ->get('/dashboard/recargas/paypal/cancel?token=NO-EXISTE');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('recargas.paypal.cancel');
+        $response->assertSeeText('Has cancelado el pago');
+        $this->assertSame($countBefore, IntencionPaypal::count());
     }
 
     public function test_cancel_sin_token_muestra_vista_sin_escribir_db(): void
     {
-        $countBefore = Recarga::count();
+        $countBefore = IntencionPaypal::count();
 
         $response = $this->actingAs($this->usuario)
             ->get('/dashboard/recargas/paypal/cancel');
@@ -58,21 +74,13 @@ class RecargaPaypalCancelTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.paypal.cancel');
         $response->assertSeeText('Has cancelado el pago');
-        $this->assertSame($countBefore, Recarga::count());
+        $this->assertSame($countBefore, IntencionPaypal::count());
     }
 
-    public function test_cancel_con_orden_pendiente_no_cambia_estado(): void
+    public function test_cancel_con_intencion_terminal_no_cambia_estado(): void
     {
-        $token = 'MOCK-ORDER-CANCEL-PEND';
-        Recarga::create([
-            'cliente_id' => $this->cliente->id,
-            'metodo' => 'paypal',
-            'monto_usd' => 10.00,
-            'creditos_obtenidos' => 100,
-            'estado' => 'pendiente',
-            'referencia_externa' => $token,
-            'fecha' => now(),
-        ]);
+        $token = 'ORDER-CANCEL-CONFIRMADA-001';
+        $this->crearIntencionPendiente($token, EstadoIntencionPaypal::Confirmada);
 
         $response = $this->actingAs($this->usuario)
             ->get("/dashboard/recargas/paypal/cancel?token={$token}");
@@ -80,6 +88,21 @@ class RecargaPaypalCancelTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.paypal.cancel');
         $response->assertSeeText('Has cancelado el pago');
-        $this->assertSame(EstadoRecarga::Pendiente, Recarga::where('referencia_externa', $token)->first()->estado);
+
+        $this->assertSame(EstadoIntencionPaypal::Confirmada, IntencionPaypal::where('order_id', $token)->first()->estado);
+    }
+
+    private function crearIntencionPendiente(string $orderId, EstadoIntencionPaypal $estado = EstadoIntencionPaypal::Pendiente): IntencionPaypal
+    {
+        return IntencionPaypal::create([
+            'cliente_id' => $this->cliente->id,
+            'order_id' => $orderId,
+            'monto_usd' => 10.00,
+            'creditos_estimados' => 100,
+            'moneda' => 'USD',
+            'estado' => $estado,
+            'expira_en' => now()->addMinutes(15),
+            'fecha' => now(),
+        ]);
     }
 }

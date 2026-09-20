@@ -63,10 +63,10 @@ class RecargaPaypalService
         }
     }
 
-    public function captureOrder(string $orderId): array
+    public function captureOrder(string $orderId, ?float $expectedMontoUsd = null): array
     {
         if (config('paypal.mock')) {
-            return $this->captureOrderMock($orderId);
+            return $this->captureOrderMock($orderId, $expectedMontoUsd);
         }
 
         try {
@@ -218,7 +218,7 @@ class RecargaPaypalService
         ];
     }
 
-    private function captureOrderMock(string $orderId): array
+    private function captureOrderMock(string $orderId, ?float $expectedMontoUsd = null): array
     {
         return [
             'id' => $orderId,
@@ -233,7 +233,9 @@ class RecargaPaypalService
                                 'status' => 'COMPLETED',
                                 'amount' => [
                                     'currency_code' => 'USD',
-                                    'value' => '0.00',
+                                    'value' => $expectedMontoUsd !== null
+                                        ? number_format($expectedMontoUsd, 2, '.', '')
+                                        : '0.00',
                                 ],
                                 'final_capture' => true,
                             ],

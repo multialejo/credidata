@@ -16,7 +16,7 @@
                     </div>
                     <h3 class="mt-4 text-lg font-semibold text-gray-900">Has cancelado el pago</h3>
                     <p class="mt-2 text-sm text-gray-600">
-                        Tu orden queda pendiente y expirará automáticamente.
+                        Tu orden fue cancelada y no se realizará ningún cobro. Si completaste el pago, revisá tu saldo o reintentá la recarga.
                     </p>
                     @if($token)
                         <p class="mt-1 text-xs text-gray-500 font-mono">Orden: {{ $token }}</p>
@@ -26,7 +26,7 @@
                             Volver al dashboard
                         </a>
                         @auth
-                            <a href="{{ route('dashboard') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
+                            <a href="{{ route('dashboard.recargas') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
                                 Reintentar recarga
                             </a>
                         @endauth
