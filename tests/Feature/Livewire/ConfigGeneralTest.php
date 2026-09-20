@@ -207,4 +207,73 @@ class ConfigGeneralTest extends TestCase
             ->assertSeeHtml('id="form-financiero-costoConsultaBase"')
             ->assertSeeHtml('form="form-financiero-costoConsultaBase"');
     }
+
+    // --- Métodos de pago: toggle ---
+
+    public function test_toggle_metodo_pago_cambia_estado_y_crea_log(): void
+    {
+        ConfigParametro::firstOrCreate(
+            ['modulo' => 'recargas', 'clave' => 'metodoPaypalHabilitado'],
+            ['valor' => json_encode(true)],
+        );
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->call('toggleMetodoPago', 'paypal')
+            ->assertSee('Oculto');
+
+        $param = ConfigParametro::where('modulo', 'recargas')
+            ->where('clave', 'metodoPaypalHabilitado')
+            ->first();
+
+        $this->assertFalse(json_decode($param->valor));
+
+        $log = LogActividad::where('accion', 'config.actualizada')
+            ->where('actor_id', $this->staffUsuario->id)
+            ->latest()
+            ->first();
+
+        $this->assertSame('recargas', $log->detalle['modulo']);
+        $this->assertSame('metodoPaypalHabilitado', $log->detalle['clave']);
+        $this->assertTrue($log->detalle['valor_anterior']);
+        $this->assertFalse($log->detalle['valor_nuevo']);
+    }
+
+    public function test_toggle_metodo_pago_crea_parametro_si_no_existe(): void
+    {
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->call('toggleMetodoPago', 'payphone');
+
+        $param = ConfigParametro::where('modulo', 'recargas')
+            ->where('clave', 'metodoPayphoneHabilitado')
+            ->first();
+
+        $this->assertNotNull($param);
+        $this->assertFalse(json_decode($param->valor));
+    }
+
+    public function test_toggle_metodo_pago_codigo_invalido_no_persiste(): void
+    {
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->call('toggleMetodoPago', 'metodo_inexistente');
+
+        $this->assertDatabaseCount('config_parametros', 0);
+    }
+
+    public function test_estados_metodos_pago_se_renderizan_en_vista(): void
+    {
+        ConfigParametro::firstOrCreate(
+            ['modulo' => 'recargas', 'clave' => 'metodoPaypalHabilitado'],
+            ['valor' => json_encode(true)],
+        );
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->assertSee('PayPal')
+            ->assertSee('PayPhone')
+            ->assertSee('Tarjeta')
+            ->assertSee('Transferencia');
+    }
 }

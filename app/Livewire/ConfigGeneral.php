@@ -10,6 +10,13 @@ use Livewire\Component;
 
 class ConfigGeneral extends Component
 {
+    public const METODOS_PAGO_CONFIG = [
+        'paypal' => ['label' => 'PayPal', 'key' => 'metodoPaypalHabilitado'],
+        'payphone' => ['label' => 'PayPhone', 'key' => 'metodoPayphoneHabilitado'],
+        'tarjeta' => ['label' => 'Tarjeta (débito/crédito)', 'key' => 'metodoTarjetaHabilitado'],
+        'transferencia' => ['label' => 'Transferencia bancaria', 'key' => 'metodoTransferenciaHabilitado'],
+    ];
+
     public ?string $editando = null;
 
     public string $valorEditando = '';
@@ -51,12 +58,43 @@ class ConfigGeneral extends Component
             ->where('clave', $clave)
             ->firstOrFail();
 
-        $valorAnterior = $param->valor;
         $valorNuevo = json_encode(json_decode($this->valorEditando));
 
-        DB::transaction(function () use ($valorNuevo, $valorAnterior, $modulo, $clave): void {
-            ConfigParametro::where('modulo', $modulo)
-                ->where('clave', $clave)
+        $this->actualizarParametro($param, $valorNuevo);
+
+        $this->cancelarEdicion();
+
+        session()->flash('status', 'Parámetro actualizado correctamente.');
+    }
+
+    public function toggleMetodoPago(string $codigo): void
+    {
+        if (! isset(self::METODOS_PAGO_CONFIG[$codigo])) {
+            return;
+        }
+
+        $config = self::METODOS_PAGO_CONFIG[$codigo];
+
+        $param = ConfigParametro::firstOrCreate(
+            ['modulo' => 'recargas', 'clave' => $config['key']],
+            ['valor' => json_encode(true)],
+        );
+
+        $valorActual = json_decode($param->valor, true);
+        $valorNuevo = ! $valorActual;
+
+        $this->actualizarParametro($param, json_encode($valorNuevo));
+
+        session()->flash('status', "Método {$config['label']} " . ($valorNuevo ? 'habilitado' : 'deshabilitado') . '.');
+    }
+
+    protected function actualizarParametro(ConfigParametro $param, string $valorNuevo): void
+    {
+        $valorAnterior = $param->valor;
+
+        DB::transaction(function () use ($param, $valorNuevo, $valorAnterior): void {
+            ConfigParametro::where('modulo', $param->modulo)
+                ->where('clave', $param->clave)
                 ->update([
                     'valor' => $valorNuevo,
                     'actualizado_por' => auth()->user()->staff->id,
@@ -68,28 +106,46 @@ class ConfigGeneral extends Component
                 'actor_id' => auth()->id(),
                 'actor_sistema' => false,
                 'detalle' => [
-                    'modulo' => $modulo,
-                    'clave' => $clave,
+                    'modulo' => $param->modulo,
+                    'clave' => $param->clave,
                     'valor_anterior' => json_decode($valorAnterior),
                     'valor_nuevo' => json_decode($valorNuevo),
                 ],
                 'ip_origen' => request()->ip(),
             ]);
         });
+    }
 
-        $this->cancelarEdicion();
+    protected function getEstadosMetodosPago(): array
+    {
+        $estados = [];
 
-        session()->flash('status', 'Parámetro actualizado correctamente.');
+        foreach (self::METODOS_PAGO_CONFIG as $codigo => $config) {
+            $param = ConfigParametro::where('modulo', 'recargas')
+                ->where('clave', $config['key'])
+                ->first();
+
+            $estados[$codigo] = [
+                'label' => $config['label'],
+                'habilitado' => $param ? (bool) json_decode($param->valor) : true,
+            ];
+        }
+
+        return $estados;
     }
 
     public function render()
     {
         $parametros = ConfigParametro::query()
+            ->where('modulo', '!=', 'recargas')
             ->orderBy('modulo')
             ->orderBy('clave')
             ->get()
             ->groupBy('modulo');
 
-        return view('livewire.config-general', ['parametros' => $parametros]);
+        return view('livewire.config-general', [
+            'parametros' => $parametros,
+            'estadosMetodosPago' => $this->getEstadosMetodosPago(),
+        ]);
     }
 }

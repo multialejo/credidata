@@ -10,6 +10,45 @@
         </div>
     @endif
 
+    {{-- Métodos de Pago --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="mb-6 border-b border-gray-100 pb-4">
+            <h3 class="text-xl font-bold text-gray-900">{{ __('Métodos de Pago') }}</h3>
+            <p class="mt-1 text-sm text-gray-500">{{ __('Habilita o deshabilita métodos de pago visibles en "Recargar créditos".') }}</p>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+            @foreach($estadosMetodosPago as $codigo => $metodo)
+                <button
+                    type="button"
+                    wire:click="toggleMetodoPago('{{ $codigo }}')"
+                    @class([
+                        'flex items-center justify-between rounded-xl border p-4 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+                        'border-green-200 bg-green-50' => $metodo['habilitado'],
+                        'border-gray-200 bg-gray-50' => ! $metodo['habilitado'],
+                    ])
+                    wire:loading.attr="disabled"
+                    wire:loading.class="opacity-50"
+                >
+                    <span class="flex items-center gap-3">
+                        <span @class([
+                            'h-3 w-3 rounded-full shrink-0',
+                            'bg-green-500' => $metodo['habilitado'],
+                            'bg-gray-400' => ! $metodo['habilitado'],
+                        ])></span>
+                        <span class="text-sm font-semibold text-gray-900">{{ $metodo['label'] }}</span>
+                    </span>
+                    <span @class([
+                        'text-xs font-semibold px-2 py-0.5 rounded-full',
+                        'bg-green-100 text-green-700' => $metodo['habilitado'],
+                        'bg-gray-100 text-gray-500' => ! $metodo['habilitado'],
+                    ])>
+                        {{ $metodo['habilitado'] ? __('Visible') : __('Oculto') }}
+                    </span>
+                </button>
+            @endforeach
+        </div>
+    </div>
+
     {{-- Main Container --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div class="mb-6 border-b border-gray-100 pb-4">

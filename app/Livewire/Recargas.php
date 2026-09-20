@@ -9,10 +9,6 @@ class Recargas extends Component
 {
     use InteractsWithFinancieroConfig;
 
-    public const METODOS_DISPONIBLES = ['paypal', 'payphone', 'tarjeta'];
-
-    public const METODOS_PROXIMAMENTE = ['transferencia'];
-
     public const MONTOS_SUGERIDOS = [10, 25, 50, 100];
 
     public string $metodo = 'paypal';
@@ -21,7 +17,9 @@ class Recargas extends Component
 
     public function selectMetodo(string $metodo): void
     {
-        if (! in_array($metodo, self::METODOS_DISPONIBLES, true)) {
+        $pagables = $this->getMetodosPagoPagablesHabilitados();
+
+        if (! in_array($metodo, $pagables, true)) {
             return;
         }
 
@@ -62,10 +60,30 @@ class Recargas extends Component
     public function render()
     {
         $recargaMinimaUsd = $this->getRecargaMinimaUsd();
+        $habilitados = $this->getMetodosPagoHabilitados();
+        $pagables = $this->getMetodosPagoPagablesHabilitados();
+
+        if (! in_array($this->metodo, $pagables, true)) {
+            $this->metodo = $pagables[0] ?? '';
+        }
+
+        $configs = [
+            'paypal' => ['label' => 'PayPal', 'detail' => 'Pago seguro', 'icon' => 'wallet'],
+            'payphone' => ['label' => 'PayPhone', 'detail' => 'Billetera PayPhone', 'icon' => 'device-phone-mobile'],
+            'tarjeta' => ['label' => 'Tarjeta', 'detail' => 'Débito o crédito', 'icon' => 'credit-card'],
+            'transferencia' => ['label' => 'Transferencia', 'detail' => 'Próximamente', 'icon' => 'arrows-right-left'],
+        ];
+
+        $metodosHabilitados = [];
+        foreach ($habilitados as $codigo) {
+            $config = $configs[$codigo];
+            $config['pagable'] = in_array($codigo, $pagables, true);
+            $metodosHabilitados[$codigo] = $config;
+        }
 
         return view('livewire.recargas', [
-            'metodosDisponibles' => self::METODOS_DISPONIBLES,
-            'metodosProximamente' => self::METODOS_PROXIMAMENTE,
+            'metodosDisponibles' => $pagables,
+            'metodosHabilitados' => $metodosHabilitados,
             'montosSugeridos' => array_values(array_filter(
                 self::MONTOS_SUGERIDOS,
                 fn (int $monto) => $monto >= $recargaMinimaUsd,

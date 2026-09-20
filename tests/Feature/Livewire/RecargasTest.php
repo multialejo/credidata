@@ -120,6 +120,61 @@ class RecargasTest extends TestCase
             ->assertSee(route('dashboard.recargas'));
     }
 
+    // --- Visibilidad de métodos de pago ---
+
+    public function test_recargas_oculta_metodos_deshabilitados(): void
+    {
+        ConfigParametro::where('modulo', 'recargas')
+            ->where('clave', 'metodoPaypalHabilitado')
+            ->update(['valor' => json_encode(false)]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->assertDontSeeText('PayPal')
+            ->assertSeeText('PayPhone')
+            ->assertSeeText('Tarjeta');
+    }
+
+    public function test_recargas_cambia_default_cuando_paypal_deshabilitado(): void
+    {
+        ConfigParametro::where('modulo', 'recargas')
+            ->where('clave', 'metodoPaypalHabilitado')
+            ->update(['valor' => json_encode(false)]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->assertSet('metodo', 'payphone');
+    }
+
+    public function test_recargas_solo_transferencia_habilitada_muestra_proximamente_sin_cta(): void
+    {
+        ConfigParametro::where('modulo', 'recargas')
+            ->whereIn('clave', ['metodoPaypalHabilitado', 'metodoPayphoneHabilitado', 'metodoTarjetaHabilitado'])
+            ->update(['valor' => json_encode(false)]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->assertSeeText('Transferencia')
+            ->assertSeeText('Próximamente')
+            ->assertDontSeeText('PayPal')
+            ->assertDontSeeText('PayPhone')
+            ->assertDontSee('pay-with-paypal', false)
+            ->assertDontSee('pay-with-payphone', false);
+    }
+
+    public function test_recargas_selectMetodo_solo_acepta_metodos_habilitados(): void
+    {
+        ConfigParametro::where('modulo', 'recargas')
+            ->where('clave', 'metodoPaypalHabilitado')
+            ->update(['valor' => json_encode(false)]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->assertSet('metodo', 'payphone')
+            ->call('selectMetodo', 'paypal')
+            ->assertSet('metodo', 'payphone');
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
@@ -138,6 +193,22 @@ class ConfigParametrosRecargaRecargas
         ConfigParametro::firstOrCreate(
             ['modulo' => 'financiero', 'clave' => 'recargaMinimaUsd'],
             ['valor' => json_encode('5.00')],
+        );
+        ConfigParametro::firstOrCreate(
+            ['modulo' => 'recargas', 'clave' => 'metodoPaypalHabilitado'],
+            ['valor' => json_encode(true)],
+        );
+        ConfigParametro::firstOrCreate(
+            ['modulo' => 'recargas', 'clave' => 'metodoPayphoneHabilitado'],
+            ['valor' => json_encode(true)],
+        );
+        ConfigParametro::firstOrCreate(
+            ['modulo' => 'recargas', 'clave' => 'metodoTarjetaHabilitado'],
+            ['valor' => json_encode(true)],
+        );
+        ConfigParametro::firstOrCreate(
+            ['modulo' => 'recargas', 'clave' => 'metodoTransferenciaHabilitado'],
+            ['valor' => json_encode(true)],
         );
     }
 }

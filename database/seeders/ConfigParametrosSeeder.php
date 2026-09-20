@@ -24,6 +24,10 @@ class ConfigParametrosSeeder extends Seeder
             ['modulo' => 'apiKeys',        'clave' => 'diasSugerenciaRotacion',           'valor' => json_encode('90')],
             ['modulo' => 'apiKeys',        'clave' => 'diasNotificacionAnticipada',        'valor' => json_encode('7')],
             ['modulo' => 'cache',          'clave' => 'ttlDatosExternosSegundos',         'valor' => json_encode('86400')],
+            ['modulo' => 'recargas',       'clave' => 'metodoPaypalHabilitado',           'valor' => json_encode(true)],
+            ['modulo' => 'recargas',       'clave' => 'metodoPayphoneHabilitado',         'valor' => json_encode(true)],
+            ['modulo' => 'recargas',       'clave' => 'metodoTarjetaHabilitado',          'valor' => json_encode(true)],
+            ['modulo' => 'recargas',       'clave' => 'metodoTransferenciaHabilitado',    'valor' => json_encode(true)],
         ];
 
         DB::table('config_parametros')->insert($params);

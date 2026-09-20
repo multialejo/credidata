@@ -13,13 +13,8 @@
             <div class="pt-6">
                 <p class="mb-3 text-sm font-semibold text-[#14213d]">Método de pago</p>
                 <div role="radiogroup" aria-label="Método de pago" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    @foreach([
-                        'paypal' => ['label' => 'PayPal', 'detail' => 'Pago seguro', 'icon' => 'wallet'],
-                        'payphone' => ['label' => 'PayPhone', 'detail' => 'Billetera PayPhone', 'icon' => 'device-phone-mobile'],
-                        'tarjeta' => ['label' => 'Tarjeta', 'detail' => 'Débito o crédito', 'icon' => 'credit-card'],
-                        'transferencia' => ['label' => 'Transferencia', 'detail' => 'Próximamente', 'icon' => 'arrows-right-left'],
-                    ] as $codigo => $configuracion)
-                        @php $disponible = in_array($codigo, $metodosDisponibles, true); @endphp
+                    @foreach($metodosHabilitados as $codigo => $configuracion)
+                        @php $disponible = $configuracion['pagable']; @endphp
                         <button type="button" role="radio" aria-checked="{{ $metodo === $codigo ? 'true' : 'false' }}" @if($disponible) wire:click="selectMetodo('{{ $codigo }}')" @endif @class(['group rounded-xl border p-4 text-left transition focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2', 'border-[#3155d9] bg-blue-50 ring-1 ring-[#3155d9]/30' => $metodo === $codigo && $disponible, 'border-slate-200 bg-white hover:border-slate-400' => $metodo !== $codigo && $disponible, 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-60' => ! $disponible]) @disabled(! $disponible)>
                             <span class="flex items-start gap-3">
                                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#e8edf9] text-[#3155d9] transition group-hover:bg-blue-50">
@@ -59,6 +54,7 @@
                 @error('monto')<p class="mt-2 text-sm font-medium text-rose-600" role="alert">{{ $message }}</p>@enderror
             </div>
 
+            @if(in_array($metodo, $metodosDisponibles, true))
             <div class="mt-7 border-t border-slate-100 pt-6">
                 @if($this->montoValido)
                     <p class="mb-4 flex items-center justify-between gap-4 rounded-xl bg-[#e8edf9] px-4 py-3 text-sm leading-6" aria-live="polite">
@@ -74,6 +70,7 @@
                     <livewire:pay-with-payphone :monto="$monto" :solo-tarjeta="true" :key="'tarjeta-'.$metodo" />
                 @endif
             </div>
+@endif
         </section>
 
         <aside class="h-fit rounded-2xl bg-[#e8edf9] p-6 sm:p-7">
