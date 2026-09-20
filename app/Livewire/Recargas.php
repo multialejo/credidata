@@ -15,6 +15,8 @@ class Recargas extends Component
 
     public float $monto = 0;
 
+    public bool $mostrarModalTransferencia = false;
+
     public function selectMetodo(string $metodo): void
     {
         $pagables = $this->getMetodosPagoPagablesHabilitados();
@@ -24,6 +26,18 @@ class Recargas extends Component
         }
 
         $this->metodo = $metodo;
+
+        if ($metodo === 'transferencia') {
+            $this->mostrarModalTransferencia = true;
+        }
+    }
+
+    public function cerrarModalTransferencia(): void
+    {
+        $this->mostrarModalTransferencia = false;
+
+        $pagables = $this->getMetodosPagoPagablesHabilitados();
+        $this->metodo = $pagables[0] ?? 'paypal';
     }
 
     public function selectMonto(float $monto): void
@@ -62,6 +76,7 @@ class Recargas extends Component
         $recargaMinimaUsd = $this->getRecargaMinimaUsd();
         $habilitados = $this->getMetodosPagoHabilitados();
         $pagables = $this->getMetodosPagoPagablesHabilitados();
+        $datosTransferencia = $this->getDatosTransferencia();
 
         if (! in_array($this->metodo, $pagables, true)) {
             $this->metodo = $pagables[0] ?? '';
@@ -71,7 +86,7 @@ class Recargas extends Component
             'paypal' => ['label' => 'PayPal', 'detail' => 'Pago seguro', 'icon' => 'wallet'],
             'payphone' => ['label' => 'PayPhone', 'detail' => 'Billetera PayPhone', 'icon' => 'device-phone-mobile'],
             'tarjeta' => ['label' => 'Tarjeta', 'detail' => 'Débito o crédito', 'icon' => 'credit-card'],
-            'transferencia' => ['label' => 'Transferencia', 'detail' => 'Próximamente', 'icon' => 'arrows-right-left'],
+            'transferencia' => ['label' => 'Transferencia', 'detail' => $datosTransferencia ? 'Depósito bancario' : 'No disponible', 'icon' => 'arrows-right-left'],
         ];
 
         $metodosHabilitados = [];

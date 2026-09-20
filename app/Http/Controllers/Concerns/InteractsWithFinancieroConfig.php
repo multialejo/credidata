@@ -13,9 +13,9 @@ trait InteractsWithFinancieroConfig
         'transferencia' => 'metodoTransferenciaHabilitado',
     ];
 
-    public const METODOS_PAGABLES = ['paypal', 'payphone', 'tarjeta'];
+    public const METODOS_PAGABLES = ['paypal', 'payphone', 'tarjeta', 'transferencia'];
 
-    public const METODOS_NO_PAGABLES = ['transferencia'];
+    public const METODOS_NO_PAGABLES = [];
 
     public const TODOS_LOS_METODOS = ['paypal', 'payphone', 'tarjeta', 'transferencia'];
 
@@ -40,6 +40,49 @@ trait InteractsWithFinancieroConfig
     protected function isMontoValido(float $monto): bool
     {
         return $monto >= $this->getRecargaMinimaUsd();
+    }
+
+    protected function getDatosTransferencia(): ?array
+    {
+        $param = ConfigParametro::where('modulo', 'recargas')
+            ->where('clave', 'datosTransferencia')
+            ->first();
+
+        if (! $param) {
+            return null;
+        }
+
+        $datos = json_decode($param->valor, true);
+
+        if (! is_array($datos)) {
+            return null;
+        }
+
+        $whatsapp = $this->normalizeWhatsapp($datos['whatsapp'] ?? '');
+
+        return [
+            'banco' => $datos['banco'] ?? '',
+            'tipoCuenta' => $datos['tipoCuenta'] ?? '',
+            'numeroCuenta' => $datos['numeroCuenta'] ?? '',
+            'titular' => $datos['titular'] ?? '',
+            'cedulaTitular' => $datos['cedulaTitular'] ?? '',
+            'whatsapp' => $whatsapp,
+        ];
+    }
+
+    protected function normalizeWhatsapp(string $whatsapp): string
+    {
+        $digits = preg_replace('/\D/', '', $whatsapp);
+
+        if (str_starts_with($digits, '0') && strlen($digits) === 10) {
+            $digits = '593' . substr($digits, 1);
+        }
+
+        if (strlen($digits) === 9 && str_starts_with($digits, '9')) {
+            $digits = '593' . $digits;
+        }
+
+        return $digits;
     }
 
     protected function getMetodosPagoHabilitados(): array

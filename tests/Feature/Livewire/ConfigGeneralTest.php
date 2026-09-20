@@ -276,4 +276,107 @@ class ConfigGeneralTest extends TestCase
             ->assertSee('Tarjeta')
             ->assertSee('Transferencia');
     }
+
+    // --- Datos transferencia bancaria ---
+
+    public function test_guardar_datos_transferencia_persiste_y_crea_log(): void
+    {
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->set('transferenciaBanco', 'Banco Pichincha')
+            ->set('transferenciaTipoCuenta', 'Cuenta de ahorros')
+            ->set('transferenciaNumeroCuenta', '2204592986')
+            ->set('transferenciaTitular', 'Jean Paul Mayorga')
+            ->set('transferenciaCedulaTitular', '1805752685')
+            ->set('transferenciaWhatsapp', '593991234567')
+            ->call('guardarDatosTransferencia')
+            ->assertHasNoErrors();
+
+        $param = ConfigParametro::where('modulo', 'recargas')
+            ->where('clave', 'datosTransferencia')
+            ->first();
+
+        $this->assertNotNull($param);
+        $datos = json_decode($param->valor, true);
+        $this->assertSame('Banco Pichincha', $datos['banco']);
+        $this->assertSame('2204592986', $datos['numeroCuenta']);
+        $this->assertSame('1805752685', $datos['cedulaTitular']);
+        $this->assertSame('593991234567', $datos['whatsapp']);
+        $this->assertNotNull($param->actualizado_en);
+        $this->assertSame($this->staff->id, $param->actualizado_por);
+
+        $log = LogActividad::where('accion', 'config.actualizada')
+            ->where('actor_id', $this->staffUsuario->id)
+            ->latest()
+            ->first();
+
+        $this->assertSame('recargas', $log->detalle['modulo']);
+        $this->assertSame('datosTransferencia', $log->detalle['clave']);
+    }
+
+    public function test_guardar_datos_transferencia_falla_si_banco_vacio(): void
+    {
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->set('transferenciaBanco', '')
+            ->set('transferenciaTipoCuenta', 'Cuenta de ahorros')
+            ->set('transferenciaNumeroCuenta', '2204592986')
+            ->set('transferenciaTitular', 'Jean Paul Mayorga')
+            ->set('transferenciaCedulaTitular', '1805752685')
+            ->set('transferenciaWhatsapp', '593991234567')
+            ->call('guardarDatosTransferencia')
+            ->assertHasErrors(['transferenciaBanco']);
+    }
+
+    public function test_guardar_datos_transferencia_falla_si_cedula_no_10_digitos(): void
+    {
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->set('transferenciaBanco', 'Banco Pichincha')
+            ->set('transferenciaTipoCuenta', 'Cuenta de ahorros')
+            ->set('transferenciaNumeroCuenta', '2204592986')
+            ->set('transferenciaTitular', 'Jean Paul Mayorga')
+            ->set('transferenciaCedulaTitular', '12345')
+            ->set('transferenciaWhatsapp', '593991234567')
+            ->call('guardarDatosTransferencia')
+            ->assertHasErrors(['transferenciaCedulaTitular']);
+    }
+
+    public function test_guardar_datos_transferencia_falla_si_whatsapp_invalido(): void
+    {
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->set('transferenciaBanco', 'Banco Pichincha')
+            ->set('transferenciaTipoCuenta', 'Cuenta de ahorros')
+            ->set('transferenciaNumeroCuenta', '2204592986')
+            ->set('transferenciaTitular', 'Jean Paul Mayorga')
+            ->set('transferenciaCedulaTitular', '1805752685')
+            ->set('transferenciaWhatsapp', 'abc')
+            ->call('guardarDatosTransferencia')
+            ->assertHasErrors(['transferenciaWhatsapp']);
+    }
+
+    public function test_carga_datos_transferencia_existentes_al_montar(): void
+    {
+        ConfigParametro::create([
+            'modulo' => 'recargas',
+            'clave' => 'datosTransferencia',
+            'valor' => json_encode([
+                'banco' => 'Banco Pichincha',
+                'tipoCuenta' => 'Cuenta de ahorros',
+                'numeroCuenta' => '2204592986',
+                'titular' => 'Jean Paul Mayorga',
+                'cedulaTitular' => '1805752685',
+                'whatsapp' => '593991234567',
+            ]),
+        ]);
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->assertSet('transferenciaBanco', 'Banco Pichincha')
+            ->assertSet('transferenciaNumeroCuenta', '2204592986')
+            ->assertSet('transferenciaTitular', 'Jean Paul Mayorga')
+            ->assertSet('transferenciaCedulaTitular', '1805752685')
+            ->assertSet('transferenciaWhatsapp', '593991234567');
+    }
 }

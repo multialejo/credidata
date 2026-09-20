@@ -54,24 +54,31 @@ class RecargasTest extends TestCase
             ->assertSeeText('PayPal')
             ->assertSeeText('PayPhone')
             ->assertSeeText('Transferencia')
-            ->assertSeeText('Próximamente')
+            ->assertSeeText('No disponible')
             ->assertSee('role="radio"', false)
             ->assertSee('aria-checked="true"', false)
             ->assertSee('Continuar con PayPal');
     }
 
-    public function test_recargas_paypal_y_payphone_son_seleccionables_transferencia_no(): void
+    public function test_recargas_transferencia_es_seleccionable_y_abre_modal(): void
     {
         Livewire::actingAs($this->usuario)
             ->test(Recargas::class)
             ->assertSet('metodo', 'paypal')
-            ->call('selectMetodo', 'payphone')
-            ->assertSet('metodo', 'payphone')
-            ->call('selectMetodo', 'paypal')
-            ->assertSet('metodo', 'paypal')
+            ->assertSet('mostrarModalTransferencia', false)
             ->call('selectMetodo', 'transferencia')
-            ->assertSet('metodo', 'paypal')
-            ->call('selectMetodo', 'paypal')
+            ->assertSet('metodo', 'transferencia')
+            ->assertSet('mostrarModalTransferencia', true);
+    }
+
+    public function test_recargas_cerrar_modal_devuelve_al_primer_pagable(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->call('selectMetodo', 'transferencia')
+            ->assertSet('mostrarModalTransferencia', true)
+            ->call('cerrarModalTransferencia')
+            ->assertSet('mostrarModalTransferencia', false)
             ->assertSet('metodo', 'paypal');
     }
 
@@ -146,7 +153,7 @@ class RecargasTest extends TestCase
             ->assertSet('metodo', 'payphone');
     }
 
-    public function test_recargas_solo_transferencia_habilitada_muestra_proximamente_sin_cta(): void
+    public function test_recargas_solo_transferencia_habilitada_abre_modal_sin_datos(): void
     {
         ConfigParametro::where('modulo', 'recargas')
             ->whereIn('clave', ['metodoPaypalHabilitado', 'metodoPayphoneHabilitado', 'metodoTarjetaHabilitado'])
@@ -155,11 +162,13 @@ class RecargasTest extends TestCase
         Livewire::actingAs($this->usuario)
             ->test(Recargas::class)
             ->assertSeeText('Transferencia')
-            ->assertSeeText('Próximamente')
+            ->assertSeeText('No disponible')
             ->assertDontSeeText('PayPal')
             ->assertDontSeeText('PayPhone')
-            ->assertDontSee('pay-with-paypal', false)
-            ->assertDontSee('pay-with-payphone', false);
+            ->assertSet('mostrarModalTransferencia', false)
+            ->call('selectMetodo', 'transferencia')
+            ->assertSet('mostrarModalTransferencia', true)
+            ->assertSee('Transferencia no disponible');
     }
 
     public function test_recargas_selectMetodo_solo_acepta_metodos_habilitados(): void

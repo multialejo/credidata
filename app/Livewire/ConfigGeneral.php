@@ -21,6 +21,47 @@ class ConfigGeneral extends Component
 
     public string $valorEditando = '';
 
+    public string $transferenciaBanco = '';
+
+    public string $transferenciaTipoCuenta = '';
+
+    public string $transferenciaNumeroCuenta = '';
+
+    public string $transferenciaTitular = '';
+
+    public string $transferenciaCedulaTitular = '';
+
+    public string $transferenciaWhatsapp = '';
+
+    public function mount(): void
+    {
+        $this->cargarDatosTransferencia();
+    }
+
+    protected function cargarDatosTransferencia(): void
+    {
+        $param = ConfigParametro::where('modulo', 'recargas')
+            ->where('clave', 'datosTransferencia')
+            ->first();
+
+        if (! $param) {
+            return;
+        }
+
+        $datos = json_decode($param->valor, true);
+
+        if (! is_array($datos)) {
+            return;
+        }
+
+        $this->transferenciaBanco = $datos['banco'] ?? '';
+        $this->transferenciaTipoCuenta = $datos['tipoCuenta'] ?? '';
+        $this->transferenciaNumeroCuenta = $datos['numeroCuenta'] ?? '';
+        $this->transferenciaTitular = $datos['titular'] ?? '';
+        $this->transferenciaCedulaTitular = $datos['cedulaTitular'] ?? '';
+        $this->transferenciaWhatsapp = $datos['whatsapp'] ?? '';
+    }
+
     public function iniciarEdicion(string $modulo, string $clave): void
     {
         $param = ConfigParametro::where('modulo', $modulo)
@@ -86,6 +127,36 @@ class ConfigGeneral extends Component
         $this->actualizarParametro($param, json_encode($valorNuevo));
 
         session()->flash('status', "Método {$config['label']} " . ($valorNuevo ? 'habilitado' : 'deshabilitado') . '.');
+    }
+
+    public function guardarDatosTransferencia(): void
+    {
+        $this->validate([
+            'transferenciaBanco' => ['required', 'string', 'max:100'],
+            'transferenciaTipoCuenta' => ['required', 'string', 'max:100'],
+            'transferenciaNumeroCuenta' => ['required', 'string', 'max:20'],
+            'transferenciaTitular' => ['required', 'string', 'max:150'],
+            'transferenciaCedulaTitular' => ['required', 'string', 'digits:10'],
+            'transferenciaWhatsapp' => ['required', 'string', 'digits_between:10,15'],
+        ]);
+
+        $param = ConfigParametro::firstOrCreate(
+            ['modulo' => 'recargas', 'clave' => 'datosTransferencia'],
+            ['valor' => json_encode([])],
+        );
+
+        $valorNuevo = json_encode([
+            'banco' => $this->transferenciaBanco,
+            'tipoCuenta' => $this->transferenciaTipoCuenta,
+            'numeroCuenta' => $this->transferenciaNumeroCuenta,
+            'titular' => $this->transferenciaTitular,
+            'cedulaTitular' => $this->transferenciaCedulaTitular,
+            'whatsapp' => $this->transferenciaWhatsapp,
+        ]);
+
+        $this->actualizarParametro($param, $valorNuevo);
+
+        session()->flash('status', 'Datos de transferencia bancaria actualizados.');
     }
 
     protected function actualizarParametro(ConfigParametro $param, string $valorNuevo): void

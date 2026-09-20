@@ -49,6 +49,54 @@
         </div>
     </div>
 
+    {{-- Transferencia Bancaria --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="mb-6 border-b border-gray-100 pb-4">
+            <h3 class="text-xl font-bold text-gray-900">{{ __('Transferencia bancaria') }}</h3>
+            <p class="mt-1 text-sm text-gray-500">{{ __('Datos bancarios para recibir transferencias. Se muestran al cliente en "Recargar créditos".') }}</p>
+        </div>
+        <form wire:submit="guardarDatosTransferencia" class="space-y-4">
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <x-input-label for="transferenciaBanco" value="Banco" />
+                    <x-text-input id="transferenciaBanco" wire:model="transferenciaBanco" type="text" class="mt-1 block w-full" placeholder="Banco Pichincha" />
+                    @error('transferenciaBanco') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="transferenciaTipoCuenta" value="Tipo de cuenta" />
+                    <x-text-input id="transferenciaTipoCuenta" wire:model="transferenciaTipoCuenta" type="text" class="mt-1 block w-full" placeholder="Cuenta de ahorros" />
+                    @error('transferenciaTipoCuenta') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="transferenciaNumeroCuenta" value="Número de cuenta" />
+                    <x-text-input id="transferenciaNumeroCuenta" wire:model="transferenciaNumeroCuenta" type="text" class="mt-1 block w-full" placeholder="2204592986" />
+                    @error('transferenciaNumeroCuenta') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="transferenciaTitular" value="Titular de la cuenta" />
+                    <x-text-input id="transferenciaTitular" wire:model="transferenciaTitular" type="text" class="mt-1 block w-full" placeholder="Jean Paul Mayorga" />
+                    @error('transferenciaTitular') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="transferenciaCedulaTitular" value="Cédula del titular" />
+                    <x-text-input id="transferenciaCedulaTitular" wire:model="transferenciaCedulaTitular" type="text" class="mt-1 block w-full" placeholder="1805752685" maxlength="10" />
+                    @error('transferenciaCedulaTitular') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="transferenciaWhatsapp" value="WhatsApp (para comprobantes)" />
+                    <x-text-input id="transferenciaWhatsapp" wire:model="transferenciaWhatsapp" type="text" class="mt-1 block w-full" placeholder="593991234567" />
+                    @error('transferenciaWhatsapp') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+            </div>
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm" wire:loading.attr="disabled" wire:loading.class="opacity-50">
+                    <span wire:loading.remove wire:target="guardarDatosTransferencia">Guardar datos bancarios</span>
+                    <span wire:loading wire:target="guardarDatosTransferencia">Guardando...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
     {{-- Main Container --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div class="mb-6 border-b border-gray-100 pb-4">

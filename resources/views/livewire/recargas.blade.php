@@ -85,3 +85,22 @@
         </aside>
     </div>
 </div>
+
+@if($mostrarModalTransferencia)
+<div class="fixed inset-0 z-50 overflow-y-auto px-4 py-6 sm:px-0" x-data="{ show: true }">
+    <div class="fixed inset-0 transform transition-all" x-on:click="$wire.cerrarModalTransferencia()">
+        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+    </div>
+    <div class="mb-6 bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full sm:max-w-xl sm:mx-auto">
+        <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-[#14213d]">Transferencia bancaria</h2>
+            <button type="button" wire:click="cerrarModalTransferencia" class="text-gray-400 hover:text-gray-600 transition">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="px-6 py-5">
+            <livewire:pay-with-transferencia :monto="$monto" :key="'transferencia-modal-'.$metodo" />
+        </div>
+    </div>
+</div>
+@endif
