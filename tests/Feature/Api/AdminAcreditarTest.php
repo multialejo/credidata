@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Api;
 
-use App\Enums\EstadoRecarga;
 use App\Jobs\SendRecargaEmail;
 use App\Models\Cliente;
 use App\Models\LogActividad;
@@ -92,15 +91,5 @@ class AdminAcreditarTest extends TestCase
     {
         $response = $this->actingAs($this->validator, 'sanctum')->post('/api/v1/admin/recargas/acreditar', $this->payload());
         $response->assertForbidden()->assertJsonPath('error.tipo', 'ROL_NO_AUTORIZADO');
-    }
-
-    public function test_pending_list_excludes_manual_transfer_and_allows_provider_rejection(): void
-    {
-        $this->actingAs($this->admin, 'sanctum');
-        Recarga::create(['cliente_id' => $this->cliente->id, 'metodo' => 'transferencia', 'estado' => EstadoRecarga::Pendiente, 'referencia_externa' => 'BANK-003', 'fecha' => now()]);
-        Recarga::create(['cliente_id' => $this->cliente->id, 'metodo' => 'paypal', 'estado' => EstadoRecarga::Pendiente, 'referencia_externa' => 'PP-003', 'fecha' => now()]);
-
-        $response = $this->getJson('/api/v1/admin/recargas/pendientes');
-        $response->assertOk()->assertJsonCount(1, 'datos.recargas')->assertJsonPath('datos.recargas.0.metodo', 'paypal');
     }
 }

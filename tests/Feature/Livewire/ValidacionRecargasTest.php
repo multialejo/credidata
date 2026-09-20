@@ -2,10 +2,8 @@
 
 namespace Tests\Feature\Livewire;
 
-use App\Enums\EstadoRecarga;
 use App\Livewire\ValidacionRecargas;
 use App\Models\Cliente;
-use App\Models\Recarga;
 use App\Models\Staff;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,10 +46,9 @@ class ValidacionRecargasTest extends TestCase
         $this->assertDatabaseHas('recargas', ['metodo' => 'transferencia', 'referencia_externa' => 'BANK-LW-001']);
     }
 
-    public function test_non_admin_cannot_accredit_and_provider_pending_is_rejectable(): void
+    public function test_non_admin_cannot_accredit(): void
     {
-        Recarga::create(['cliente_id' => $this->cliente->id, 'metodo' => 'paypal', 'estado' => EstadoRecarga::Pendiente, 'referencia_externa' => 'PP-LW-001', 'fecha' => now()]);
         Livewire::actingAs($this->support)->test(ValidacionRecargas::class)
-            ->assertDontSee('wire:model="clienteEmail"', false)->assertSee('Rechazar');
+            ->assertDontSee('wire:model="clienteEmail"', false);
     }
 }

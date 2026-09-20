@@ -802,50 +802,6 @@
                 ]
             }
         },
-        "/api/v1/admin/recargas/pendientes": {
-            "get": {
-                "tags": [
-                    "Administración"
-                ],
-                "summary": "Lista recargas pendientes",
-                "description": "Requiere token Sanctum de staff. Devuelve 15 elementos por página.",
-                "operationId": "b37a0c90c509a1a9ad9c3b6adc0322d4",
-                "parameters": [
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "example": 1,
-                            "minimum": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Recargas y paginación",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Respuesta"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Token inválido"
-                    },
-                    "403": {
-                        "description": "Usuario sin rol staff"
-                    }
-                },
-                "security": [
-                    {
-                        "SanctumBearer": []
-                    }
-                ]
-            }
-        },
         "/api/v1/admin/recargas/{recarga}/comprobante": {
             "get": {
                 "tags": [
@@ -885,80 +841,6 @@
                     },
                     "404": {
                         "description": "Recarga, comprobante o archivo no disponible"
-                    }
-                },
-                "security": [
-                    {
-                        "SanctumBearer": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/admin/recargas/{recarga}/rechazar": {
-            "post": {
-                "tags": [
-                    "Administración"
-                ],
-                "summary": "Rechaza una recarga de pasarela",
-                "description": "Requiere token Sanctum de staff. Solo PayPal y Payphone en estado que admita la transición.",
-                "operationId": "f096c3afbd9efe89a16366aa6634391a",
-                "parameters": [
-                    {
-                        "name": "recarga",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 12
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "motivo"
-                                ],
-                                "properties": {
-                                    "motivo": {
-                                        "type": "string",
-                                        "example": "Comprobante de pago inconsistente.",
-                                        "maxLength": 500,
-                                        "minLength": 10
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Recarga rechazada",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Respuesta"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Token inválido"
-                    },
-                    "403": {
-                        "description": "Usuario sin rol staff"
-                    },
-                    "404": {
-                        "description": "Recarga no encontrada"
-                    },
-                    "409": {
-                        "description": "Método no autorizado o transición inválida"
-                    },
-                    "422": {
-                        "description": "Motivo inválido"
                     }
                 },
                 "security": [

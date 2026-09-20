@@ -49,38 +49,4 @@
             <p class="mt-2 text-sm text-gray-600">Solo el rol admin puede acreditar transferencias.</p>
         @endif
     </section>
-
-    <section class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Pagos de pasarela pendientes</h3>
-        @if($recargas->isEmpty())
-            <p class="text-center text-gray-500 py-6">No hay pagos pendientes.</p>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead><tr class="border-b text-left"><th class="py-2 pr-4">Cliente</th><th class="py-2 pr-4">Método</th><th class="py-2 pr-4">Fecha</th><th class="py-2">Acciones</th></tr></thead>
-                    <tbody>
-                        @foreach($recargas as $recarga)
-                            <tr class="border-b border-gray-100">
-                                <td class="py-3 pr-4">{{ $recarga->cliente?->usuario?->email ?? '—' }}</td>
-                                <td class="py-3 pr-4 uppercase">{{ $recarga->metodo }}</td>
-                                <td class="py-3 pr-4">{{ $recarga->fecha?->format('d/m/Y H:i') }}</td>
-                                <td class="py-3">
-                                    @if($rechazandoId === $recarga->id)
-                                        <form wire:submit="rechazar({{ $recarga->id }})" class="flex gap-2 items-end">
-                                            <input wire:model="motivoRechazo" placeholder="Motivo (mín. 10 caracteres)" class="border-gray-300 rounded-md text-sm" />
-                                            <button class="text-red-600 text-sm" type="submit">Confirmar</button>
-                                        </form>
-                                        @error('motivoRechazo') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
-                                    @else
-                                        <button wire:click="toggleRechazar({{ $recarga->id }})" class="text-red-600 text-sm">Rechazar</button>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            @if($recargas->hasPages()) {{ $recargas->links() }} @endif
-        @endif
-    </section>
 </div>
