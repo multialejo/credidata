@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Web;
 
-use App\Enums\EstadoRecarga;
+use App\Enums\EstadoIntencionPayphone;
 use App\Models\Cliente;
-use App\Models\Recarga;
+use App\Models\IntencionPayphone;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -34,10 +34,10 @@ class RecargaPayphoneCancelTest extends TestCase
         ]);
     }
 
-    public function test_cancel_con_ctid_muestra_vista_informativa_sin_escribir_db(): void
+    public function test_cancel_con_intencion_pendiente_la_cancela_y_muestra_vista(): void
     {
         $ctid = 'bs-cancel-001';
-        $countBefore = Recarga::count();
+        $this->crearIntencionPendiente($ctid);
 
         $response = $this->actingAs($this->usuario)
             ->get("/dashboard/recargas/payphone/cancel?id=12345&clientTransactionId={$ctid}");
@@ -46,12 +46,27 @@ class RecargaPayphoneCancelTest extends TestCase
         $response->assertViewIs('recargas.payphone.cancel');
         $response->assertSeeText('Has cancelado el pago');
         $response->assertSeeText($ctid);
-        $this->assertSame($countBefore, Recarga::count());
+
+        $this->assertSame(EstadoIntencionPayphone::Cancelada, IntencionPayphone::where('ctid', $ctid)->first()->estado);
+        $this->assertDatabaseMissing('recargas', ['referencia_externa' => $ctid]);
+    }
+
+    public function test_cancel_con_ctid_inexistente_muestra_vista_sin_escribir_db(): void
+    {
+        $countBefore = IntencionPayphone::count();
+
+        $response = $this->actingAs($this->usuario)
+            ->get('/dashboard/recargas/payphone/cancel?id=12345&clientTransactionId=NO-EXISTE');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('recargas.payphone.cancel');
+        $response->assertSeeText('Has cancelado el pago');
+        $this->assertSame($countBefore, IntencionPayphone::count());
     }
 
     public function test_cancel_sin_query_params_muestra_vista_sin_referencia(): void
     {
-        $countBefore = Recarga::count();
+        $countBefore = IntencionPayphone::count();
 
         $response = $this->actingAs($this->usuario)
             ->get('/dashboard/recargas/payphone/cancel');
@@ -59,21 +74,14 @@ class RecargaPayphoneCancelTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.payphone.cancel');
         $response->assertSeeText('Has cancelado el pago');
-        $this->assertSame($countBefore, Recarga::count());
+        $this->assertSame($countBefore, IntencionPayphone::count());
     }
 
-    public function test_cancel_con_orden_pendiente_no_cambia_estado(): void
+    public function test_cancel_con_intencion_terminal_no_cambia_estado(): void
     {
-        $ctid = 'bs-cancel-pend-001';
-        Recarga::create([
-            'cliente_id' => $this->cliente->id,
-            'metodo' => 'payphone',
-            'monto_usd' => 10.00,
-            'creditos_obtenidos' => 100,
-            'estado' => 'pendiente',
-            'referencia_externa' => $ctid,
-            'fecha' => now(),
-        ]);
+        $ctid = 'bs-cancel-conf-001';
+        $intencion = $this->crearIntencionPendiente($ctid);
+        $intencion->update(['estado' => EstadoIntencionPayphone::Confirmada]);
 
         $response = $this->actingAs($this->usuario)
             ->get("/dashboard/recargas/payphone/cancel?id=12345&clientTransactionId={$ctid}");
@@ -81,6 +89,22 @@ class RecargaPayphoneCancelTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.payphone.cancel');
         $response->assertSeeText('Has cancelado el pago');
-        $this->assertSame(EstadoRecarga::Pendiente, Recarga::where('referencia_externa', $ctid)->first()->estado);
+
+        $this->assertSame(EstadoIntencionPayphone::Confirmada, IntencionPayphone::where('ctid', $ctid)->first()->estado);
+    }
+
+    private function crearIntencionPendiente(string $ctid): IntencionPayphone
+    {
+        return IntencionPayphone::create([
+            'cliente_id' => $this->cliente->id,
+            'ctid' => $ctid,
+            'payment_id' => '12345',
+            'monto_usd' => 10.00,
+            'creditos_estimados' => 100,
+            'moneda' => 'USD',
+            'estado' => EstadoIntencionPayphone::Pendiente,
+            'expira_en' => now()->addMinutes(15),
+            'fecha' => now(),
+        ]);
     }
 }

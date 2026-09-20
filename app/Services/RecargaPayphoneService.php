@@ -69,10 +69,10 @@ class RecargaPayphoneService
         }
     }
 
-    public function confirm(int $id, string $clientTransactionId): array
+    public function confirm(int $id, string $clientTransactionId, ?float $expectedAmountUsd = null): array
     {
         if (config('payphone.mock')) {
-            return $this->confirmMock();
+            return $this->confirmMock($expectedAmountUsd);
         }
 
         try {
@@ -143,6 +143,7 @@ class RecargaPayphoneService
             'transactionId' => isset($payload['transactionId']) ? (string) $payload['transactionId'] : null,
             'authorizationCode' => $payload['authorizationCode'] ?? null,
             'message' => $payload['message'] ?? null,
+            'amountPaidUsd' => isset($payload['amount']) ? round((float) $payload['amount'] / 100, 2) : null,
         ];
     }
 
@@ -157,13 +158,14 @@ class RecargaPayphoneService
         ];
     }
 
-    private function confirmMock(): array
+    private function confirmMock(?float $expectedAmountUsd = null): array
     {
         return [
             'transactionStatus' => 'Approved',
             'transactionId' => 'MOCK-PP-'.strtoupper(uniqid()),
             'authorizationCode' => 'MOCK-AUTH-'.strtoupper(uniqid()),
             'message' => null,
+            'amountPaidUsd' => $expectedAmountUsd,
         ];
     }
 }

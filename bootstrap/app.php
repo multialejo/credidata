@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureStaffRole;
 use App\Http\Middleware\EnsureStaffWeb;
 use App\Http\Middleware\EnsureSwaggerAvailable;
 use App\Http\Middleware\ValidateApiKey;
+use App\Jobs\ExpirarIntencionesPayphoneJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('apikey:rotation-reminders')->daily()->withoutOverlapping();
+        $schedule->job(new ExpirarIntencionesPayphoneJob)->everyFifteenMinutes()->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
-use App\Enums\EstadoRecarga;
+use App\Enums\EstadoIntencionPayphone;
 use App\Http\Controllers\Concerns\InteractsWithFinancieroConfig;
-use App\Models\Recarga;
+use App\Models\IntencionPayphone;
 use App\Services\RecargaPayphoneService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
@@ -72,16 +72,15 @@ class PayWithPayphone extends Component
 
         $creditos = (int) round($this->monto * $this->getTasaCambioUsdCreditos());
 
-        Recarga::create([
+        IntencionPayphone::create([
             'cliente_id' => auth()->user()->cliente->id,
-            'metodo' => 'payphone',
+            'ctid' => $ctid,
+            'payment_id' => $prepared['paymentId'],
             'monto_usd' => $this->monto,
-            'creditos_obtenidos' => $creditos,
-            'estado' => EstadoRecarga::Pendiente,
-            'referencia_externa' => $ctid,
-            'provider_payment_id' => $prepared['paymentId'],
-            'provider_status' => 'PREPARED',
-            'provider_currency' => config('payphone.currency'),
+            'creditos_estimados' => $creditos,
+            'moneda' => config('payphone.currency'),
+            'estado' => EstadoIntencionPayphone::Pendiente,
+            'expira_en' => now()->addMinutes((int) config('payphone.intencion_ttl_minutes', 15)),
             'fecha' => now(),
         ]);
 

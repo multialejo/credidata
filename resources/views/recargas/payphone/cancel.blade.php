@@ -16,7 +16,7 @@
                     </div>
                     <h3 class="mt-4 text-lg font-semibold text-gray-900">Has cancelado el pago</h3>
                     <p class="mt-2 text-sm text-gray-600">
-                        Tu orden queda pendiente y expirará automáticamente.
+                        Tu orden fue cancelada y no se realizará ningún cobro. Si completaste el pago, revisá tu saldo o reintentá la recarga.
                     </p>
                     @if($clientTransactionId)
                         <p class="mt-1 text-xs text-gray-500 font-mono">Referencia: {{ $clientTransactionId }}</p>

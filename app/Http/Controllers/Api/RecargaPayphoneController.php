@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\EstadoIntencionPayphone;
 use App\Enums\EstadoRecarga;
 use App\Http\Controllers\Concerns\InteractsWithFinancieroConfig;
 use App\Http\Controllers\Controller;
+use App\Models\Cliente;
+use App\Models\IntencionPayphone;
 use App\Models\LogActividad;
 use App\Models\Recarga;
 use App\Services\RecargaPayphoneService;
 use App\Services\RecargaService;
+use App\StateTransitions\IntencionPayphoneTransitions;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class RecargaPayphoneController extends Controller
 {
@@ -46,16 +52,15 @@ class RecargaPayphoneController extends Controller
             return $this->respondFuenteNoDisponible($e);
         }
 
-        $recarga = Recarga::create([
+        $intencion = IntencionPayphone::create([
             'cliente_id' => $cliente->id,
-            'metodo' => 'payphone',
+            'ctid' => $ctid,
+            'payment_id' => $prepare['paymentId'],
             'monto_usd' => $monto,
-            'creditos_obtenidos' => $creditos,
-            'estado' => EstadoRecarga::Pendiente,
-            'referencia_externa' => $ctid,
-            'provider_payment_id' => $prepare['paymentId'],
-            'provider_status' => 'PREPARED',
-            'provider_currency' => config('payphone.currency'),
+            'creditos_estimados' => $creditos,
+            'moneda' => config('payphone.currency'),
+            'estado' => EstadoIntencionPayphone::Pendiente,
+            'expira_en' => now()->addMinutes((int) config('payphone.intencion_ttl_minutes', 15)),
             'fecha' => now(),
         ]);
 
@@ -64,7 +69,7 @@ class RecargaPayphoneController extends Controller
             'exito' => true,
             'mensaje' => 'Transacción Payphone creada',
             'datos' => [
-                'recarga_id' => $recarga->id,
+                'intencion_id' => $intencion->id,
                 'client_transaction_id' => $ctid,
                 'monto_usd' => $monto,
                 'creditos_calculados' => $creditos,
@@ -84,9 +89,9 @@ class RecargaPayphoneController extends Controller
         $cliente = $request->user()->cliente;
         $ctid = $validated['clientTransactionId'];
 
-        $existente = Recarga::where('referencia_externa', $ctid)->first();
+        $intencion = IntencionPayphone::where('ctid', $ctid)->first();
 
-        if ($existente === null) {
+        if ($intencion === null) {
             return response()->json([
                 'codigo' => 404,
                 'exito' => false,
@@ -96,7 +101,7 @@ class RecargaPayphoneController extends Controller
             ], 404);
         }
 
-        if ($existente->cliente_id !== $cliente->id) {
+        if ($intencion->cliente_id !== $cliente->id) {
             return response()->json([
                 'codigo' => 403,
                 'exito' => false,
@@ -106,33 +111,41 @@ class RecargaPayphoneController extends Controller
             ], 403);
         }
 
-        if ((string) $existente->provider_payment_id !== $id) {
+        if ((string) $intencion->payment_id !== $id) {
             return response()->json([
                 'codigo' => 409,
                 'exito' => false,
-                'mensaje' => 'El pago Payphone no coincide con la recarga',
+                'mensaje' => 'El pago Payphone no coincide con la intención',
                 'error' => ['tipo' => 'PAGO_NO_VALIDO', 'detalle' => null],
                 'metadatos' => ['timestamp' => now()->toIso8601String()],
             ], 409);
         }
 
-        if (in_array($existente->estado, [EstadoRecarga::Fallida, EstadoRecarga::Rechazada], true)) {
+        $recargaCompletada = Recarga::where('referencia_externa', $ctid)
+            ->where('estado', EstadoRecarga::Completada)
+            ->first();
+
+        if ($recargaCompletada) {
+            return $this->respondYaProcesada($recargaCompletada, $cliente);
+        }
+
+        if (in_array($intencion->estado, [EstadoIntencionPayphone::Cancelada, EstadoIntencionPayphone::Expirada], true)) {
             return response()->json([
                 'codigo' => 409,
                 'exito' => false,
-                'mensaje' => 'La recarga está en un estado terminal y no puede reintentarse',
-                'error' => ['tipo' => 'TRANSICION_INVALIDA', 'detalle' => $existente->estado->value],
+                'mensaje' => 'La intención está en un estado terminal y no puede reintentarse',
+                'error' => ['tipo' => 'TRANSICION_INVALIDA', 'detalle' => $intencion->estado->value],
                 'metadatos' => ['timestamp' => now()->toIso8601String()],
             ], 409);
         }
 
-        if ($existente->estado === EstadoRecarga::Completada) {
+        if ($intencion->estado === EstadoIntencionPayphone::Confirmada) {
             return response()->json([
                 'codigo' => 200,
                 'exito' => true,
                 'mensaje' => 'Recarga ya procesada',
                 'datos' => [
-                    'creditos_acreditados' => (int) $existente->creditos_obtenidos,
+                    'creditos_acreditados' => (int) $intencion->creditos_estimados,
                     'saldo_actual' => (int) $cliente->fresh()->saldo_creditos,
                 ],
                 'metadatos' => ['timestamp' => now()->toIso8601String()],
@@ -140,42 +153,37 @@ class RecargaPayphoneController extends Controller
         }
 
         try {
-            $confirmacion = $this->payphone->confirm((int) $id, $ctid);
+            $confirmacion = $this->payphone->confirm((int) $id, $ctid, (float) $intencion->monto_usd);
         } catch (ConnectionException $e) {
-            return $this->respondFuenteNoDisponible($e);
+            Log::error('API confirm Payphone connection failed', [
+                'clientTransactionId' => $ctid,
+                'id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'codigo' => 503,
+                'exito' => false,
+                'mensaje' => 'Pago pendiente de confirmación, reintentá luego',
+                'error' => [
+                    'tipo' => 'PAGO_PENDIENTE',
+                    'detalle' => 'La pasarela de pago no está disponible',
+                ],
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 503);
         }
 
         $status = $confirmacion['transactionStatus'] ?? 'Unknown';
 
-        $existente->update([
-            'provider_transaction_id' => $confirmacion['transactionId'] ?? null,
-            'provider_authorization_code' => $confirmacion['authorizationCode'] ?? null,
-            'provider_status' => $status,
-        ]);
-
         if ($status !== 'Approved') {
-            if ($status === 'Canceled') {
-                $existente->update(['estado' => EstadoRecarga::Fallida]);
-            }
-
-            if ($existente->estado === EstadoRecarga::Fallida) {
-                LogActividad::create([
-                    'accion' => 'recarga.fallida',
-                    'actor_id' => $cliente->usuario->id,
-                    'detalle' => [
-                        'referencia_externa' => $ctid,
-                        'payphone_status' => $status,
-                        'payphone_message' => $confirmacion['message'] ?? null,
-                    ],
-                ]);
-            }
+            $this->marcarCancelada($intencion, $cliente, $ctid, $status, $confirmacion);
 
             return response()->json([
                 'codigo' => 200,
                 'exito' => false,
-                'mensaje' => $existente->estado === EstadoRecarga::Fallida ? 'Pago no completado, puede reintentar' : 'Pago pendiente de confirmación',
+                'mensaje' => 'Pago no completado, puede reintentar',
                 'error' => [
-                    'tipo' => $existente->estado === EstadoRecarga::Fallida ? 'PAGO_NO_COMPLETADO' : 'PAGO_PENDIENTE',
+                    'tipo' => 'PAGO_NO_COMPLETADO',
                     'detalle' => 'Estado Payphone: '.$status,
                 ],
                 'metadatos' => ['timestamp' => now()->toIso8601String()],
@@ -192,14 +200,58 @@ class RecargaPayphoneController extends Controller
             ]);
         }
 
-        $existente->update(['provider_verified_at' => now()]);
+        $montoPagado = round((float) ($confirmacion['amountPaidUsd'] ?? 0), 2);
+        $montoEsperado = round((float) $intencion->monto_usd, 2);
 
-        $this->recargaService->procesar(
-            referenciaExterna: $ctid,
-            clienteUid: $cliente->usuario->uid,
-            creditosObtenidos: (int) $existente->creditos_obtenidos,
-            metodoPago: 'payphone',
-        );
+        if ($montoPagado !== $montoEsperado) {
+            $this->marcarCancelada($intencion, $cliente, $ctid, $status, $confirmacion);
+
+            return response()->json([
+                'codigo' => 409,
+                'exito' => false,
+                'mensaje' => 'El monto pagado no coincide con el monto de la intención',
+                'error' => [
+                    'tipo' => 'MONTO_NO_COINCIDE',
+                    'detalle' => ['pagado_usd' => $montoPagado, 'esperado_usd' => $montoEsperado],
+                ],
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 409);
+        }
+
+        try {
+            $recarga = $this->recargaService->procesar(
+                referenciaExterna: $ctid,
+                clienteUid: $cliente->usuario->uid,
+                creditosObtenidos: (int) $intencion->creditos_estimados,
+                metodoPago: 'payphone',
+                montoUsd: $montoEsperado,
+            );
+        } catch (Throwable $e) {
+            Log::error('API procesar failed (Payphone)', [
+                'clientTransactionId' => $ctid,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'codigo' => 503,
+                'exito' => false,
+                'mensaje' => 'Pago pendiente de confirmación, reintentá luego',
+                'error' => ['tipo' => 'PAGO_PENDIENTE', 'detalle' => 'No se pudo acreditar el saldo'],
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 503);
+        }
+
+        $recarga->forceFill([
+            'provider_payment_id' => (string) $id,
+            'provider_transaction_id' => $confirmacion['transactionId'],
+            'provider_authorization_code' => $confirmacion['authorizationCode'] ?? null,
+            'provider_status' => $status,
+            'provider_currency' => config('payphone.currency'),
+            'provider_verified_at' => now(),
+        ])->save();
+
+        IntencionPayphoneTransitions::assert($intencion->estado, EstadoIntencionPayphone::Confirmada);
+        $intencion->update(['estado' => EstadoIntencionPayphone::Confirmada]);
 
         $saldo = (int) $cliente->fresh()->saldo_creditos;
 
@@ -208,10 +260,40 @@ class RecargaPayphoneController extends Controller
             'exito' => true,
             'mensaje' => 'Recarga acreditada',
             'datos' => [
-                'creditos_acreditados' => (int) $existente->creditos_obtenidos,
+                'creditos_acreditados' => (int) $recarga->creditos_obtenidos,
                 'saldo_actual' => $saldo,
             ],
             'metadatos' => ['timestamp' => now()->toIso8601String()],
+        ]);
+    }
+
+    private function respondYaProcesada(Recarga $recarga, Cliente $cliente): JsonResponse
+    {
+        return response()->json([
+            'codigo' => 200,
+            'exito' => true,
+            'mensaje' => 'Recarga ya procesada',
+            'datos' => [
+                'creditos_acreditados' => (int) $recarga->creditos_obtenidos,
+                'saldo_actual' => (int) $cliente->fresh()->saldo_creditos,
+            ],
+            'metadatos' => ['timestamp' => now()->toIso8601String()],
+        ]);
+    }
+
+    private function marcarCancelada(IntencionPayphone $intencion, Cliente $cliente, string $ctid, string $status, array $confirmacion): void
+    {
+        IntencionPayphoneTransitions::assert($intencion->estado, EstadoIntencionPayphone::Cancelada);
+        $intencion->update(['estado' => EstadoIntencionPayphone::Cancelada]);
+
+        LogActividad::create([
+            'accion' => 'recarga.fallida',
+            'actor_id' => $cliente->usuario->id,
+            'detalle' => [
+                'referencia_externa' => $ctid,
+                'payphone_status' => $status,
+                'payphone_message' => $confirmacion['message'] ?? null,
+            ],
         ]);
     }
 

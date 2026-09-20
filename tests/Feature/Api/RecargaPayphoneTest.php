@@ -2,10 +2,11 @@
 
 namespace Tests\Feature\Api;
 
-use App\Enums\EstadoRecarga;
+use App\Enums\EstadoIntencionPayphone;
 use App\Jobs\SendRecargaEmail;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
+use App\Models\IntencionPayphone;
 use App\Models\LogActividad;
 use App\Models\Recarga;
 use App\Models\Usuario;
@@ -74,7 +75,7 @@ class RecargaPayphoneTest extends TestCase
         $response->assertJsonPath('error.tipo', 'VALIDACION');
     }
 
-    public function test_crear_transaccion_con_monto_valido_retorna_200_y_crea_pendiente(): void
+    public function test_crear_transaccion_con_monto_valido_retorna_200_y_crea_intencion(): void
     {
         $response = $this->actingAs($this->usuario, 'sanctum')
             ->postJson('/api/v1/recargas/payphone/transaccion', ['monto_usd' => 10.00]);
@@ -85,7 +86,7 @@ class RecargaPayphoneTest extends TestCase
         $response->assertJsonPath('datos.creditos_calculados', 100);
         $response->assertJsonStructure([
             'datos' => [
-                'recarga_id', 'client_transaction_id', 'monto_usd', 'creditos_calculados', 'pay_with_payphone', 'pay_with_card',
+                'intencion_id', 'client_transaction_id', 'monto_usd', 'creditos_calculados', 'pay_with_payphone', 'pay_with_card',
             ],
         ]);
 
@@ -96,15 +97,17 @@ class RecargaPayphoneTest extends TestCase
         $this->assertNotEmpty($response->json('datos.pay_with_payphone'));
         $this->assertNotEmpty($response->json('datos.pay_with_card'));
 
-        $this->assertDatabaseHas('recargas', [
-            'referencia_externa' => $ctid,
+        $this->assertDatabaseHas('intenciones_payphone', [
+            'ctid' => $ctid,
             'cliente_id' => $this->cliente->id,
-            'metodo' => 'payphone',
             'estado' => 'pendiente',
+            'moneda' => 'USD',
             'monto_usd' => 10.00,
-            'creditos_obtenidos' => 100,
+            'creditos_estimados' => 100,
         ]);
-        $this->assertNotNull(Recarga::where('referencia_externa', $ctid)->value('provider_payment_id'));
+        $this->assertNotNull(IntencionPayphone::where('ctid', $ctid)->value('payment_id'));
+        $this->assertNotNull(IntencionPayphone::where('ctid', $ctid)->value('expira_en'));
+        $this->assertDatabaseMissing('recargas', ['referencia_externa' => $ctid]);
     }
 
     public function test_crear_transaccion_usa_la_tasa_de_config_parametros(): void
@@ -153,8 +156,7 @@ class RecargaPayphoneTest extends TestCase
         $response->assertStatus(503);
         $response->assertJsonPath('error.tipo', 'FUENTE_EXTERNA_NO_DISPONIBLE');
 
-        $this->assertSame(0, Recarga::where('metodo', 'payphone')
-            ->where('cliente_id', $this->cliente->id)->count());
+        $this->assertSame(0, IntencionPayphone::where('cliente_id', $this->cliente->id)->count());
         $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
 
         Queue::assertNothingPushed();
@@ -191,9 +193,20 @@ class RecargaPayphoneTest extends TestCase
     public function test_confirmar_approved_acredita_y_encola_email(): void
     {
         Queue::fake();
+        Http::fake([
+            '*button/V2/Confirm*' => Http::response([
+                'statusCode' => 3,
+                'transactionStatus' => 'Approved',
+                'transactionId' => '88888',
+                'authorizationCode' => 'AUTH-001',
+                'amount' => 1000,
+                'message' => null,
+            ], 200),
+        ]);
+        config()->set('payphone.mock', false);
 
         $ctid = 'bs-approved-001';
-        $recarga = $this->crearRecargaPendiente($ctid, 100);
+        $this->crearIntencionPendiente($ctid);
 
         $response = $this->actingAs($this->usuario, 'sanctum')
             ->postJson('/api/v1/recargas/payphone/12345/confirmar', [
@@ -206,6 +219,10 @@ class RecargaPayphoneTest extends TestCase
         $response->assertJsonPath('datos.saldo_actual', 100);
 
         $this->assertSame(100, (int) $this->cliente->fresh()->saldo_creditos);
+        $this->assertDatabaseHas('intenciones_payphone', [
+            'ctid' => $ctid,
+            'estado' => 'confirmada',
+        ]);
         $this->assertDatabaseHas('recargas', [
             'referencia_externa' => $ctid,
             'estado' => 'completada',
@@ -223,14 +240,16 @@ class RecargaPayphoneTest extends TestCase
 
         $evidencia = Recarga::where('referencia_externa', $ctid)->firstOrFail();
         $this->assertSame('12345', $evidencia->provider_payment_id);
-        $this->assertNotNull($evidencia->provider_transaction_id);
+        $this->assertSame('88888', $evidencia->provider_transaction_id);
         $this->assertNotNull($evidencia->provider_verified_at);
     }
 
     public function test_confirmar_con_payment_id_distinto_no_llama_a_payphone(): void
     {
+        Http::fake();
+
         $ctid = 'bs-payment-id-mismatch';
-        $this->crearRecargaPendiente($ctid, 100);
+        $this->crearIntencionPendiente($ctid);
 
         $response = $this->actingAs($this->usuario, 'sanctum')
             ->postJson('/api/v1/recargas/payphone/99999/confirmar', [
@@ -240,14 +259,26 @@ class RecargaPayphoneTest extends TestCase
         $response->assertStatus(409);
         $response->assertJsonPath('error.tipo', 'PAGO_NO_VALIDO');
         $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
+        Http::assertNothingSent();
     }
 
     public function test_confirmar_dos_veces_con_misma_referencia_acredita_una_sola(): void
     {
         Queue::fake();
+        Http::fake([
+            '*button/V2/Confirm*' => Http::response([
+                'statusCode' => 3,
+                'transactionStatus' => 'Approved',
+                'transactionId' => '88888',
+                'authorizationCode' => 'AUTH-002',
+                'amount' => 1000,
+                'message' => null,
+            ], 200),
+        ]);
+        config()->set('payphone.mock', false);
 
         $ctid = 'bs-idempotente-001';
-        $recarga = $this->crearRecargaPendiente($ctid, 100);
+        $this->crearIntencionPendiente($ctid);
 
         $primera = $this->actingAs($this->usuario, 'sanctum')
             ->postJson('/api/v1/recargas/payphone/12345/confirmar', [
@@ -273,7 +304,7 @@ class RecargaPayphoneTest extends TestCase
             ->where('actor_id', $this->usuario->id)->count());
     }
 
-    public function test_confirmar_canceled_marca_fallida_sin_acreditar(): void
+    public function test_confirmar_canceled_marca_intencion_cancelada_sin_acreditar(): void
     {
         Queue::fake();
 
@@ -287,7 +318,7 @@ class RecargaPayphoneTest extends TestCase
         ]);
 
         $ctid = 'bs-canceled-001';
-        $recarga = $this->crearRecargaPendiente($ctid, 100);
+        $this->crearIntencionPendiente($ctid);
 
         $response = $this->actingAs($this->usuario, 'sanctum')
             ->postJson('/api/v1/recargas/payphone/12345/confirmar', [
@@ -299,14 +330,52 @@ class RecargaPayphoneTest extends TestCase
         $response->assertJsonPath('error.tipo', 'PAGO_NO_COMPLETADO');
 
         $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
-        $this->assertDatabaseHas('recargas', [
-            'referencia_externa' => $ctid,
-            'estado' => 'fallida',
+        $this->assertDatabaseHas('intenciones_payphone', [
+            'ctid' => $ctid,
+            'estado' => 'cancelada',
         ]);
+        $this->assertDatabaseMissing('recargas', ['referencia_externa' => $ctid]);
         $this->assertDatabaseHas('logs_actividad', [
             'accion' => 'recarga.fallida',
             'actor_id' => $this->usuario->id,
         ]);
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_confirmar_con_monto_pagado_distinto_retorna_409_y_cancela(): void
+    {
+        Queue::fake();
+
+        config()->set('payphone.mock', false);
+        Http::fake([
+            '*button/V2/Confirm*' => Http::response([
+                'statusCode' => 3,
+                'transactionStatus' => 'Approved',
+                'transactionId' => '88888',
+                'authorizationCode' => 'AUTH-003',
+                'amount' => 900,
+                'message' => null,
+            ], 200),
+        ]);
+
+        $ctid = 'bs-monto-invalido-001';
+        $this->crearIntencionPendiente($ctid);
+
+        $response = $this->actingAs($this->usuario, 'sanctum')
+            ->postJson('/api/v1/recargas/payphone/12345/confirmar', [
+                'clientTransactionId' => $ctid,
+            ]);
+
+        $response->assertStatus(409);
+        $response->assertJsonPath('error.tipo', 'MONTO_NO_COINCIDE');
+
+        $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
+        $this->assertDatabaseHas('intenciones_payphone', [
+            'ctid' => $ctid,
+            'estado' => 'cancelada',
+        ]);
+        $this->assertDatabaseMissing('recargas', ['referencia_externa' => $ctid]);
 
         Queue::assertNothingPushed();
     }
@@ -327,13 +396,15 @@ class RecargaPayphoneTest extends TestCase
         ]);
 
         $ctid = 'bs-otro-cliente-001';
-        $recarga = Recarga::create([
+        IntencionPayphone::create([
             'cliente_id' => $otroCliente->id,
-            'metodo' => 'payphone',
+            'ctid' => $ctid,
+            'payment_id' => '12345',
             'monto_usd' => 10.00,
-            'creditos_obtenidos' => 100,
-            'estado' => EstadoRecarga::Pendiente,
-            'referencia_externa' => $ctid,
+            'creditos_estimados' => 100,
+            'moneda' => 'USD',
+            'estado' => EstadoIntencionPayphone::Pendiente,
+            'expira_en' => now()->addMinutes(15),
             'fecha' => now(),
         ]);
 
@@ -347,15 +418,15 @@ class RecargaPayphoneTest extends TestCase
 
         $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
         $this->assertSame(0, (int) $otroCliente->fresh()->saldo_creditos);
-        $this->assertDatabaseHas('recargas', [
-            'referencia_externa' => $ctid,
+        $this->assertDatabaseHas('intenciones_payphone', [
+            'ctid' => $ctid,
             'estado' => 'pendiente',
         ]);
 
         Queue::assertNothingPushed();
     }
 
-    public function test_confirmar_con_timeout_del_sdk_retorna_503_sin_tocar_recargas(): void
+    public function test_confirmar_con_timeout_del_sdk_retorna_503_pago_pendiente_sin_tocar_estado(): void
     {
         Queue::fake();
 
@@ -367,7 +438,7 @@ class RecargaPayphoneTest extends TestCase
         ]);
 
         $ctid = 'bs-timeout-001';
-        $recarga = $this->crearRecargaPendiente($ctid, 100);
+        $this->crearIntencionPendiente($ctid);
 
         $response = $this->actingAs($this->usuario, 'sanctum')
             ->postJson('/api/v1/recargas/payphone/12345/confirmar', [
@@ -375,11 +446,11 @@ class RecargaPayphoneTest extends TestCase
             ]);
 
         $response->assertStatus(503);
-        $response->assertJsonPath('error.tipo', 'FUENTE_EXTERNA_NO_DISPONIBLE');
+        $response->assertJsonPath('error.tipo', 'PAGO_PENDIENTE');
 
         $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
-        $this->assertDatabaseHas('recargas', [
-            'referencia_externa' => $ctid,
+        $this->assertDatabaseHas('intenciones_payphone', [
+            'ctid' => $ctid,
             'estado' => 'pendiente',
         ]);
         $this->assertDatabaseMissing('logs_actividad', [
@@ -390,16 +461,17 @@ class RecargaPayphoneTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    private function crearRecargaPendiente(string $ctid, int $creditos): Recarga
+    private function crearIntencionPendiente(string $ctid, string $paymentId = '12345', float $monto = 10.00, int $creditos = 100): IntencionPayphone
     {
-        return Recarga::create([
+        return IntencionPayphone::create([
             'cliente_id' => $this->cliente->id,
-            'metodo' => 'payphone',
-            'monto_usd' => 10.00,
-            'creditos_obtenidos' => $creditos,
-            'estado' => EstadoRecarga::Pendiente,
-            'referencia_externa' => $ctid,
-            'provider_payment_id' => '12345',
+            'ctid' => $ctid,
+            'payment_id' => $paymentId,
+            'monto_usd' => $monto,
+            'creditos_estimados' => $creditos,
+            'moneda' => 'USD',
+            'estado' => EstadoIntencionPayphone::Pendiente,
+            'expira_en' => now()->addMinutes(15),
             'fecha' => now(),
         ]);
     }

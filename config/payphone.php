@@ -10,4 +10,5 @@ return [
     'reference' => env('PAYPHONE_REFERENCE', 'CrediData recarga'),
     'response_url' => env('PAYPHONE_RESPONSE_URL') ?: null,
     'cancellation_url' => env('PAYPHONE_CANCELLATION_URL') ?: null,
+    'intencion_ttl_minutes' => (int) env('PAYPHONE_INTENCION_TTL_MINUTES', 15),
 ];

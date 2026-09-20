@@ -5,6 +5,7 @@ namespace Tests\Feature\Livewire;
 use App\Livewire\PayWithPayphone;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
+use App\Models\IntencionPayphone;
 use App\Models\Recarga;
 use App\Models\Usuario;
 use App\Services\RecargaPayphoneService;
@@ -48,10 +49,10 @@ class PayWithPayphoneTest extends TestCase
             ->call('pay')
             ->assertRedirectToRoute('login');
 
-        $this->assertSame(0, Recarga::count());
+        $this->assertSame(0, IntencionPayphone::count());
     }
 
-    public function test_pay_with_payphone_con_monto_valido_persiste_pendiente_y_renderiza_dos_botones(): void
+    public function test_pay_with_payphone_con_monto_valido_persiste_intencion_y_renderiza_dos_botones(): void
     {
         $payWithPayPhone = 'https://pay.payphonetodoesposible.com/PayPhone/Index?paymentId=MOCK-PAY-001';
         $payWithCard = 'https://pay.payphonetodoesposible.com/Anonymous/Index?paymentId=MOCK-PAY-001';
@@ -83,14 +84,17 @@ class PayWithPayphoneTest extends TestCase
             ->assertSeeText('Pagar con tarjeta')
             ->assertSeeText('bs-test-001');
 
-        $this->assertDatabaseHas('recargas', [
-            'referencia_externa' => 'bs-test-001',
+        $this->assertDatabaseHas('intenciones_payphone', [
+            'ctid' => 'bs-test-001',
             'cliente_id' => $this->cliente->id,
-            'metodo' => 'payphone',
+            'payment_id' => 'MOCK-PAY-001',
             'estado' => 'pendiente',
+            'moneda' => 'USD',
             'monto_usd' => 50.00,
-            'creditos_obtenidos' => 500,
+            'creditos_estimados' => 500,
         ]);
+        $this->assertNotNull(IntencionPayphone::where('ctid', 'bs-test-001')->value('expira_en'));
+        $this->assertSame(0, Recarga::count());
     }
 
     public function test_pay_with_payphone_con_monto_bajo_minimo_retorna_error_de_validacion_sin_persistir(): void
@@ -104,7 +108,7 @@ class PayWithPayphoneTest extends TestCase
             ->call('pay')
             ->assertHasErrors(['monto']);
 
-        $this->assertSame(0, Recarga::count());
+        $this->assertSame(0, IntencionPayphone::count());
     }
 
     public function test_pay_with_payphone_con_payphone_503_retorna_error_sin_persistir(): void
@@ -126,7 +130,7 @@ class PayWithPayphoneTest extends TestCase
             ->assertSet('payWithPayphone', null)
             ->assertSet('payWithCard', null);
 
-        $this->assertSame(0, Recarga::count());
+        $this->assertSame(0, IntencionPayphone::count());
     }
 
     public function test_pay_with_payphone_con_respuesta_incompleta_retorna_error_sin_persistir(): void
@@ -149,7 +153,7 @@ class PayWithPayphoneTest extends TestCase
             ->call('pay')
             ->assertSet('errorMessage', 'No se pudo preparar la transacción con Payphone.');
 
-        $this->assertSame(0, Recarga::count());
+        $this->assertSame(0, IntencionPayphone::count());
     }
 
     public function test_pay_with_payphone_sin_monto_en_prop_no_persiste_y_falla_validacion(): void
@@ -159,7 +163,7 @@ class PayWithPayphoneTest extends TestCase
             ->call('pay')
             ->assertHasErrors(['monto']);
 
-        $this->assertSame(0, Recarga::count());
+        $this->assertSame(0, IntencionPayphone::count());
     }
 
     public function test_pay_with_payphone_sincroniza_monto_via_evento_monto_updated(): void
@@ -204,7 +208,7 @@ class PayWithPayphoneTest extends TestCase
             ->assertSet('payWithPayphone', 'https://example.com/app-2')
             ->assertSet('payWithCard', 'https://example.com/card-2');
 
-        $this->assertSame(2, Recarga::where('metodo', 'payphone')->count());
+        $this->assertSame(2, IntencionPayphone::count());
     }
 
     protected function tearDown(): void
