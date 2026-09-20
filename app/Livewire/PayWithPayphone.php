@@ -17,6 +17,8 @@ class PayWithPayphone extends Component
 
     public float $monto = 0;
 
+    public bool $soloTarjeta = false;
+
     public ?string $errorMessage = null;
 
     public ?string $payWithPayphone = null;
@@ -25,15 +27,21 @@ class PayWithPayphone extends Component
 
     public ?string $clientTransactionId = null;
 
-    public function mount(float $monto = 0): void
+    public function mount(float|int|null $monto = 0, bool $soloTarjeta = false): void
     {
-        $this->monto = $monto;
+        $this->monto = (float) ($monto ?? 0);
+        $this->soloTarjeta = $soloTarjeta;
     }
 
     #[On('monto-updated')]
     public function syncMonto(float $monto): void
     {
         $this->monto = $monto;
+    }
+
+    public function getMontoValidoProperty(): bool
+    {
+        return $this->isMontoValido($this->monto);
     }
 
     protected function rules()
@@ -70,7 +78,7 @@ class PayWithPayphone extends Component
             return;
         }
 
-        $creditos = (int) round($this->monto * $this->getTasaCambioUsdCreditos());
+        $creditos = (int) floor($this->monto * $this->getTasaCambioUsdCreditos());
 
         IntencionPayphone::create([
             'cliente_id' => auth()->user()->cliente->id,

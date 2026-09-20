@@ -19,15 +19,20 @@ class PayWithPaypal extends Component
 
     public ?string $errorMessage = null;
 
-    public function mount(float $monto = 0): void
+    public function mount(float|int|null $monto = 0): void
     {
-        $this->monto = $monto;
+        $this->monto = (float) ($monto ?? 0);
     }
 
     #[On('monto-updated')]
     public function syncMonto(float $monto): void
     {
         $this->monto = $monto;
+    }
+
+    public function getMontoValidoProperty(): bool
+    {
+        return $this->isMontoValido($this->monto);
     }
 
     protected function rules()

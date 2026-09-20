@@ -23,4 +23,9 @@ trait InteractsWithFinancieroConfig
 
         return $param ? (float) json_decode($param->valor) : 5.00;
     }
+
+    protected function isMontoValido(float $monto): bool
+    {
+        return $monto >= $this->getRecargaMinimaUsd();
+    }
 }
