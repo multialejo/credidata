@@ -52,12 +52,11 @@ class PayWithPayphoneTest extends TestCase
         $this->assertSame(0, IntencionPayphone::count());
     }
 
-    public function test_pay_with_payphone_con_monto_valido_persiste_intencion_y_renderiza_dos_botones(): void
+    public function test_pay_with_payphone_con_monto_valido_persiste_intencion_y_redirige_a_payphone(): void
     {
         $payWithPayPhone = 'https://pay.payphonetodoesposible.com/PayPhone/Index?paymentId=MOCK-PAY-001';
-        $payWithCard = 'https://pay.payphonetodoesposible.com/Anonymous/Index?paymentId=MOCK-PAY-001';
 
-        $this->partialMock(RecargaPayphoneService::class, function ($mock) use ($payWithPayPhone, $payWithCard) {
+        $this->partialMock(RecargaPayphoneService::class, function ($mock) use ($payWithPayPhone) {
             $mock->shouldReceive('generateClientTransactionId')
                 ->once()
                 ->andReturn('bs-test-001');
@@ -67,22 +66,14 @@ class PayWithPayphoneTest extends TestCase
                 ->andReturn([
                     'paymentId' => 'MOCK-PAY-001',
                     'payWithPayPhone' => $payWithPayPhone,
-                    'payWithCard' => $payWithCard,
+                    'payWithCard' => 'https://pay.payphonetodoesposible.com/Anonymous/Index?paymentId=MOCK-PAY-001',
                 ]);
         });
 
         Livewire::actingAs($this->usuario)
             ->test(PayWithPayphone::class, ['monto' => 50.0])
             ->call('pay')
-            ->assertSet('payWithPayphone', $payWithPayPhone)
-            ->assertSet('payWithCard', $payWithCard)
-            ->assertSet('clientTransactionId', 'bs-test-001')
-            ->assertSet('errorMessage', null)
-            ->assertSeeHtml('href="'.$payWithPayPhone.'"')
-            ->assertSeeHtml('href="'.$payWithCard.'"')
-            ->assertSeeText('Pagar con PayPhone')
-            ->assertSeeText('Pagar con tarjeta')
-            ->assertSeeText('bs-test-001');
+            ->assertRedirect($payWithPayPhone);
 
         $this->assertDatabaseHas('intenciones_payphone', [
             'ctid' => 'bs-test-001',
@@ -95,6 +86,34 @@ class PayWithPayphoneTest extends TestCase
         ]);
         $this->assertNotNull(IntencionPayphone::where('ctid', 'bs-test-001')->value('expira_en'));
         $this->assertSame(0, Recarga::count());
+    }
+
+    public function test_solo_tarjeta_persiste_intencion_y_redirige_a_url_tarjeta(): void
+    {
+        $payWithCard = 'https://pay.payphonetodoesposible.com/Anonymous/Index?paymentId=MOCK-PAY-002';
+
+        $this->partialMock(RecargaPayphoneService::class, function ($mock) use ($payWithCard) {
+            $mock->shouldReceive('generateClientTransactionId')
+                ->once()
+                ->andReturn('bs-test-card');
+            $mock->shouldReceive('prepare')
+                ->once()
+                ->andReturn([
+                    'paymentId' => 'MOCK-PAY-002',
+                    'payWithPayPhone' => 'https://pay.payphonetodoesposible.com/PayPhone/Index?paymentId=MOCK-PAY-002',
+                    'payWithCard' => $payWithCard,
+                ]);
+        });
+
+        Livewire::actingAs($this->usuario)
+            ->test(PayWithPayphone::class, ['monto' => 50.0, 'soloTarjeta' => true])
+            ->call('pay')
+            ->assertRedirect($payWithCard);
+
+        $this->assertDatabaseHas('intenciones_payphone', [
+            'ctid' => 'bs-test-card',
+            'estado' => 'pendiente',
+        ]);
     }
 
     public function test_pay_with_payphone_con_monto_bajo_minimo_retorna_error_de_validacion_sin_persistir(): void
@@ -126,9 +145,7 @@ class PayWithPayphoneTest extends TestCase
         Livewire::actingAs($this->usuario)
             ->test(PayWithPayphone::class, ['monto' => 50.0])
             ->call('pay')
-            ->assertSet('errorMessage', 'Payphone no disponible, intenta nuevamente.')
-            ->assertSet('payWithPayphone', null)
-            ->assertSet('payWithCard', null);
+            ->assertSet('errorMessage', 'Payphone no disponible, intenta nuevamente.');
 
         $this->assertSame(0, IntencionPayphone::count());
     }
@@ -177,7 +194,7 @@ class PayWithPayphoneTest extends TestCase
             ->assertSet('monto', 12.50);
     }
 
-    public function test_pay_with_payphone_reinicia_estado_en_cada_intento(): void
+    public function test_pay_with_payphone_cada_intento_persiste_y_redirige(): void
     {
         $this->partialMock(RecargaPayphoneService::class, function ($mock) {
             $mock->shouldReceive('generateClientTransactionId')
@@ -197,16 +214,12 @@ class PayWithPayphoneTest extends TestCase
                 );
         });
 
-        $component = Livewire::actingAs($this->usuario)
-            ->test(PayWithPayphone::class, ['monto' => 50.0]);
-
-        $component->call('pay')
-            ->assertSet('clientTransactionId', 'bs-first');
-
-        $component->call('pay')
-            ->assertSet('clientTransactionId', 'bs-second')
-            ->assertSet('payWithPayphone', 'https://example.com/app-2')
-            ->assertSet('payWithCard', 'https://example.com/card-2');
+        Livewire::actingAs($this->usuario)
+            ->test(PayWithPayphone::class, ['monto' => 50.0])
+            ->call('pay')
+            ->assertRedirect('https://example.com/app-1')
+            ->call('pay')
+            ->assertRedirect('https://example.com/app-2');
 
         $this->assertSame(2, IntencionPayphone::count());
     }

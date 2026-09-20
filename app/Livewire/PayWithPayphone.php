@@ -21,12 +21,6 @@ class PayWithPayphone extends Component
 
     public ?string $errorMessage = null;
 
-    public ?string $payWithPayphone = null;
-
-    public ?string $payWithCard = null;
-
-    public ?string $clientTransactionId = null;
-
     public function mount(float|int|null $monto = 0, bool $soloTarjeta = false): void
     {
         $this->monto = (float) ($monto ?? 0);
@@ -58,8 +52,7 @@ class PayWithPayphone extends Component
         }
 
         $this->validate();
-
-        $this->resetPayphoneState();
+        $this->errorMessage = null;
 
         $ctid = $service->generateClientTransactionId();
 
@@ -92,17 +85,7 @@ class PayWithPayphone extends Component
             'fecha' => now(),
         ]);
 
-        $this->clientTransactionId = $ctid;
-        $this->payWithPayphone = $prepared['payWithPayPhone'];
-        $this->payWithCard = $prepared['payWithCard'];
-    }
-
-    private function resetPayphoneState(): void
-    {
-        $this->errorMessage = null;
-        $this->payWithPayphone = null;
-        $this->payWithCard = null;
-        $this->clientTransactionId = null;
+        return redirect()->away($this->soloTarjeta ? $prepared['payWithCard'] : $prepared['payWithPayPhone']);
     }
 
     public function render()

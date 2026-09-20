@@ -1,58 +1,17 @@
 <div class="space-y-3">
     <div wire:loading.remove wire:target="pay">
-        @if($payWithPayphone && $payWithCard)
+        <button
+            type="button"
+            wire:click="pay"
+            @disabled(! $this->montoValido)
+            class="ui-primary-button w-full"
+        >
             @if($soloTarjeta)
-                <p class="text-sm text-slate-600">
-                    Serás redirigido a Payphone para completar el pago con tarjeta.
-                </p>
-                <p class="text-xs text-slate-500 font-mono">
-                    Referencia: {{ $clientTransactionId }}
-                </p>
-                <a
-                    href="{{ $payWithCard }}"
-                    rel="noopener"
-                    class="ui-primary-button w-full"
-                >
-                    Pagar con tarjeta
-                </a>
+                Pagar con tarjeta
             @else
-                <p class="text-sm text-slate-600">
-                    Elige cómo quieres pagar. Serás redirigido a Payphone para completar el pago.
-                </p>
-                <p class="text-xs text-slate-500 font-mono">
-                    Referencia: {{ $clientTransactionId }}
-                </p>
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <a
-                        href="{{ $payWithPayphone }}"
-                        rel="noopener"
-                        class="ui-primary-button flex-1"
-                    >
-                        Pagar con PayPhone
-                    </a>
-                    <a
-                        href="{{ $payWithCard }}"
-                        rel="noopener"
-                        class="ui-secondary-button flex-1"
-                    >
-                        Pagar con tarjeta
-                    </a>
-                </div>
+                Pagar con Payphone
             @endif
-        @else
-            <button
-                type="button"
-                wire:click="pay"
-                @disabled(! $this->montoValido)
-                class="ui-primary-button w-full"
-            >
-                @if($soloTarjeta)
-                    Pagar con tarjeta
-                @else
-                    Pagar con Payphone
-                @endif
-            </button>
-        @endif
+        </button>
     </div>
 
     <p wire:loading wire:target="pay" aria-live="polite" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600">
