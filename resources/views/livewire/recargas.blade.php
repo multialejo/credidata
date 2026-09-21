@@ -1,3 +1,4 @@
+<div>
 <div class="mx-auto max-w-5xl px-4 pt-6 pb-10 sm:px-6 lg:px-8">
     <div class="mb-6">
         <p class="ui-eyebrow">Créditos</p>
@@ -68,6 +69,27 @@
                     <livewire:pay-with-payphone :monto="$monto" :key="'payphone-'.$metodo" />
                 @elseif($metodo === 'tarjeta')
                     <livewire:pay-with-payphone :monto="$monto" :solo-tarjeta="true" :key="'tarjeta-'.$metodo" />
+                @elseif($metodo === 'transferencia')
+                    @if($this->montoValido)
+                        <button
+                            type="button"
+                            wire:click="abrirModalTransferencia"
+                            class="flex items-center justify-center gap-2 w-full rounded-xl bg-[#3155d9] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#2545b8] focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2"
+                        >
+                            <x-icons.arrows-right-left class="h-5 w-5" />
+                            Mostrar datos bancarios
+                        </button>
+                    @else
+                        <button
+                            type="button"
+                            disabled
+                            class="flex items-center justify-center gap-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-400 cursor-not-allowed"
+                        >
+                            <x-icons.arrows-right-left class="h-5 w-5" />
+                            Mostrar datos bancarios
+                        </button>
+                        <p class="mt-2 text-xs text-slate-400 text-center">Ingresa un monto válido para ver los datos de transferencia.</p>
+                    @endif
                 @endif
             </div>
 @endif
@@ -86,21 +108,50 @@
     </div>
 </div>
 
-@if($mostrarModalTransferencia)
-<div class="fixed inset-0 z-50 overflow-y-auto px-4 py-6 sm:px-0" x-data="{ show: true }">
-    <div class="fixed inset-0 transform transition-all" x-on:click="$wire.cerrarModalTransferencia()">
-        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-    </div>
-    <div class="mb-6 bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full sm:max-w-xl sm:mx-auto">
-        <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-            <h2 class="text-lg font-bold text-[#14213d]">Transferencia bancaria</h2>
-            <button type="button" wire:click="cerrarModalTransferencia" class="text-gray-400 hover:text-gray-600 transition">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-        </div>
-        <div class="px-6 py-5">
-            <livewire:pay-with-transferencia :monto="$monto" :key="'transferencia-modal-'.$metodo" />
+<div
+    wire:key="transferencia-modal-container"
+    x-data
+    x-on:keydown.escape.window="$wire.cerrarModalTransferencia()"
+>
+    <div
+        wire:show="mostrarModalTransferencia"
+        wire:cloak
+        class="fixed inset-0 z-50 overflow-y-auto px-4 py-4 sm:py-6"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="transferencia-modal-title"
+    >
+        <div class="fixed inset-0 bg-[#14213d]/60" aria-hidden="true" wire:click="cerrarModalTransferencia"></div>
+
+        <div class="relative z-10 flex min-h-full items-center justify-center">
+            <div class="flex max-h-[calc(100dvh-2rem)] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl sm:max-h-[calc(100dvh-3rem)]">
+                <div class="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 sm:px-6 sm:py-4">
+                    <h2 id="transferencia-modal-title" class="text-lg font-bold text-[#14213d]">Transferencia bancaria</h2>
+                    <button
+                        type="button"
+                        autofocus
+                        wire:click="cerrarModalTransferencia"
+                        aria-label="Cerrar información de transferencia bancaria"
+                        class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3155d9] focus-visible:ring-offset-2"
+                    >
+                        <svg class="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="min-h-0 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
+                    @if($mostrarModalTransferencia && $datosTransferencia)
+                        <livewire:pay-with-transferencia :monto="$monto" :key="'transferencia-modal-'.$monto" />
+                    @else
+                        <div class="text-center py-8">
+                            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                                <x-icons.arrows-right-left class="h-6 w-6 text-slate-400" />
+                            </div>
+                            <p class="mt-4 text-sm font-medium text-slate-600">Información bancaria no configurada</p>
+                            <p class="mt-1 text-xs text-slate-400">El administrador aún no ha configurado los datos para transferencias. Selecciona otro método de pago o contacta a soporte.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 </div>
-@endif
+</div>

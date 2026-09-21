@@ -60,26 +60,81 @@ class RecargasTest extends TestCase
             ->assertSee('Continuar con PayPal');
     }
 
-    public function test_recargas_transferencia_es_seleccionable_y_abre_modal(): void
+    public function test_recargas_transferencia_seleccionable_no_abre_modal_automaticamente(): void
     {
+        ConfigParametro::create([
+            'modulo' => 'recargas',
+            'clave' => 'datosTransferencia',
+            'valor' => json_encode([
+                'banco' => 'Banco Pichincha',
+                'tipoCuenta' => 'Cuenta de ahorros',
+                'numeroCuenta' => '2204592986',
+                'titular' => 'Jean Paul Mayorga',
+                'cedulaTitular' => '1805752685',
+                'whatsapp' => '593991234567',
+            ]),
+        ]);
+
         Livewire::actingAs($this->usuario)
             ->test(Recargas::class)
             ->assertSet('metodo', 'paypal')
             ->assertSet('mostrarModalTransferencia', false)
             ->call('selectMetodo', 'transferencia')
             ->assertSet('metodo', 'transferencia')
-            ->assertSet('mostrarModalTransferencia', true);
+            ->assertSet('mostrarModalTransferencia', false)
+            ->assertSee('wire:show="mostrarModalTransferencia"', false)
+            ->assertSee('Mostrar datos bancarios');
     }
 
-    public function test_recargas_cerrar_modal_devuelve_al_primer_pagable(): void
+    public function test_recargas_abrir_modal_requiere_monto_valido(): void
     {
         Livewire::actingAs($this->usuario)
             ->test(Recargas::class)
             ->call('selectMetodo', 'transferencia')
+            ->set('monto', 1.0)
+            ->call('abrirModalTransferencia')
+            ->assertSet('mostrarModalTransferencia', false);
+    }
+
+    public function test_recargas_abrir_modal_con_monto_valido_muestra_banco(): void
+    {
+        ConfigParametro::create([
+            'modulo' => 'recargas',
+            'clave' => 'datosTransferencia',
+            'valor' => json_encode([
+                'banco' => 'Banco Pichincha',
+                'tipoCuenta' => 'Cuenta de ahorros',
+                'numeroCuenta' => '2204592986',
+                'titular' => 'Jean Paul Mayorga',
+                'cedulaTitular' => '1805752685',
+                'whatsapp' => '593991234567',
+            ]),
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->call('selectMetodo', 'transferencia')
+            ->set('monto', 25.0)
+            ->call('abrirModalTransferencia')
+            ->assertSet('mostrarModalTransferencia', true)
+            ->assertSee('role="dialog"', false)
+            ->assertSee('aria-modal="true"', false)
+            ->assertSee('Banco Pichincha')
+            ->assertSee('2204592986');
+    }
+
+    public function test_recargas_cerrar_modal_mantiene_seleccion_transferencia(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->call('selectMetodo', 'transferencia')
+            ->assertSet('metodo', 'transferencia')
+            ->set('monto', 25.0)
+            ->call('abrirModalTransferencia')
             ->assertSet('mostrarModalTransferencia', true)
             ->call('cerrarModalTransferencia')
             ->assertSet('mostrarModalTransferencia', false)
-            ->assertSet('metodo', 'paypal');
+            ->assertSet('metodo', 'transferencia');
     }
 
     public function test_recargas_monto_bajo_minimo_falla_validacion(): void
@@ -153,7 +208,7 @@ class RecargasTest extends TestCase
             ->assertSet('metodo', 'payphone');
     }
 
-    public function test_recargas_solo_transferencia_habilitada_abre_modal_sin_datos(): void
+    public function test_recargas_solo_transferencia_habilitada_abre_modal_con_datos_vacios(): void
     {
         ConfigParametro::where('modulo', 'recargas')
             ->whereIn('clave', ['metodoPaypalHabilitado', 'metodoPayphoneHabilitado', 'metodoTarjetaHabilitado'])
@@ -167,8 +222,14 @@ class RecargasTest extends TestCase
             ->assertDontSeeText('PayPhone')
             ->assertSet('mostrarModalTransferencia', false)
             ->call('selectMetodo', 'transferencia')
+            ->assertSet('mostrarModalTransferencia', false)
+            ->set('monto', 10.0)
+            ->call('abrirModalTransferencia')
             ->assertSet('mostrarModalTransferencia', true)
-            ->assertSee('Transferencia no disponible');
+            ->assertSee('role="dialog"', false)
+            ->assertSee('aria-modal="true"', false)
+            ->assertSee('Información bancaria no configurada')
+            ->assertSee('El administrador aún no ha configurado los datos para transferencias.');
     }
 
     public function test_recargas_selectMetodo_solo_acepta_metodos_habilitados(): void

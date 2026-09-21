@@ -48,7 +48,8 @@ class PayWithTransferenciaTest extends TestCase
     {
         Livewire::actingAs($this->usuario)
             ->test(PayWithTransferencia::class, ['monto' => 50])
-            ->assertSee('Transferencia no disponible')
+            ->assertSee('Información bancaria no configurada')
+            ->assertSee('El administrador aún no ha configurado los datos para transferencias.')
             ->assertDontSee('Paso 1');
     }
 

@@ -26,18 +26,20 @@ class Recargas extends Component
         }
 
         $this->metodo = $metodo;
+    }
 
-        if ($metodo === 'transferencia') {
-            $this->mostrarModalTransferencia = true;
+    public function abrirModalTransferencia(): void
+    {
+        if (! $this->isMontoValido($this->monto)) {
+            return;
         }
+
+        $this->mostrarModalTransferencia = true;
     }
 
     public function cerrarModalTransferencia(): void
     {
         $this->mostrarModalTransferencia = false;
-
-        $pagables = $this->getMetodosPagoPagablesHabilitados();
-        $this->metodo = $pagables[0] ?? 'paypal';
     }
 
     public function selectMonto(float $monto): void
@@ -105,6 +107,7 @@ class Recargas extends Component
             )),
             'recargaMinimaUsd' => $recargaMinimaUsd,
             'saldoCreditos' => (int) auth()->user()->cliente->saldo_creditos,
+            'datosTransferencia' => $datosTransferencia,
         ]);
     }
 }

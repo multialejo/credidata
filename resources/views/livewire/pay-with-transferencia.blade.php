@@ -1,10 +1,11 @@
+<div>
 @if(!$this->datosTransferencia)
     <div class="text-center py-8">
         <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
             <x-icons.arrows-right-left class="h-6 w-6 text-slate-400" />
         </div>
-        <p class="mt-4 text-sm font-medium text-slate-600">Transferencia no disponible</p>
-        <p class="mt-1 text-xs text-slate-400">Selecciona otro método de pago o intenta más tarde.</p>
+        <p class="mt-4 text-sm font-medium text-slate-600">Información bancaria no configurada</p>
+        <p class="mt-1 text-xs text-slate-400">El administrador aún no ha configurado los datos para transferencias. Selecciona otro método de pago o contacta a soporte.</p>
     </div>
 @else
     @php $datos = $this->datosTransferencia; @endphp
@@ -73,3 +74,4 @@
         </div>
     </div>
 @endif
+</div>
