@@ -13,7 +13,7 @@ class Recargas extends Component
 
     public string $metodo = 'paypal';
 
-    public float $monto = 0;
+    public string $monto = '';
 
     public bool $mostrarModalTransferencia = false;
 
@@ -30,7 +30,7 @@ class Recargas extends Component
 
     public function abrirModalTransferencia(): void
     {
-        if (! $this->isMontoValido($this->monto)) {
+        if (! $this->isMontoValido($this->montoFloat())) {
             return;
         }
 
@@ -44,20 +44,29 @@ class Recargas extends Component
 
     public function selectMonto(float $monto): void
     {
-        $this->monto = $monto;
+        $this->monto = (string) $monto;
         $this->dispatch('monto-updated', $monto);
+    }
+
+    public function montoFloat(): float
+    {
+        return is_numeric($this->monto) ? (float) $this->monto : 0.0;
     }
 
     public function getCreditosEstimadosProperty(): int
     {
-        return isset($this->monto)
-            ? (int) floor($this->monto * $this->getTasaCambioUsdCreditos())
+        $monto = $this->montoFloat();
+
+        return $monto > 0
+            ? (int) floor($monto * $this->getTasaCambioUsdCreditos())
             : 0;
     }
 
     public function getMontoValidoProperty(): bool
     {
-        return isset($this->monto) && $this->isMontoValido($this->monto);
+        $monto = $this->montoFloat();
+
+        return $monto > 0 && $this->isMontoValido($monto);
     }
 
     protected function rules()
@@ -69,7 +78,7 @@ class Recargas extends Component
 
     public function updatedMonto(): void
     {
-        $this->dispatch('monto-updated', (float) ($this->monto ?? 0));
+        $this->dispatch('monto-updated', $this->montoFloat());
         $this->validateOnly('monto');
     }
 
@@ -106,8 +115,9 @@ class Recargas extends Component
                 fn (int $monto) => $monto >= $recargaMinimaUsd,
             )),
             'recargaMinimaUsd' => $recargaMinimaUsd,
-            'saldoCreditos' => (int) auth()->user()->cliente->saldo_creditos,
+            'recargaMaximaPayphoneUsd' => $this->getRecargaMaximaPayphoneUsd(),
             'datosTransferencia' => $datosTransferencia,
+            'saldoCreditos' => (int) auth()->user()->cliente->saldo_creditos,
         ]);
     }
 }

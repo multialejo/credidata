@@ -40,11 +40,15 @@
                 <label for="monto" class="block text-sm font-semibold text-[#14213d]">Monto (USD)</label>
                 <div class="relative mt-2">
                     <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-sm font-semibold text-slate-500">$</span>
-                    <input id="monto" type="number" step="0.01" min="{{ $recargaMinimaUsd }}" inputmode="decimal" wire:model.live="monto" class="ui-input block w-full pl-9 pr-4 py-3" placeholder="10.00" aria-describedby="monto-minimo" />
+                    <input id="monto" type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" wire:model.live="monto" class="ui-input block w-full pl-9 pr-4 py-3" placeholder="10.00" aria-describedby="monto-minimo" />
                 </div>
                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <p id="monto-minimo" class="text-xs text-slate-500">Monto mínimo: ${{ number_format($recargaMinimaUsd, 2) }}</p>
+                    <p class="text-xs {{ $monto > $recargaMaximaPayphoneUsd ? 'font-medium text-rose-600' : 'text-slate-500' }}">Monto máximo: ${{ number_format($recargaMaximaPayphoneUsd, 2) }}</p>
                 </div>
+                @if($monto > $recargaMaximaPayphoneUsd)
+                    <p class="mt-2 text-sm font-medium text-rose-600" role="alert">El monto no puede exceder ${{ number_format($recargaMaximaPayphoneUsd, 2) }} USD por transacción.</p>
+                @endif
                 <div class="mt-3 flex flex-wrap gap-2">
                     @foreach($montosSugeridos as $sugerido)
                         <button type="button" wire:click="selectMonto({{ $sugerido }})" class="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-[#14213d] transition hover:border-[#3155d9] hover:text-[#3155d9] focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2">
@@ -60,15 +64,15 @@
                 @if($this->montoValido)
                     <p class="mb-4 flex items-center justify-between gap-4 rounded-xl bg-[#e8edf9] px-4 py-3 text-sm leading-6" aria-live="polite">
                         <span class="font-medium text-[#14213d]">Total a pagar</span>
-                        <span class="font-semibold text-[#3155d9]">${{ number_format($monto, 2) }} → {{ number_format($this->creditosEstimados) }} créditos</span>
+                        <span class="font-semibold text-[#3155d9]">${{ number_format($this->montoFloat(), 2) }} → {{ number_format($this->creditosEstimados) }} créditos</span>
                     </p>
                 @endif
                 @if($metodo === 'paypal')
-                    <livewire:pay-with-paypal :monto="$monto" :key="'paypal-'.$metodo" />
+                    <livewire:pay-with-paypal :monto="$this->montoFloat()" :key="'paypal-'.$metodo" />
                 @elseif($metodo === 'payphone')
-                    <livewire:pay-with-payphone :monto="$monto" :key="'payphone-'.$metodo" />
+                    <livewire:pay-with-payphone :monto="$this->montoFloat()" :key="'payphone-'.$metodo" />
                 @elseif($metodo === 'tarjeta')
-                    <livewire:pay-with-payphone :monto="$monto" :solo-tarjeta="true" :key="'tarjeta-'.$metodo" />
+                    <livewire:pay-with-payphone :monto="$this->montoFloat()" :solo-tarjeta="true" :key="'tarjeta-'.$metodo" />
                 @elseif($metodo === 'transferencia')
                     @if($this->montoValido)
                         <button
@@ -139,7 +143,7 @@
                 </div>
                 <div class="min-h-0 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
                     @if($mostrarModalTransferencia && $datosTransferencia)
-                        <livewire:pay-with-transferencia :monto="$monto" :key="'transferencia-modal-'.$monto" />
+                        <livewire:pay-with-transferencia :monto="$this->montoFloat()" :key="'transferencia-modal-'.$this->montoFloat()" />
                     @else
                         <div class="text-center py-8">
                             <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">

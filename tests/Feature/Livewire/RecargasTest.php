@@ -159,7 +159,7 @@ class RecargasTest extends TestCase
             ->test(Recargas::class)
             ->set('monto', 25.0);
 
-        $tester->assertSet('monto', 25.0);
+        $tester->assertSet('monto', '25');
         $tester->assertSee('wire:model.live="monto"', false);
         $tester->assertSee('pay-with-paypal', false);
     }
@@ -232,7 +232,7 @@ class RecargasTest extends TestCase
             ->assertSee('El administrador aún no ha configurado los datos para transferencias.');
     }
 
-    public function test_recargas_selectMetodo_solo_acepta_metodos_habilitados(): void
+    public function test_recargas_select_metodo_solo_acepta_metodos_habilitados(): void
     {
         ConfigParametro::where('modulo', 'recargas')
             ->where('clave', 'metodoPaypalHabilitado')
@@ -243,6 +243,59 @@ class RecargasTest extends TestCase
             ->assertSet('metodo', 'payphone')
             ->call('selectMetodo', 'paypal')
             ->assertSet('metodo', 'payphone');
+    }
+
+    // --- Decimal input handling ---
+
+    public function test_recargas_preserva_intermediate_decimal_dot(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->set('monto', '10.')
+            ->assertSet('monto', '10.');
+    }
+
+    public function test_recargas_preserva_decimal_value(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->set('monto', '25')
+            ->assertSet('monto', '25');
+    }
+
+    public function test_recargas_monto_float_para_string_vacio_retorna_cero(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->set('monto', '')
+            ->assertSet('creditosEstimados', 0)
+            ->assertSet('montoValido', false);
+    }
+
+    public function test_recargas_monto_float_para_monto_valido_calcula_creditos(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->set('monto', '10')
+            ->assertSet('creditosEstimados', 100)
+            ->assertSet('montoValido', true);
+    }
+
+    public function test_recargas_monto_invalido_retorna_cero_creditos(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->set('monto', 'abc')
+            ->assertSet('creditosEstimados', 0)
+            ->assertSet('montoValido', false);
+    }
+
+    public function test_recargas_despacha_evento_float_para_monto_string(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->call('selectMonto', 10.0)
+            ->assertDispatched('monto-updated');
     }
 
     protected function tearDown(): void
