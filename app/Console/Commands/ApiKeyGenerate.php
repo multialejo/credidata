@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Cliente;
-use Illuminate\Console\Command;
 use App\Services\ApiKeyService;
+use Illuminate\Console\Command;
 
 class ApiKeyGenerate extends Command
 {

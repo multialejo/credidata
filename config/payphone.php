@@ -11,4 +11,5 @@ return [
     'response_url' => env('PAYPHONE_RESPONSE_URL') ?: null,
     'cancellation_url' => env('PAYPHONE_CANCELLATION_URL') ?: null,
     'intencion_ttl_minutes' => (int) env('PAYPHONE_INTENCION_TTL_MINUTES', 15),
+    'max_amount' => (float) env('PAYPHONE_MAX_AMOUNT', 1000),
 ];

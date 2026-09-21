@@ -130,6 +130,48 @@ class PayWithPayphoneTest extends TestCase
         $this->assertSame(0, IntencionPayphone::count());
     }
 
+    public function test_pay_with_payphone_con_monto_supera_maximo_retorna_error_de_validacion_sin_persistir(): void
+    {
+        $this->partialMock(RecargaPayphoneService::class, function ($mock) {
+            $mock->shouldReceive('prepare')->never();
+        });
+
+        Livewire::actingAs($this->usuario)
+            ->test(PayWithPayphone::class, ['monto' => 1000.01])
+            ->call('pay')
+            ->assertHasErrors(['monto']);
+
+        $this->assertSame(0, IntencionPayphone::count());
+    }
+
+    public function test_pay_with_payphone_con_monto_maximo_exacto_persiste_y_redirige(): void
+    {
+        $this->partialMock(RecargaPayphoneService::class, function ($mock) {
+            $mock->shouldReceive('generateClientTransactionId')
+                ->once()
+                ->andReturn('bs-test-max');
+            $mock->shouldReceive('prepare')
+                ->with(1000.0, 'bs-test-max')
+                ->once()
+                ->andReturn([
+                    'paymentId' => 'MOCK-PAY-MAX',
+                    'payWithPayPhone' => 'https://pay.payphonetodoesposible.com/PayPhone/Index?paymentId=MOCK-PAY-MAX',
+                    'payWithCard' => 'https://pay.payphonetodoesposible.com/Anonymous/Index?paymentId=MOCK-PAY-MAX',
+                ]);
+        });
+
+        Livewire::actingAs($this->usuario)
+            ->test(PayWithPayphone::class, ['monto' => 1000.0])
+            ->call('pay')
+            ->assertRedirect('https://pay.payphonetodoesposible.com/PayPhone/Index?paymentId=MOCK-PAY-MAX');
+
+        $this->assertDatabaseHas('intenciones_payphone', [
+            'ctid' => 'bs-test-max',
+            'cliente_id' => $this->cliente->id,
+            'monto_usd' => 1000.00,
+        ]);
+    }
+
     public function test_pay_with_payphone_con_payphone_503_retorna_error_sin_persistir(): void
     {
         $this->partialMock(RecargaPayphoneService::class, function ($mock) {

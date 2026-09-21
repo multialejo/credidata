@@ -35,13 +35,13 @@ class PayWithPayphone extends Component
 
     public function getMontoValidoProperty(): bool
     {
-        return $this->isMontoValido($this->monto);
+        return $this->isMontoValido($this->monto) && $this->monto <= $this->getRecargaMaximaPayphoneUsd();
     }
 
     protected function rules()
     {
         return [
-            'monto' => 'required|numeric|min:'.$this->getRecargaMinimaUsd(),
+            'monto' => 'required|numeric|min:'.$this->getRecargaMinimaUsd().'|max:'.$this->getRecargaMaximaPayphoneUsd(),
         ];
     }
 

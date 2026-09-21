@@ -3,8 +3,8 @@
 namespace Tests\Feature\Livewire;
 
 use App\Livewire\PayWithTransferencia;
-use App\Models\ConfigParametro;
 use App\Models\Cliente;
+use App\Models\ConfigParametro;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;

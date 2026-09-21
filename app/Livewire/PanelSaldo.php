@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\Consulta;
 use App\Models\Aporte;
+use App\Models\Consulta;
 use App\Models\Recarga;
 use Livewire\Component;
 

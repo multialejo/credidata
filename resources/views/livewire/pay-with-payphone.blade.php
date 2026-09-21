@@ -22,6 +22,10 @@
         Procesando...
     </p>
 
+    @error('monto')
+        <p class="text-sm font-medium text-rose-600" role="alert">{{ $message }}</p>
+    @enderror
+
     @if($errorMessage)
         <p class="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700" role="alert">{{ $errorMessage }}</p>
     @endif

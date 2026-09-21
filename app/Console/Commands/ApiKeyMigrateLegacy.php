@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 class ApiKeyMigrateLegacy extends Command
 {
     protected $signature = 'apikey:migrate-legacy {--dry-run : Solo informa las keys que serían revocadas}';
+
     protected $description = 'Revoca las API Keys legacy que no pueden validarse por prefijo';
 
     public function handle(): int

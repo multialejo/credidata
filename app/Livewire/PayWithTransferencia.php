@@ -17,7 +17,7 @@ class PayWithTransferencia extends Component
     public function mount(float|int|null $monto = 0): void
     {
         $this->monto = (float) ($monto ?? 0);
-        $this->referencia = 'CD-' . strtoupper(bin2hex(random_bytes(3)));
+        $this->referencia = 'CD-'.strtoupper(bin2hex(random_bytes(3)));
     }
 
     #[On('monto-updated')]
@@ -51,10 +51,10 @@ class PayWithTransferencia extends Component
             return null;
         }
 
-        $mensaje = "Hola, quiero confirmar una recarga de \$" . number_format($this->monto, 2)
-            . " ({$this->creditosEstimados} créditos)."
-            . "\nReferencia: {$this->referencia}"
-            . "\n\nAdjunto el comprobante de pago.";
+        $mensaje = 'Hola, quiero confirmar una recarga de $'.number_format($this->monto, 2)
+            ." ({$this->creditosEstimados} créditos)."
+            ."\nReferencia: {$this->referencia}"
+            ."\n\nAdjunto el comprobante de pago.";
 
         $encoded = rawurlencode($mensaje);
 

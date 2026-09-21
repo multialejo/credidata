@@ -38,7 +38,9 @@ class AporteAuthorizationTest extends TestCase
     {
         $usuario = Usuario::create(['uid' => "cliente-{$suffix}", 'email' => "{$suffix}@test.com", 'nombre' => 'Cliente', 'roles' => $colaborador ? ['cliente', 'colaborador'] : ['cliente']]);
         Cliente::create(['usuario_id' => $usuario->id, 'saldo_creditos' => 0]);
-        if ($colaborador) Colaborador::create(['usuario_id' => $usuario->id, 'terminos_version' => 'test', 'terminos_aceptados_en' => now()]);
+        if ($colaborador) {
+            Colaborador::create(['usuario_id' => $usuario->id, 'terminos_version' => 'test', 'terminos_aceptados_en' => now()]);
+        }
 
         return $usuario->fresh();
     }

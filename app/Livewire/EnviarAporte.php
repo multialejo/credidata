@@ -9,8 +9,11 @@ use Livewire\Component;
 class EnviarAporte extends Component
 {
     public string $identificador = '';
+
     public string $tipoDato = 'telefono';
+
     public string $valor = '';
+
     public ?string $resultado = null;
 
     public ?int $recompensaAcreditada = null;
@@ -24,5 +27,8 @@ class EnviarAporte extends Component
         $this->reset(['identificador', 'tipoDato', 'valor']);
     }
 
-    public function render() { return view('livewire.enviar-aporte'); }
+    public function render()
+    {
+        return view('livewire.enviar-aporte');
+    }
 }

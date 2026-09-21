@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Middleware\EnsureCliente;
 use App\Http\Middleware\EnsureActiveColaborador;
+use App\Http\Middleware\EnsureCliente;
 use App\Http\Middleware\EnsureStaff;
 use App\Http\Middleware\EnsureStaffRole;
 use App\Http\Middleware\EnsureStaffWeb;

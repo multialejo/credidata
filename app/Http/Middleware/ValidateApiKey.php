@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\ApiKeyService;
 use Closure;
 use Illuminate\Http\Request;
-use App\Services\ApiKeyService;
 
 class ValidateApiKey
 {

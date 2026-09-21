@@ -75,6 +75,25 @@ class RecargaPayphoneTest extends TestCase
         $response->assertJsonPath('error.tipo', 'VALIDACION');
     }
 
+    public function test_crear_transaccion_con_monto_supera_maximo_retorna_422(): void
+    {
+        $response = $this->actingAs($this->usuario, 'sanctum')
+            ->postJson('/api/v1/recargas/payphone/transaccion', ['monto_usd' => 1000.01]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('error.tipo', 'VALIDACION');
+    }
+
+    public function test_crear_transaccion_con_monto_maximo_exacto_retorna_200(): void
+    {
+        $response = $this->actingAs($this->usuario, 'sanctum')
+            ->postJson('/api/v1/recargas/payphone/transaccion', ['monto_usd' => 1000.00]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('exito', true);
+        $response->assertJsonPath('datos.monto_usd', 1000);
+    }
+
     public function test_crear_transaccion_con_monto_valido_retorna_200_y_crea_intencion(): void
     {
         $response = $this->actingAs($this->usuario, 'sanctum')

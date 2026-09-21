@@ -32,13 +32,14 @@ class RecargaPayphoneController extends Controller
     public function crearTransaccion(Request $request): JsonResponse
     {
         $minimo = $this->getRecargaMinimaUsd();
+        $maximo = $this->getRecargaMaximaPayphoneUsd();
 
         try {
             $validated = $request->validate([
-                'monto_usd' => ['required', 'numeric', 'min:'.$minimo],
+                'monto_usd' => ['required', 'numeric', 'min:'.$minimo, 'max:'.$maximo],
             ]);
         } catch (ValidationException $e) {
-            return $this->respondValidationError($e, $minimo);
+            return $this->respondValidationError($e, $minimo, $maximo);
         }
 
         $cliente = $request->user()->cliente;
@@ -311,7 +312,7 @@ class RecargaPayphoneController extends Controller
         ], 503);
     }
 
-    private function respondValidationError(ValidationException $e, float $minimo): JsonResponse
+    private function respondValidationError(ValidationException $e, float $minimo, float $maximo): JsonResponse
     {
         return response()->json([
             'codigo' => 422,
@@ -319,7 +320,7 @@ class RecargaPayphoneController extends Controller
             'mensaje' => 'Datos de entrada inválidos',
             'error' => [
                 'tipo' => 'VALIDACION',
-                'detalle' => "El monto mínimo de recarga es \${$minimo} USD",
+                'detalle' => "El monto de recarga debe ser entre \${$minimo} y \${$maximo} USD",
             ],
             'metadatos' => [
                 'timestamp' => now()->toIso8601String(),

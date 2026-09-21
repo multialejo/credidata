@@ -4,10 +4,10 @@ use App\Http\Controllers\Api\AdminRecargaEvidenceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecargaPaypalReturnController;
 use App\Http\Controllers\RecargaPayphoneReturnController;
-use App\Livewire\ConfigGeneral;
 use App\Livewire\ActivarColaborador;
-use App\Livewire\EnviarAporte;
+use App\Livewire\ConfigGeneral;
 use App\Livewire\EditarRegistro;
+use App\Livewire\EnviarAporte;
 use App\Livewire\GestionApiKey;
 use App\Livewire\GestionClientes;
 use App\Livewire\HistorialConsultas;
@@ -15,8 +15,8 @@ use App\Livewire\LogsActividad;
 use App\Livewire\PanelSaldo;
 use App\Livewire\Recargas;
 use App\Livewire\Recibos;
-use App\Livewire\ValidacionRecargas;
 use App\Livewire\ValidacionAportes;
+use App\Livewire\ValidacionRecargas;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {

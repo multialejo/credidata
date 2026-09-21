@@ -126,7 +126,7 @@ class ConfigGeneral extends Component
 
         $this->actualizarParametro($param, json_encode($valorNuevo));
 
-        session()->flash('status', "Método {$config['label']} " . ($valorNuevo ? 'habilitado' : 'deshabilitado') . '.');
+        session()->flash('status', "Método {$config['label']} ".($valorNuevo ? 'habilitado' : 'deshabilitado').'.');
     }
 
     public function guardarDatosTransferencia(): void

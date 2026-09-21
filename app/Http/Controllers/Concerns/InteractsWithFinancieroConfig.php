@@ -42,6 +42,11 @@ trait InteractsWithFinancieroConfig
         return $monto >= $this->getRecargaMinimaUsd();
     }
 
+    protected function getRecargaMaximaPayphoneUsd(): float
+    {
+        return (float) config('payphone.max_amount', 1000);
+    }
+
     protected function getDatosTransferencia(): ?array
     {
         $param = ConfigParametro::where('modulo', 'recargas')
@@ -75,11 +80,11 @@ trait InteractsWithFinancieroConfig
         $digits = preg_replace('/\D/', '', $whatsapp);
 
         if (str_starts_with($digits, '0') && strlen($digits) === 10) {
-            $digits = '593' . substr($digits, 1);
+            $digits = '593'.substr($digits, 1);
         }
 
         if (strlen($digits) === 9 && str_starts_with($digits, '9')) {
-            $digits = '593' . $digits;
+            $digits = '593'.$digits;
         }
 
         return $digits;

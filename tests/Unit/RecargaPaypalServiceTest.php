@@ -3,6 +3,8 @@
 namespace Tests\Unit;
 
 use App\Services\RecargaPaypalService;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -101,7 +103,7 @@ class RecargaPaypalServiceTest extends TestCase
                     && $context['status'] === 422
                     && $context['body']['details'][0]['issue'] === 'PAYEE_ACCOUNT_RESTRICTED';
             });
-        Http::swap(new \Illuminate\Http\Client\Factory);
+        Http::swap(new Factory);
         Http::fake(function ($request) {
             if (str_contains($request->url(), '/v1/oauth2/token')) {
                 return Http::response([
@@ -121,11 +123,11 @@ class RecargaPaypalServiceTest extends TestCase
 
         try {
             $this->service->createOrder(10.00);
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+        } catch (ConnectionException $e) {
             $exception = $e;
         }
 
-        $this->assertInstanceOf(\Illuminate\Http\Client\ConnectionException::class, $exception);
+        $this->assertInstanceOf(ConnectionException::class, $exception);
         Http::assertSentCount(2);
     }
 }
