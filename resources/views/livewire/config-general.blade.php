@@ -1,206 +1,206 @@
-<div class="max-w-7xl mx-auto space-y-6">
+<div class="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
+    @php
+        $transferenciaConfigurada = filled($transferenciaBanco) && filled($transferenciaNumeroCuenta);
+        $etiquetasParametros = [
+            'costoConsultaBase' => __('Costo base de consulta'),
+            'tasaCambioUsdCreditos' => __('Tasa de cambio USD a créditos'),
+            'ttlDatosExternosSegundos' => __('Duración de caché de datos externos'),
+        ];
+    @endphp
 
-    {{-- Top Flash Alert --}}
     @if (session('status'))
-        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center gap-2 shadow-sm">
-            <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-sm text-emerald-900" role="status" aria-live="polite">
+            <svg class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
             </svg>
-            <span>{{ session('status') }}</span>
+            <span class="font-medium">{{ session('status') }}</span>
         </div>
     @endif
 
-    {{-- Métodos de Pago --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div class="mb-6 border-b border-gray-100 pb-4">
-            <h3 class="text-xl font-bold text-gray-900">{{ __('Métodos de Pago') }}</h3>
-            <p class="mt-1 text-sm text-gray-500">{{ __('Habilita o deshabilita métodos de pago visibles en "Recargar créditos".') }}</p>
+    <section class="rounded-2xl border border-slate-200 bg-white" aria-labelledby="pagos-heading">
+        <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
+            <div class="flex items-start gap-3">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#3155d9]">
+                    <x-icons.credit-card class="h-5 w-5" />
+                </span>
+                <div>
+                    <h2 id="pagos-heading" class="text-lg font-bold text-[#14213d]">{{ __('Métodos de pago') }}</h2>
+                    <p class="mt-1 max-w-2xl text-sm leading-5 text-slate-500">{{ __('Define qué opciones aparecen cuando un cliente recarga créditos.') }}</p>
+                </div>
+            </div>
         </div>
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="grid gap-3 p-5 sm:grid-cols-2 sm:p-6">
             @foreach($estadosMetodosPago as $codigo => $metodo)
                 <button
                     type="button"
                     wire:click="toggleMetodoPago('{{ $codigo }}')"
-                    @class([
-                        'flex items-center justify-between rounded-xl border p-4 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                        'border-green-200 bg-green-50' => $metodo['habilitado'],
-                        'border-gray-200 bg-gray-50' => ! $metodo['habilitado'],
-                    ])
                     wire:loading.attr="disabled"
-                    wire:loading.class="opacity-50"
+                    wire:loading.class="opacity-60"
+                    @class([
+                        'group flex min-h-[76px] items-center justify-between gap-4 rounded-xl border px-4 py-3.5 text-left transition focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2',
+                        'border-emerald-200 bg-emerald-50/70 hover:border-emerald-300' => $metodo['habilitado'],
+                        'border-slate-200 bg-slate-50 hover:border-slate-300' => ! $metodo['habilitado'],
+                    ])
+                    aria-pressed="{{ $metodo['habilitado'] ? 'true' : 'false' }}"
                 >
-                    <span class="flex items-center gap-3">
+                    <span class="flex min-w-0 items-center gap-3">
                         <span @class([
-                            'h-3 w-3 rounded-full shrink-0',
-                            'bg-green-500' => $metodo['habilitado'],
-                            'bg-gray-400' => ! $metodo['habilitado'],
-                        ])></span>
-                        <span class="text-sm font-semibold text-gray-900">{{ $metodo['label'] }}</span>
+                            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold',
+                            'bg-white text-emerald-700' => $metodo['habilitado'],
+                            'bg-slate-200 text-slate-500' => ! $metodo['habilitado'],
+                        ])>{{ str($metodo['label'])->substr(0, 1) }}</span>
+                        <span class="min-w-0">
+                            <span class="block truncate text-sm font-semibold text-[#14213d]">{{ $metodo['label'] }}</span>
+                            <span class="mt-0.5 block text-xs text-slate-500">{{ $metodo['habilitado'] ? __('Visible para clientes') : __('No visible para clientes') }}</span>
+                        </span>
                     </span>
-                    <span @class([
-                        'text-xs font-semibold px-2 py-0.5 rounded-full',
-                        'bg-green-100 text-green-700' => $metodo['habilitado'],
-                        'bg-gray-100 text-gray-500' => ! $metodo['habilitado'],
-                    ])>
-                        {{ $metodo['habilitado'] ? __('Visible') : __('Oculto') }}
+                    <span class="flex shrink-0 items-center gap-2">
+                        <span @class([
+                            'text-xs font-semibold',
+                            'text-emerald-700' => $metodo['habilitado'],
+                            'text-slate-500' => ! $metodo['habilitado'],
+                        ])>{{ $metodo['habilitado'] ? __('Visible') : __('Oculto') }}</span>
+                        <span @class([
+                            'relative h-6 w-11 rounded-full transition-colors',
+                            'bg-emerald-500' => $metodo['habilitado'],
+                            'bg-slate-300' => ! $metodo['habilitado'],
+                        ]) aria-hidden="true">
+                            <span @class([
+                                'absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform',
+                                'translate-x-6' => $metodo['habilitado'],
+                                'translate-x-1' => ! $metodo['habilitado'],
+                            ])></span>
+                        </span>
                     </span>
                 </button>
             @endforeach
         </div>
-    </div>
+    </section>
 
-    {{-- Transferencia Bancaria --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div class="mb-6 border-b border-gray-100 pb-4">
-            <h3 class="text-xl font-bold text-gray-900">{{ __('Transferencia bancaria') }}</h3>
-            <p class="mt-1 text-sm text-gray-500">{{ __('Datos bancarios para recibir transferencias. Se muestran al cliente en "Recargar créditos".') }}</p>
+    <section class="rounded-2xl border border-slate-200 bg-white" aria-labelledby="transferencia-heading">
+        <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div class="flex items-start gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                        <x-icons.arrows-right-left class="h-5 w-5" />
+                    </span>
+                    <div>
+                        <h2 id="transferencia-heading" class="text-lg font-bold text-[#14213d]">{{ __('Transferencia bancaria') }}</h2>
+                        <p class="mt-1 max-w-2xl text-sm leading-5 text-slate-500">{{ __('Estos datos se mostrarán a los clientes que elijan este método de pago.') }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <form wire:submit="guardarDatosTransferencia" class="space-y-4">
-            <div class="grid gap-4 sm:grid-cols-2">
+        <form wire:submit="guardarDatosTransferencia" class="space-y-6 px-5 py-6 sm:px-6">
+            <div>
+                <h3 class="text-sm font-semibold text-[#14213d]">{{ __('Datos de la cuenta') }}</h3>
+                <p class="mt-1 text-xs text-slate-500">{{ __('Completa todos los campos para que el cliente pueda identificar el pago.') }}</p>
+            </div>
+            <div class="grid gap-x-5 gap-y-5 sm:grid-cols-2">
                 <div>
                     <x-input-label for="transferenciaBanco" value="Banco" />
-                    <x-text-input id="transferenciaBanco" wire:model="transferenciaBanco" type="text" class="mt-1 block w-full" placeholder="Banco Pichincha" />
-                    @error('transferenciaBanco') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                    <x-text-input id="transferenciaBanco" wire:model="transferenciaBanco" type="text" class="mt-1.5 block w-full" placeholder="Banco Pichincha" />
+                    @error('transferenciaBanco') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <x-input-label for="transferenciaTipoCuenta" value="Tipo de cuenta" />
-                    <x-text-input id="transferenciaTipoCuenta" wire:model="transferenciaTipoCuenta" type="text" class="mt-1 block w-full" placeholder="Cuenta de ahorros" />
-                    @error('transferenciaTipoCuenta') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                    <x-text-input id="transferenciaTipoCuenta" wire:model="transferenciaTipoCuenta" type="text" class="mt-1.5 block w-full" placeholder="Cuenta de ahorros" />
+                    @error('transferenciaTipoCuenta') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <x-input-label for="transferenciaNumeroCuenta" value="Número de cuenta" />
-                    <x-text-input id="transferenciaNumeroCuenta" wire:model="transferenciaNumeroCuenta" type="text" class="mt-1 block w-full" placeholder="2204592986" />
-                    @error('transferenciaNumeroCuenta') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                    <x-text-input id="transferenciaNumeroCuenta" wire:model="transferenciaNumeroCuenta" type="text" inputmode="numeric" class="mt-1.5 block w-full" placeholder="2204592986" maxlength="20" />
+                    @error('transferenciaNumeroCuenta') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <x-input-label for="transferenciaTitular" value="Titular de la cuenta" />
-                    <x-text-input id="transferenciaTitular" wire:model="transferenciaTitular" type="text" class="mt-1 block w-full" placeholder="Jean Paul Mayorga" />
-                    @error('transferenciaTitular') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                    <x-text-input id="transferenciaTitular" wire:model="transferenciaTitular" type="text" class="mt-1.5 block w-full" placeholder="Jean Paul Mayorga" />
+                    @error('transferenciaTitular') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <x-input-label for="transferenciaCedulaTitular" value="Cédula del titular" />
-                    <x-text-input id="transferenciaCedulaTitular" wire:model="transferenciaCedulaTitular" type="text" class="mt-1 block w-full" placeholder="1805752685" maxlength="10" />
-                    @error('transferenciaCedulaTitular') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                    <x-text-input id="transferenciaCedulaTitular" wire:model="transferenciaCedulaTitular" type="text" inputmode="numeric" class="mt-1.5 block w-full" placeholder="1805752685" maxlength="10" />
+                    @error('transferenciaCedulaTitular') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <x-input-label for="transferenciaWhatsapp" value="WhatsApp (para comprobantes)" />
-                    <x-text-input id="transferenciaWhatsapp" wire:model="transferenciaWhatsapp" type="text" class="mt-1 block w-full" placeholder="593991234567" />
-                    @error('transferenciaWhatsapp') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                    <x-input-label for="transferenciaWhatsapp" value="WhatsApp para comprobantes" />
+                    <x-text-input id="transferenciaWhatsapp" wire:model="transferenciaWhatsapp" type="text" inputmode="tel" class="mt-1.5 block w-full" placeholder="593991234567" maxlength="15" />
+                    @error('transferenciaWhatsapp') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>
-            <div class="flex items-center gap-3 pt-2">
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm" wire:loading.attr="disabled" wire:loading.class="opacity-50">
-                    <span wire:loading.remove wire:target="guardarDatosTransferencia">Guardar datos bancarios</span>
-                    <span wire:loading wire:target="guardarDatosTransferencia">Guardando...</span>
+            <div class="flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#3155d9] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2948bf] focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2 disabled:opacity-50" wire:loading.attr="disabled" wire:loading.class="opacity-60">
+                    <span wire:loading.remove wire:target="guardarDatosTransferencia">{{ __('Guardar datos bancarios') }}</span>
+                    <span wire:loading wire:target="guardarDatosTransferencia">{{ __('Guardando...') }}</span>
                 </button>
             </div>
         </form>
-    </div>
+    </section>
 
-    {{-- Main Container --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div class="mb-6 border-b border-gray-100 pb-4">
-            <h3 class="text-xl font-bold text-gray-900">{{ __('Configuración General') }}</h3>
+    <section class="rounded-2xl border border-slate-200 bg-white" aria-labelledby="avanzada-heading">
+        <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
+            <div class="flex items-start gap-3">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                    <x-icons.cog-6-tooth class="h-5 w-5" />
+                </span>
+                <div>
+                    <h2 id="avanzada-heading" class="text-lg font-bold text-[#14213d]">{{ __('Configuración avanzada') }}</h2>
+                    <p class="mt-1 max-w-2xl text-sm leading-5 text-slate-500">{{ __('Ajusta los parámetros globales del sistema y del módulo.') }}</p>
+                </div>
+            </div>
         </div>
 
-        @forelse($parametros as $modulo => $items)
-            <div class="mb-8 last:mb-0">
-                {{-- Module Section Badge Header --}}
-                <div class="flex items-center gap-2 mb-3">
-                    <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 rounded-md">
-                        {{ $modulo }}
-                    </span>
+        <div class="space-y-4 p-4 sm:p-5">
+            @forelse($parametros as $modulo => $items)
+                <div>
+                    <div class="mb-2 flex items-center justify-between gap-3">
+                        <h3 class="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{{ $modulo }}</h3>
+                    </div>
+                    <div class="overflow-hidden rounded-lg border border-slate-200">
+                        @foreach($items as $param)
+                            @php
+                                $isEditing = $editando === $param->modulo . '.' . $param->clave;
+                                $decoded = json_decode($param->valor, true);
+                                $displayValue = is_array($decoded) ? json_encode($decoded, JSON_UNESCAPED_UNICODE) : ($decoded ?? $param->valor);
+                                $etiquetaParametro = $etiquetasParametros[$param->clave] ?? str($param->clave)->headline();
+                            @endphp
+                            <div class="grid gap-2 border-b border-slate-100 px-3 py-2.5 last:border-b-0 md:grid-cols-[minmax(180px,1fr)_minmax(0,2fr)_auto] md:items-center md:gap-4">
+                                <div class="min-w-0">
+                                    <span class="block text-sm font-semibold text-[#14213d]">{{ $etiquetaParametro }}</span>
+                                    <span class="sr-only">{{ $param->clave }}</span>
+                                </div>
+                                <div class="min-w-0">
+                                    @if($isEditing)
+                                        <form id="form-{{ $param->modulo }}-{{ $param->clave }}" wire:submit.prevent="guardar('{{ $param->modulo }}', '{{ $param->clave }}')" class="space-y-1">
+                                            <label for="valor-{{ $param->modulo }}-{{ $param->clave }}" class="sr-only">{{ __('Nuevo valor para :clave', ['clave' => $param->clave]) }}</label>
+                                            <input id="valor-{{ $param->modulo }}-{{ $param->clave }}" type="text" wire:model="valorEditando" class="w-full rounded-lg border-slate-300 px-3 py-2 font-mono text-sm focus:border-[#3155d9] focus:ring-[#3155d9]" placeholder="{{ __('Ingrese un valor JSON válido') }}" autofocus>
+                                            @error('valorEditando') <p class="text-xs font-medium text-red-600">{{ $message }}</p> @enderror
+                                        </form>
+                                    @else
+                                        <span class="block break-all font-mono text-xs leading-5 text-slate-600">{{ $displayValue }}</span>
+                                    @endif
+                                </div>
+                                <div class="flex items-center justify-end gap-2">
+                                    @if($isEditing)
+                                        <button type="submit" form="form-{{ $param->modulo }}-{{ $param->clave }}" wire:loading.attr="disabled" class="inline-flex min-h-9 items-center rounded-lg bg-[#3155d9] px-3 text-xs font-semibold text-white transition hover:bg-[#2948bf] focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2 disabled:opacity-50">
+                                            <span wire:loading.remove wire:target="guardar">{{ __('Guardar') }}</span>
+                                            <span wire:loading wire:target="guardar">...</span>
+                                        </button>
+                                        <button type="button" wire:click="cancelarEdicion" class="inline-flex min-h-9 items-center rounded-lg px-3 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#14213d] focus:outline-none focus:ring-2 focus:ring-[#3155d9]">{{ __('Cancelar') }}</button>
+                                    @else
+                                        <button type="button" wire:click="iniciarEdicion('{{ $param->modulo }}', '{{ $param->clave }}')" class="inline-flex min-h-9 items-center rounded-lg border border-slate-300 px-3 text-xs font-semibold text-[#14213d] transition hover:border-[#3155d9] hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2">{{ __('Editar') }}</button>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
-
-                {{-- Table --}}
-                <div class="overflow-x-auto rounded-lg border border-gray-100">
-                    <table class="w-full text-sm text-left divide-y divide-gray-200">
-                        <thead class="bg-gray-50 text-gray-500 font-medium uppercase text-xs tracking-wider">
-                            <tr>
-                                <th class="py-3 px-4 w-1/4">{{ __('Clave') }}</th>
-                                <th class="py-3 px-4 w-2/4">{{ __('Valor') }}</th>
-                                <th class="py-3 px-4 w-1/6">{{ __('Actualizado') }}</th>
-                                <th class="py-3 px-4 text-right w-1/12">{{ __('Acciones') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 bg-white">
-                            @foreach($items as $param)
-                                @php
-                                    $isEditing = $editando === $param->modulo . '.' . $param->clave;
-                                @endphp
-                                <tr class="hover:bg-gray-50/50 transition-colors">
-                                    {{-- Clave --}}
-                                    <td class="py-3.5 px-4 align-middle">
-                                        <code class="text-xs font-mono font-semibold text-gray-800 bg-gray-100 px-2 py-1 rounded">
-                                            {{ $param->clave }}
-                                        </code>
-                                    </td>
-
-                                    {{-- Valor (Inline Edit Mode) --}}
-                                    <td class="py-3.5 px-4 align-middle">
-                                        @if($isEditing)
-                                            <form id="form-{{ $param->modulo }}-{{ $param->clave }}"
-                                                  wire:submit.prevent="guardar('{{ $param->modulo }}', '{{ $param->clave }}')"
-                                                  class="space-y-1">
-                                                <input type="text"
-                                                       wire:model="valorEditando"
-                                                       class="w-full border-gray-300 rounded-lg text-sm font-mono focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-3"
-                                                       placeholder="{{ __('Ingrese el nuevo valor') }}"
-                                                       autofocus>
-                                                @error('valorEditando')
-                                                    <p class="text-red-600 text-xs font-medium">{{ $message }}</p>
-                                                @enderror
-                                            </form>
-                                        @else
-                                            <span class="font-mono text-gray-700 break-all text-xs">
-                                                @php
-                                                    $decoded = json_decode($param->valor, true);
-                                                    $displayValue = is_array($decoded) ? json_encode($decoded) : ($decoded ?? $param->valor);
-                                                @endphp
-                                                {{ $displayValue }}
-                                            </span>
-                                        @endif
-                                    </td>
-
-                                    {{-- Actualizado --}}
-                                    <td class="py-3.5 px-4 text-gray-500 text-xs whitespace-nowrap align-middle">
-                                        {{ $param->actualizado_en ? $param->actualizado_en->format('d/m/Y H:i') : '—' }}
-                                    </td>
-
-                                    {{-- Acciones --}}
-                                    <td class="py-3.5 px-4 text-right whitespace-nowrap align-middle">
-                                        @if($isEditing)
-                                            <div class="flex items-center justify-end gap-2">
-                                                <button type="submit"
-                                                        form="form-{{ $param->modulo }}-{{ $param->clave }}"
-                                                        wire:loading.attr="disabled"
-                                                        class="px-3 py-1 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50">
-                                                    <span wire:loading.remove wire:target="guardar">{{ __('Guardar') }}</span>
-                                                    <span wire:loading wire:target="guardar">...</span>
-                                                </button>
-                                                <button type="button"
-                                                        wire:click="cancelarEdicion"
-                                                        class="px-2.5 py-1 text-gray-500 hover:text-gray-700 text-xs font-medium transition-colors">
-                                                    {{ __('Cancelar') }}
-                                                </button>
-                                            </div>
-                                        @else
-                                            <button wire:click="iniciarEdicion('{{ $param->modulo }}', '{{ $param->clave }}')"
-                                                    class="px-3 py-1 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg text-xs font-medium transition-colors">
-                                                {{ __('Editar') }}
-                                            </button>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+            @empty
+                <div class="rounded-xl border border-dashed border-slate-300 px-5 py-12 text-center">
+                    <p class="text-sm font-medium text-slate-500">{{ __('No hay parámetros de configuración disponibles.') }}</p>
+                    <p class="mt-1 text-xs text-slate-400">{{ __('Los parámetros aparecerán aquí cuando estén disponibles.') }}</p>
                 </div>
-            </div>
-        @empty
-            <div class="text-center py-12 border-2 border-dashed border-gray-100 rounded-lg">
-                <p class="text-gray-400 text-sm">{{ __('No hay parámetros de configuración disponibles.') }}</p>
-            </div>
-        @endforelse
-    </div>
+            @endforelse
+        </div>
+    </section>
 </div>
