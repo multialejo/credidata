@@ -67,7 +67,7 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertViewIs('recargas.paypal.return');
         $response->assertSeeText('Recarga acreditada');
         $response->assertSeeText('100');
-        $response->assertSeeText('Volver al Panel de Saldo');
+        $response->assertSeeText('Volver a Inicio');
         $response->assertSee(route('dashboard'));
         $this->assertSame($saldoInicial, (int) $this->cliente->fresh()->saldo_creditos);
     }
@@ -92,7 +92,7 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertViewIs('recargas.paypal.return');
         $response->assertSeeText('Recarga acreditada');
         $response->assertSeeText('100');
-        $response->assertSeeText('Volver al Panel de Saldo');
+        $response->assertSeeText('Volver a Inicio');
         $this->assertSame($saldoInicial, (int) $this->cliente->fresh()->saldo_creditos);
     }
 
@@ -140,7 +140,7 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertViewIs('recargas.paypal.return');
         $response->assertSeeText('Recarga acreditada');
         $response->assertSeeText('100');
-        $response->assertSeeText('Volver al Panel de Saldo');
+        $response->assertSeeText('Volver a Inicio');
 
         $this->assertSame(EstadoIntencionPaypal::Confirmada, IntencionPaypal::where('order_id', $token)->first()->estado);
         $this->assertDatabaseHas('recargas', [
@@ -193,7 +193,7 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.paypal.return');
         $response->assertSeeText('Orden no encontrada');
-        $response->assertSeeText('Volver al Panel de Saldo');
+        $response->assertSeeText('Volver a Inicio');
         $this->assertSame(EstadoIntencionPaypal::Pendiente, IntencionPaypal::where('order_id', $token)->first()->estado);
     }
 
@@ -231,7 +231,7 @@ class RecargaPaypalReturnTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.paypal.return');
         $response->assertSeeText('Orden no encontrada');
-        $response->assertSeeText('Volver al Panel de Saldo');
+        $response->assertSeeText('Volver a Inicio');
     }
 
     public function test_retorno_sin_token_retorna_not_found(): void

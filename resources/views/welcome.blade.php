@@ -73,11 +73,6 @@
 
             <div class="relative mx-auto grid max-w-7xl items-center gap-12 px-4 pb-20 pt-14 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:pt-20">
                 <div>
-                    <div class="inline-flex items-center gap-2 rounded-full border border-[#3155d9]/25 bg-[#3155d9]/10 px-3 py-1 text-xs font-semibold text-[#3155d9]">
-                        <span class="h-1.5 w-1.5 rounded-full bg-[#3155d9]"></span>
-                        Datos de identidad y empresas de Ecuador
-                    </div>
-
                     <h1 class="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight text-[#14213d] sm:text-5xl lg:text-6xl">
                         Consulta datos de Ecuador,<br class="hidden sm:block">
                         <span class="text-[#3155d9]">sin trámites</span>.
@@ -98,19 +93,12 @@
                             @endif
                         @endauth
                     </div>
-
-                    <ul class="mt-8 flex flex-col gap-2 text-sm text-slate-600 sm:flex-row sm:flex-wrap sm:gap-x-6">
-                        <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#3155d9]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg> Sin mensualidades</li>
-                        <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#3155d9]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg> Recargas desde $0.50</li>
-                        <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#3155d9]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg> API REST para integraciones</li>
-                    </ul>
                 </div>
 
                 <div class="relative">
                     <div class="ui-card p-6 shadow-[0_24px_60px_-24px_rgba(20,33,61,0.35)]">
                         <div class="flex items-center justify-between">
                             <p class="ui-eyebrow">Prueba de consulta</p>
-                            <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Respuesta en 0.4 s</span>
                         </div>
 
                         <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -119,7 +107,6 @@
                                     <p class="truncate text-lg font-bold tracking-wide text-[#14213d]">PÉREZ GARCÍA JUAN CARLOS</p>
                                     <p class="mt-1 text-sm font-semibold text-slate-500">CC 1700000000</p>
                                 </div>
-                                <span class="ml-4 hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#3155d9]/10 text-sm font-bold text-[#3155d9] sm:flex">36</span>
                             </div>
                             <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-slate-200 pt-4">
                                 <div>
@@ -140,8 +127,6 @@
                                 </div>
                             </dl>
                         </div>
-
-                        <p class="mt-4 text-xs text-slate-400">Fuente: Registro Civil — datos simulados en esta etapa de desarrollo.</p>
                     </div>
                 </div>
             </div>
@@ -248,7 +233,6 @@
   }
 }</code>
                     </pre>
-                    <p class="px-3 pb-2 font-mono text-[11px] text-slate-500">Ejemplo ilustrativo del formato de respuesta (datos simulados).</p>
                 </div>
             </div>
         </section>
@@ -416,25 +400,34 @@
                         </ul>
                     </div>
                 </div>
-
-                <div class="mt-12 border-t border-white/10 pt-8">
-                    <p class="text-xs leading-relaxed text-slate-500">
-                        CrediData es una plataforma privada e independiente. No es un sitio del gobierno ecuatoriano ni está afiliada a
-                        ninguna entidad oficial. Durante esta etapa de desarrollo los datos mostrados son simulados.
+                <div class="mt-12 border-t border-white/10 pt-8 text-xs text-slate-500">
+                    <!-- Descargo de responsabilidad -->
+                    <p class="leading-relaxed text-slate-400">
+                        CrediData es una plataforma privada e independiente. No es un sitio del gobierno ecuatoriano ni está afiliada a ninguna entidad oficial. Durante esta etapa de desarrollo, los datos mostrados son simulados.
                     </p>
-                    <div class="mt-5 flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-                        <p>© 2026 CrediData. Todos los derechos reservados.</p>
-                        <p class="font-medium text-slate-500">Hecho con <span class="text-[#3155d9]">❤</span> en Ecuador</p>
+
+                    <!-- Información de derechos y créditos -->
+                    <div class="mt-6 flex flex-col items-center justify-between gap-3 text-sm sm:flex-row">
+                        <p class="text-slate-400">
+                            &copy; {{ date('Y') }} <span class="font-medium text-slate-300">CrediData</span>. Todos los derechos reservados.
+                        </p>
+
+                        <p class="inline-flex items-center gap-1 font-medium text-slate-400">
+                            <span>Desarrollado por</span>
+                            <a
+                                href="https://softecsa.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-slate-300 underline decoration-slate-600 underline-offset-4 transition-colors hover:text-white hover:decoration-white focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-sm"
+                            >
+                                Softecapps S.A.S.
+                            </a>
+                        </p>
                     </div>
                 </div>
             </div>
         </footer>
 
-        {{-- SOPORTE FLOTANTE --}}
-        <a href="#faq" class="fixed bottom-6 right-6 z-30 flex items-center gap-2 rounded-full bg-[#3155d9] px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#2647c2]" aria-label="Ayuda y soporte">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-            Soporte
-        </a>
-
+        @livewireScripts
     </body>
 </html>

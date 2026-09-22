@@ -1,4 +1,7 @@
 <x-guest-layout>
+    <div class="mb-6">
+        <h1 class="ui-page-title">Restablecer contraseña</h1>
+    </div>
     <div class="mb-4 text-sm text-slate-600">
         ¿Olvidaste tu contraseña? No hay problema. Ingresá tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
     </div>
@@ -6,8 +9,8 @@
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
     @if ($errors->any())
-        <div class="mb-4">
-            <ul class="text-sm text-red-600 space-y-1">
+        <div class="ui-alert ui-alert--danger mb-4">
+            <ul class="space-y-1 text-sm">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -20,7 +23,7 @@
 
         <div>
             <x-input-label for="email" value="Correo electrónico" />
-            <x-text-input id="email" name="email" type="email" class="block mt-1 w-full" :value="old('email')" required autofocus />
+            <x-text-input id="email" name="email" type="email" class="mt-1" :value="old('email')" required autofocus />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 

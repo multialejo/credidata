@@ -68,7 +68,7 @@ class RecargaPayphoneReturnTest extends TestCase
         $response->assertViewIs('recargas.payphone.return');
         $response->assertSeeText('Recarga acreditada');
         $response->assertSeeText('100');
-        $response->assertSeeText('Volver al Panel de Saldo');
+        $response->assertSeeText('Volver a Inicio');
         $response->assertSee(route('dashboard'));
         $this->assertSame($saldoInicial, (int) $this->cliente->fresh()->saldo_creditos);
         $this->assertSame(EstadoIntencionPayphone::Pendiente, IntencionPayphone::where('ctid', $ctid)->first()->estado);
@@ -95,7 +95,7 @@ class RecargaPayphoneReturnTest extends TestCase
         $response->assertViewIs('recargas.payphone.return');
         $response->assertSeeText('Recarga acreditada');
         $response->assertSeeText('100');
-        $response->assertSeeText('Volver al Panel de Saldo');
+        $response->assertSeeText('Volver a Inicio');
         $this->assertSame($saldoInicial, (int) $this->cliente->fresh()->saldo_creditos);
     }
 
@@ -130,7 +130,7 @@ class RecargaPayphoneReturnTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.payphone.return');
         $response->assertSeeText('Recarga acreditada');
-        $response->assertSeeText('Volver al Panel de Saldo');
+        $response->assertSeeText('Volver a Inicio');
 
         $intencion = IntencionPayphone::where('ctid', $ctid)->first();
         $this->assertSame(EstadoIntencionPayphone::Confirmada, $intencion->estado);
@@ -187,7 +187,7 @@ class RecargaPayphoneReturnTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.payphone.return');
         $response->assertSeeText('Orden no encontrada');
-        $response->assertSeeText('Volver al Panel de Saldo');
+        $response->assertSeeText('Volver a Inicio');
         $this->assertSame(EstadoIntencionPayphone::Pendiente, IntencionPayphone::where('ctid', $ctid)->first()->estado);
     }
 
@@ -225,7 +225,7 @@ class RecargaPayphoneReturnTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('recargas.payphone.return');
         $response->assertSeeText('Orden no encontrada');
-        $response->assertSeeText('Volver al Panel de Saldo');
+        $response->assertSeeText('Volver a Inicio');
     }
 
     public function test_retorno_sin_payment_id_retorna_not_found(): void

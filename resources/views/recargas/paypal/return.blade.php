@@ -7,7 +7,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
-                <h3 class="mt-5 text-xl font-bold tracking-tight text-[#14213d]">Recarga acreditada</h3>
+                <h1 class="mt-5 text-xl font-bold tracking-tight text-[#14213d]">Recarga acreditada</h1>
                 <p class="mt-3 text-sm leading-6 text-slate-600">
                     Tu recarga por
                     <span class="font-semibold text-emerald-600">
@@ -19,7 +19,7 @@
                     Orden: {{ $recarga?->referencia_externa ?? $intencion?->order_id }}
                 </p>
                 <a href="{{ route('dashboard') }}" class="ui-primary-button mt-8 w-full">
-                    Volver al Panel de Saldo
+                    Volver a Inicio
                 </a>
             </div>
         @break
@@ -31,7 +31,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-                <h3 class="mt-5 text-xl font-bold tracking-tight text-[#14213d]">Pendiente</h3>
+                <h1 class="mt-5 text-xl font-bold tracking-tight text-[#14213d]">Pendiente</h1>
                 <p class="mt-3 text-sm leading-6 text-slate-600">
                     Tu orden <span class="font-mono text-slate-700">{{ $intencion?->order_id }}</span>
                     está pendiente de acreditación.
@@ -58,7 +58,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </div>
-                <h3 class="mt-5 text-xl font-bold tracking-tight text-[#14213d]">Pago no completado</h3>
+                <h1 class="mt-5 text-xl font-bold tracking-tight text-[#14213d]">Pago no completado</h1>
                 <p class="mt-3 text-sm leading-6 text-slate-600">
                     Tu orden no pudo ser procesada por PayPal. Puedes reintentar la recarga.
                 </p>
@@ -69,7 +69,7 @@
                         </a>
                     @endauth
                     <a href="{{ route('dashboard') }}" class="ui-secondary-button w-full">
-                        Volver al Panel de Saldo
+                        Volver a Inicio
                     </a>
                 </div>
             </div>
@@ -82,12 +82,12 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-                <h3 class="mt-5 text-xl font-bold tracking-tight text-[#14213d]">Orden no encontrada</h3>
+                <h1 class="mt-5 text-xl font-bold tracking-tight text-[#14213d]">Orden no encontrada</h1>
                 <p class="mt-3 text-sm leading-6 text-slate-600">
                     No pudimos encontrar la orden asociada a esta URL.
                 </p>
                 <a href="{{ route('dashboard') }}" class="ui-primary-button mt-8 w-full">
-                    Volver al Panel de Saldo
+                    Volver a Inicio
                 </a>
             </div>
     @endswitch

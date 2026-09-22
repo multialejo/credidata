@@ -1,11 +1,14 @@
 <x-guest-layout>
+    <div class="mb-6">
+        <h1 class="ui-page-title">Confirma tu contraseña</h1>
+    </div>
     <div class="mb-4 text-sm text-slate-600">
         Esta es un área segura de la aplicación. Por favor confirmá tu contraseña para continuar.
     </div>
 
     @if ($errors->any())
-        <div class="mb-4">
-            <ul class="text-sm text-red-600 space-y-1">
+        <div class="ui-alert ui-alert--danger mb-4">
+            <ul class="space-y-1 text-sm">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -18,7 +21,7 @@
 
         <div class="mt-4">
             <x-input-label for="password" value="Contraseña" />
-            <x-text-input id="password" name="password" type="password" class="block mt-1 w-full" required autocomplete="current-password" autofocus />
+            <x-text-input id="password" name="password" type="password" class="mt-1" required autocomplete="current-password" autofocus />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
