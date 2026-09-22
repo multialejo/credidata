@@ -1,17 +1,6 @@
 <x-page-shell max-width="7xl">
     <x-page-header eyebrow="Administración" title="Gestión de clientes" description="Consulta saldos, estados y accesos de los clientes." />
 <section class="ui-data-table">
-    <div class="ui-data-table__header">
-        <div>
-            <h2 class="ui-data-table__title">Gestión de clientes</h2>
-            <p class="ui-data-table__description">Consulta saldos, estados y accesos de clientes.</p>
-        </div>
-        <button wire:click="resetFilters" type="button"
-            class="ui-secondary-button">
-            Limpiar filtros
-        </button>
-    </div>
-
     <div class="ui-data-table__filters sm:grid-cols-3 lg:grid-cols-3">
         <div>
             <label class="ui-label mb-1 text-xs" for="clientes-buscar">Buscar</label>
@@ -29,7 +18,11 @@
                 <option value="suspendido">Suspendido</option>
             </select>
         </div>
-        <div></div>
+        <div class="flex items-end justify-end">
+            <button wire:click="resetFilters" type="button" class="ui-secondary-button">
+                Limpiar filtros
+            </button>
+        </div>
     </div>
 
     @if($clientes->isEmpty())

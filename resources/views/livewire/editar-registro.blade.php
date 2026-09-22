@@ -14,21 +14,16 @@
     @endif
 
     <section class="ui-card p-5 sm:p-7">
-        {{-- Section Header --}}
-        <div class="mb-6 flex flex-col gap-4 border-b border-slate-100 pb-4 md:flex-row md:items-center md:justify-between">
-            <div>
-                <h2 class="ui-section-title">{{ __('Buscar un registro') }}</h2>
-            </div>
-
-            @if($encontrado)
+        @if($encontrado)
+            <div class="mb-4 flex justify-end">
                 <div class="ui-alert ui-alert--info inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold">
                     <svg class="h-4 w-4 text-[#3155d9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
                     <span>{{ __('Editando:') }} <strong class="font-mono">{{ $identificador }}</strong></span>
                 </div>
-            @endif
-        </div>
+            </div>
+        @endif
 
         {{-- Search Input Form --}}
         <form wire:submit.prevent="buscar" class="mb-8">
@@ -41,7 +36,7 @@
                         <input type="text" id="identificador" wire:model="identificador"
                             placeholder="{{ __('Ej. 1713175071') }}"
                             @if($encontrado) disabled @endif
-                            class="ui-input w-full font-mono {{ $encontrado ? 'bg-slate-50 text-slate-500' : '' }}">
+                            class="ui-input w-full font-mono {{ $encontrado ? 'cursor-not-allowed bg-slate-50 text-slate-500' : '' }}">
                     </div>
 
                     @if($encontrado)

@@ -77,6 +77,14 @@ class GestionClientesTest extends TestCase
             ->assertOk();
     }
 
+    public function test_la_pagina_muestra_un_solo_titulo_principal(): void
+    {
+        Livewire::actingAs($this->staffUsuario)
+            ->test(GestionClientes::class)
+            ->assertSee('Gestión de clientes', false)
+            ->assertDontSee('<h2 class="ui-data-table__title">Gestión de clientes</h2>', false);
+    }
+
     public function test_cliente_no_staff_recibe_403(): void
     {
         $this->actingAs($this->clienteUsuario)

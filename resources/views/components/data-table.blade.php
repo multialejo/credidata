@@ -1,36 +1,43 @@
 @props([
-    'title',
+    'title' => null,
     'description' => null,
+    'caption' => null,
 ])
 
 <section {{ $attributes->class('ui-data-table') }}>
     <div wire:loading.flex role="status" class="ui-data-table__loading">
         <span class="sr-only">Actualizando resultados.</span>
     </div>
-    <header class="ui-data-table__header">
-        <div>
-            <h2 class="ui-data-table__title">{{ $title }}</h2>
-            @if($description)
-                <p class="ui-data-table__description">{{ $description }}</p>
+    @if($title || isset($actions))
+        <header class="ui-data-table__header">
+            @if($title)
+                <div>
+                    <h2 class="ui-data-table__title">{{ $title }}</h2>
+                    @if($description)
+                        <p class="ui-data-table__description">{{ $description }}</p>
+                    @endif
+                </div>
             @endif
-        </div>
 
-        @isset($actions)
-            <div class="ui-data-table__actions">
-                {{ $actions }}
-            </div>
-        @endisset
-    </header>
+            @isset($actions)
+                <div class="ui-data-table__actions">
+                    {{ $actions }}
+                </div>
+            @endisset
+        </header>
+    @endif
 
     @isset($filters)
-        <div class="ui-data-table__filters">
+        <div {{ $filters->attributes->class('ui-data-table__filters') }}>
             {{ $filters }}
         </div>
     @endisset
 
     <div class="ui-data-table__scroll">
         <table class="ui-data-table__table">
-            <caption class="sr-only">{{ $title }}</caption>
+            @if($caption || $title)
+                <caption class="sr-only">{{ $caption ?: $title }}</caption>
+            @endif
             {{ $slot }}
         </table>
     </div>

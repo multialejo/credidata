@@ -1,6 +1,6 @@
 <x-page-shell max-width="7xl">
     <x-page-header eyebrow="Administración" title="Aportes pendientes" description="Revisa los cambios propuestos por colaboradores antes de aplicarlos." />
-<x-data-table title="Aportes por revisar" description="Abre cada registro para verificar y decidir.">
+<x-data-table caption="Aportes por revisar">
     <thead><tr><th scope="col">Identificador</th><th scope="col">Tipo</th><th scope="col">Fecha</th><th scope="col" class="text-right">Acciones</th></tr></thead>
     <tbody>
         @forelse($aportes as $aporte)

@@ -1,15 +1,12 @@
 <x-page-shell max-width="7xl">
     <x-page-header eyebrow="Administración" title="Registro de actividad" description="Trazabilidad de acciones realizadas por usuarios y procesos del sistema." />
-<x-data-table title="Actividad registrada" description="Filtra eventos por acción, fecha o actor.">
-    <x-slot:actions>
-        <button type="button" wire:click="resetFilters" class="ui-secondary-button">Limpiar filtros</button>
-    </x-slot:actions>
-
-    <x-slot:filters>
+<x-data-table caption="Actividad registrada">
+    <x-slot:filters class="lg:grid-cols-5">
         <div><label class="ui-label mb-1 text-xs" for="log-accion">Acción</label><select id="log-accion" wire:model.live="accion" class="ui-input w-full"><option value="">Todas las acciones</option>@foreach($accionesConocidas as $a)<option value="{{ $a }}">{{ $a }}</option>@endforeach</select></div>
         <div><label class="ui-label mb-1 text-xs" for="log-desde">Desde</label><input id="log-desde" type="date" wire:model.live="fechaDesde" class="ui-input w-full"></div>
         <div><label class="ui-label mb-1 text-xs" for="log-hasta">Hasta</label><input id="log-hasta" type="date" wire:model.live="fechaHasta" class="ui-input w-full"></div>
         <div><label class="ui-label mb-1 text-xs" for="log-actor">Actor</label><input id="log-actor" type="search" wire:model.live.debounce.300ms="actorEmail" placeholder="Buscar por correo" class="ui-input w-full"></div>
+        <div class="flex items-end justify-end"><button type="button" wire:click="resetFilters" class="ui-secondary-button">Limpiar filtros</button></div>
     </x-slot:filters>
 
     <thead><tr><th scope="col">Fecha</th><th scope="col">Acción</th><th scope="col">Actor</th><th scope="col">IP de origen</th><th scope="col">Detalle</th></tr></thead>

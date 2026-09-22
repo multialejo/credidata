@@ -1,7 +1,7 @@
 <x-page-shell max-width="7xl">
     <x-page-header eyebrow="Créditos" title="Recibos de recarga" description="Consulta tus recargas, créditos acreditados y estados de pago." />
 
-    <x-data-table title="Recargas registradas" description="Cada movimiento conserva su método, monto y estado.">
+    <x-data-table caption="Recargas registradas">
     <thead>
         <tr>
             <th scope="col">Fecha</th>

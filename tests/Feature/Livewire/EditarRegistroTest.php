@@ -121,6 +121,7 @@ class EditarRegistroTest extends TestCase
             ->get('/admin/registros')
             ->assertOk()
             ->assertSee('Identificador (Cédula o RUC)')
+            ->assertDontSeeHtml('<h2 class="ui-section-title">Buscar un registro</h2>')
             ->assertDontSeeHtml('id="identificador" wire:model="identificador" placeholder="Ej. 1713175071" disabled');
     }
 

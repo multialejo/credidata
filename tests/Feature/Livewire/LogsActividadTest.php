@@ -73,6 +73,14 @@ class LogsActividadTest extends TestCase
             ->assertOk();
     }
 
+    public function test_la_pagina_no_duplica_el_titulo_visible(): void
+    {
+        $this->actingAs($this->staffUsuario)
+            ->get('/admin/logs')
+            ->assertSee('Registro de actividad')
+            ->assertDontSeeHtml('<h2 class="ui-data-table__title">Actividad registrada</h2>');
+    }
+
     public function test_cliente_no_staff_recibe_403(): void
     {
         $this->actingAs($this->clienteUsuario)
