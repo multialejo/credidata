@@ -33,6 +33,7 @@ Do not introduce arbitrary gray, indigo or red families when a semantic token ex
 - Keep page content inside `ui-page-shell` and use `ui-page-header` for the title block.
 - Keep controls at least 44px high for touch and keyboard use.
 - Use generous separation between sections and tighter spacing inside related control groups.
+- Every direct child of `ui-page-shell` uses the shell's shared vertical gap; use local margins only for content inside a section, not to separate page-level cards, alerts or sections.
 
 ## Typography
 
