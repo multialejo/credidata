@@ -26,6 +26,16 @@ Credidata is an operations workspace, not a generic admin template. Use a warm p
 - Status badges must include readable text, not color alone.
 - Empty, loading, and error states should be explicit.
 
+## Tables
+
+- Interactive tables use the `x-data-table` component or the `ui-data-table` classes. Email tables are a separate documentary variant.
+- Use a white, rounded, subtly bordered container with a distinct header, optional Spanish-language filters/actions, a horizontally scrollable data region, and pagination at the footer.
+- Table headers use compact uppercase labels; rows have a minimum readable density, subtle separators, and a hover state.
+- Align numeric values to the right and use tabular numerals. Dates, references, API keys, IPs, and identifiers use the appropriate compact or monospaced treatment.
+- Statuses must use a `ui-table-badge` with readable text as well as color.
+- Keep server-side filtering and pagination in Livewire. Do not introduce DataTables.js unless a table has a dedicated local-data or JSON-endpoint use case.
+- On mobile, the data region may scroll horizontally, while headings, filters, and primary actions remain understandable without it.
+
 ## Navigation
 
 - Primary navigation is a fixed left sidebar (`w-64`) in ink `#14213d`, visible from the `lg` breakpoint up.

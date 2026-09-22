@@ -49,4 +49,76 @@
     .ui-input {
         @apply rounded-xl border-slate-300 bg-white text-sm shadow-sm placeholder:text-slate-400 focus:border-[#3155d9] focus:ring-[#3155d9];
     }
+
+    .ui-data-table {
+        @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_35px_-24px_rgba(20,33,61,0.45)];
+    }
+
+    .ui-data-table__header {
+        @apply flex flex-col gap-4 border-b border-slate-200/80 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6;
+    }
+
+    .ui-data-table__title {
+        @apply text-lg font-semibold text-[#14213d];
+    }
+
+    .ui-data-table__description {
+        @apply mt-1 text-sm text-slate-500;
+    }
+
+    .ui-data-table__actions {
+        @apply flex shrink-0 flex-wrap items-center gap-2;
+    }
+
+    .ui-data-table__filters {
+        @apply grid gap-3 border-b border-slate-200/80 bg-slate-50/70 px-4 py-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-4;
+    }
+
+    .ui-data-table__scroll {
+        @apply overflow-x-auto;
+    }
+
+    .ui-data-table__table {
+        @apply min-w-full border-separate border-spacing-0 text-left text-sm;
+    }
+
+    .ui-data-table__table thead {
+        @apply bg-slate-50 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600;
+    }
+
+    .ui-data-table__table th {
+        @apply whitespace-nowrap border-b border-slate-200 !px-4 !py-3.5 font-semibold;
+    }
+
+    .ui-data-table__table td {
+        @apply border-b border-slate-100 !px-4 !py-3 align-middle text-slate-700;
+    }
+
+    .ui-data-table__table tbody tr {
+        @apply transition-colors hover:bg-slate-50/80;
+    }
+
+    .ui-data-table__table tbody tr:last-child td {
+        @apply border-b-0;
+    }
+
+    .ui-data-table__table--compact th {
+        @apply !px-3 !py-2.5;
+    }
+
+    .ui-data-table__table--compact td {
+        @apply !px-3 !py-2;
+    }
+
+    .ui-data-table__pagination {
+        @apply border-t border-slate-200/80 px-4 py-4 sm:px-6;
+    }
+
+    .ui-data-table__empty {
+        @apply px-4 py-12 text-center text-sm text-slate-500;
+    }
+
+    .ui-table-badge {
+        @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
+    }
 }

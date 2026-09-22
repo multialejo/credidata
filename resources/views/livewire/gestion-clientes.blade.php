@@ -1,23 +1,26 @@
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-    <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold text-gray-900">Gestión de Clientes</h3>
+<div class="ui-data-table">
+    <div class="ui-data-table__header">
+        <div>
+            <h2 class="ui-data-table__title">Gestión de clientes</h2>
+            <p class="ui-data-table__description">Administrá saldos, estados y accesos de clientes.</p>
+        </div>
         <button wire:click="resetFilters" type="button"
-            class="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+            class="ui-secondary-button">
             Limpiar filtros
         </button>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+    <div class="ui-data-table__filters sm:grid-cols-3 lg:grid-cols-3">
         <div>
-            <label class="block text-xs text-gray-600 mb-1">Buscar</label>
+            <label class="mb-1 block text-xs font-medium text-slate-700">Buscar</label>
             <input type="text" wire:model.live="buscar"
                 placeholder="Buscar por nombre, email o prefijo API Key"
-                class="w-full border-gray-300 rounded-md text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                class="ui-input w-full">
         </div>
         <div>
-            <label class="block text-xs text-gray-600 mb-1">Estado</label>
+            <label class="mb-1 block text-xs font-medium text-slate-700">Estado</label>
             <select wire:model.live="estado"
-                class="w-full border-gray-300 rounded-md text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                class="ui-input w-full">
                 <option value="">Todos los estados</option>
                 <option value="activo">Activo</option>
                 <option value="inactivo">Inactivo</option>
@@ -28,10 +31,11 @@
     </div>
 
     @if($clientes->isEmpty())
-        <p class="text-center text-gray-500 py-8">No se encontraron clientes con los filtros aplicados.</p>
+        <p class="ui-data-table__empty">No se encontraron clientes con los filtros aplicados.</p>
     @else
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+        <div class="ui-data-table__scroll">
+            <table class="ui-data-table__table">
+                <caption class="sr-only">Listado de clientes</caption>
                 <thead>
                     <tr class="border-b border-gray-200 text-left">
                         <th class="py-2 pr-4 font-medium text-gray-600">Email</th>
@@ -141,7 +145,7 @@
                                         <div class="mb-4 bg-white border border-gray-200 rounded-md p-3">
                                             <h4 class="text-sm font-semibold text-gray-900 mb-2">Últimas consultas</h4>
                                             @if($detalle->consultas->isNotEmpty())
-                                                <table class="w-full text-sm">
+                                                <table class="ui-data-table__table ui-data-table__table--compact">
                                                     <thead>
                                                         <tr class="border-b border-gray-200 text-left">
                                                             <th class="py-1 pr-4 font-medium text-gray-600">Fecha</th>
@@ -170,7 +174,7 @@
                                         <div class="bg-white border border-gray-200 rounded-md p-3">
                                             <h4 class="text-sm font-semibold text-gray-900 mb-2">Últimas recargas</h4>
                                             @if($detalle->recargas->isNotEmpty())
-                                                <table class="w-full text-sm">
+                                                <table class="ui-data-table__table ui-data-table__table--compact">
                                                     <thead>
                                                         <tr class="border-b border-gray-200 text-left">
                                                             <th class="py-1 pr-4 font-medium text-gray-600">Fecha</th>
@@ -221,8 +225,10 @@
     @endif
 
     @if($clientes->hasPages())
-        <div class="mt-4">
+        <div class="ui-data-table__pagination">
             {{ $clientes->links() }}
         </div>
     @endif
+
+    <p wire:loading.delay role="status" class="sr-only">Actualizando resultados.</p>
 </div>

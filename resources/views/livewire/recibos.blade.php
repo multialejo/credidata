@@ -1,71 +1,47 @@
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4">Recibos de Recarga</h3>
-
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="border-b border-gray-200 text-left">
-                    <th class="py-2 pr-4 font-medium text-gray-600">Fecha</th>
-                    <th class="py-2 pr-4 font-medium text-gray-600">Método</th>
-                    <th class="py-2 pr-4 font-medium text-gray-600">Monto USD</th>
-                    <th class="py-2 pr-4 font-medium text-gray-600">Créditos</th>
-                    <th class="py-2 font-medium text-gray-600">Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($recargas as $r)
-                    <tr class="border-b border-gray-100 hover:bg-gray-50">
-                        <td class="py-2 pr-4 whitespace-nowrap text-gray-700">
-                            {{ $r->fecha->format('d/m/Y H:i') }}
-                        </td>
-                        <td class="py-2 pr-4 capitalize">{{ $r->metodo }}</td>
-                        <td class="py-2 pr-4">
-                            {{ $r->monto_usd > 0 ? '$' . number_format($r->monto_usd, 2) : '—' }}
-                        </td>
-                        <td class="py-2 pr-4 font-medium text-green-600">
-                            +{{ number_format($r->creditos_obtenidos, 0) }}
-                        </td>
-                        <td class="py-2">
-                            @switch($r->estado)
-                                @case(\App\Enums\EstadoRecarga::Completada)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        Completada
-                                    </span>
-                                @break
-                                @case(\App\Enums\EstadoRecarga::Pendiente)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                        Pendiente
-                                    </span>
-                                @break
-                                @case(\App\Enums\EstadoRecarga::Rechazada)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                        Rechazada
-                                    </span>
-                                @break
-                                @case(\App\Enums\EstadoRecarga::Fallida)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                        Pago no completado
-                                    </span>
-                                @break
-                                @default
-                                    {{ $r->estado->value ?? $r->estado }}
-                            @endswitch
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="py-8 text-center text-gray-500">
-                            No hay recargas registradas.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+<x-data-table title="Recibos de recarga" description="Historial de créditos acreditados y sus estados de pago.">
+    <thead>
+        <tr>
+            <th scope="col">Fecha</th>
+            <th scope="col">Método</th>
+            <th scope="col" class="text-right">Monto USD</th>
+            <th scope="col" class="text-right">Créditos</th>
+            <th scope="col">Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        @forelse($recargas as $r)
+            <tr>
+                <td class="whitespace-nowrap">{{ $r->fecha->format('d/m/Y H:i') }}</td>
+                <td class="capitalize">{{ $r->metodo }}</td>
+                <td class="text-right tabular-nums">{{ $r->monto_usd > 0 ? '$' . number_format($r->monto_usd, 2) : '—' }}</td>
+                <td class="text-right font-semibold text-emerald-700 tabular-nums">+{{ number_format($r->creditos_obtenidos, 0) }}</td>
+                <td>
+                    @switch($r->estado)
+                        @case(\App\Enums\EstadoRecarga::Completada)
+                            <span class="ui-table-badge bg-emerald-100 text-emerald-800">Completada</span>
+                        @break
+                        @case(\App\Enums\EstadoRecarga::Pendiente)
+                            <span class="ui-table-badge bg-amber-100 text-amber-800">Pendiente</span>
+                        @break
+                        @case(\App\Enums\EstadoRecarga::Rechazada)
+                            <span class="ui-table-badge bg-rose-100 text-rose-800">Rechazada</span>
+                        @break
+                        @case(\App\Enums\EstadoRecarga::Fallida)
+                            <span class="ui-table-badge bg-rose-100 text-rose-800">Pago no completado</span>
+                        @break
+                        @default
+                            <span class="ui-table-badge bg-slate-100 text-slate-700">{{ $r->estado->value ?? $r->estado }}</span>
+                    @endswitch
+                </td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="5" class="ui-data-table__empty">No hay recargas registradas.</td>
+            </tr>
+        @endforelse
+    </tbody>
 
     @if($recargas->hasPages())
-        <div class="mt-4">
-            {{ $recargas->links() }}
-        </div>
+        <x-slot:pagination>{{ $recargas->links() }}</x-slot:pagination>
     @endif
-</div>
+</x-data-table>
