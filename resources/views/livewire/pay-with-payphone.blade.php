@@ -3,6 +3,8 @@
         <button
             type="button"
             wire:click="pay"
+            wire:loading.attr="disabled"
+            wire:target="pay"
             @disabled(! $this->montoValido)
             class="ui-primary-button w-full"
         >
@@ -23,10 +25,10 @@
     </p>
 
     @error('monto')
-        <p class="text-sm font-medium text-rose-600" role="alert">{{ $message }}</p>
+        <p class="ui-error" role="alert">{{ $message }}</p>
     @enderror
 
     @if($errorMessage)
-        <p class="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700" role="alert">{{ $errorMessage }}</p>
+        <p class="ui-alert ui-alert--danger mt-3" role="alert">{{ $errorMessage }}</p>
     @endif
 </div>

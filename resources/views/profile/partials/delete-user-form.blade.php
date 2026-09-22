@@ -1,11 +1,11 @@
 <section class="space-y-6">
     <header>
-        <h2 class="text-lg font-medium text-slate-900">
+        <h2 class="ui-section-title text-rose-900">
             Eliminar cuenta
         </h2>
 
         <p class="mt-1 text-sm text-slate-600">
-            Una vez que elimines tu cuenta, todos sus recursos y datos se borrarán permanentemente. Antes de eliminar tu cuenta, descargá cualquier información que quieras conservar.
+            Una vez que elimines tu cuenta, todos sus recursos y datos se borrarán permanentemente. Antes de eliminarla, descarga cualquier información que quieras conservar.
         </p>
     </header>
 
@@ -19,12 +19,12 @@
             @csrf
             @method('delete')
 
-            <h2 class="text-lg font-medium text-slate-900">
+             <h2 class="ui-section-title">
                 ¿Estás seguro de que querés eliminar tu cuenta?
             </h2>
 
             <p class="mt-1 text-sm text-slate-600">
-                Una vez que elimines tu cuenta, todos sus recursos y datos se borrarán permanentemente. Ingresá tu contraseña para confirmar que deseas eliminar tu cuenta de forma permanente.
+                 Una vez que elimines tu cuenta, todos sus recursos y datos se borrarán permanentemente. Ingresa tu contraseña para confirmar.
             </p>
 
             <div class="mt-6">

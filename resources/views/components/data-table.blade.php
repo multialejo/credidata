@@ -4,6 +4,9 @@
 ])
 
 <section {{ $attributes->class('ui-data-table') }}>
+    <div wire:loading.flex role="status" class="ui-data-table__loading">
+        <span class="sr-only">Actualizando resultados.</span>
+    </div>
     <header class="ui-data-table__header">
         <div>
             <h2 class="ui-data-table__title">{{ $title }}</h2>
@@ -38,5 +41,4 @@
         </div>
     @endisset
 
-    <p wire:loading.delay role="status" class="sr-only">Actualizando resultados.</p>
 </section>

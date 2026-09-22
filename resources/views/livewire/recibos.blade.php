@@ -1,4 +1,7 @@
-<x-data-table title="Recibos de recarga" description="Historial de créditos acreditados y sus estados de pago.">
+<x-page-shell max-width="7xl">
+    <x-page-header eyebrow="Créditos" title="Recibos de recarga" description="Consulta tus recargas, créditos acreditados y estados de pago." />
+
+    <x-data-table title="Recargas registradas" description="Cada movimiento conserva su método, monto y estado.">
     <thead>
         <tr>
             <th scope="col">Fecha</th>
@@ -44,4 +47,5 @@
     @if($recargas->hasPages())
         <x-slot:pagination>{{ $recargas->links() }}</x-slot:pagination>
     @endif
-</x-data-table>
+    </x-data-table>
+</x-page-shell>

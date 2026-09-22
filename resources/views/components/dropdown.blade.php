@@ -16,9 +16,15 @@ $width = match ($width) {
 @endphp
 
 <div class="relative" x-data="{ open: false }" @click.outside="open = false" @close.stop="open = false">
-    <div @click="open = ! open">
+    <button
+        type="button"
+        @click="open = ! open"
+        :aria-expanded="open.toString()"
+        aria-haspopup="menu"
+        class="w-full text-start focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3155d9] focus-visible:ring-offset-2"
+    >
         {{ $trigger }}
-    </div>
+    </button>
 
     <div x-show="open"
             x-transition:enter="transition ease-out duration-200"
@@ -30,8 +36,8 @@ $width = match ($width) {
             class="absolute z-50 {{ $width }} rounded-md shadow-lg {{ $alignmentClasses }}"
             style="display: none;"
             @click="open = false">
-        <div class="rounded-md ring-1 ring-black ring-opacity-5 {{ $contentClasses }}">
-            {{ $content }}
-        </div>
+            <div class="rounded-xl ring-1 ring-black/5 {{ $contentClasses }}" role="menu">
+                {{ $content }}
+            </div>
     </div>
 </div>

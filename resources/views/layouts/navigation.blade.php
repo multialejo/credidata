@@ -1,6 +1,36 @@
 @props(['variant' => 'desktop'])
 
-<div x-data="{ sidebarOpen: false }">
+<div
+    x-data="{
+        sidebarOpen: false,
+        openSidebar() {
+            this.sidebarOpen = true;
+            document.body.classList.add('overflow-hidden');
+        },
+        closeSidebar() {
+            this.sidebarOpen = false;
+            document.body.classList.remove('overflow-hidden');
+            this.$nextTick(() => this.$refs.openSidebar.focus());
+        },
+        trapFocus(event) {
+            if (event.key !== 'Tab') return;
+
+            const focusable = [...this.$refs.mobileDrawer.querySelectorAll('a, button, input, select, textarea, [tabindex]:not([tabindex=-1])')];
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+    }"
+    x-init="$watch('sidebarOpen', value => { if (value) $nextTick(() => $refs.closeSidebar.focus()) })"
+    x-on:keydown.escape.window="if (sidebarOpen) closeSidebar()"
+>
 
     {{-- Desktop sidebar (lg+) --}}
     <aside class="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:flex lg:h-full lg:w-64 lg:flex-col" aria-label="Menú de navegación">
@@ -30,7 +60,7 @@
             @if(!auth()->user()->staff)
                 <x-dropdown align="top-right" width="48">
                     <x-slot name="trigger">
-                        <div class="mx-4 mb-3 cursor-pointer rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
+                        <div class="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
                             <div class="flex items-center gap-3">
                                 <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
                                     {{ str(Auth::user()->name)->substr(0, 1)->upper() }}
@@ -54,7 +84,7 @@
                 {{-- Staff user section --}}
                 <x-dropdown align="top-right" width="48">
                     <x-slot name="trigger">
-                        <div class="flex cursor-pointer items-center gap-3 border-t border-white/10 px-5 py-4 transition hover:bg-white/10">
+                        <div class="flex items-center gap-3 border-t border-white/10 px-5 py-4 transition hover:bg-white/10">
                             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
                                 {{ str(Auth::user()->name)->substr(0, 1)->upper() }}
                             </div>
@@ -85,7 +115,7 @@
 
     {{-- Mobile header (visible below lg) --}}
     <div class="sticky top-0 z-30 flex h-14 items-center gap-3 bg-[#14213d] px-4 shadow-md lg:hidden">
-        <button @click="sidebarOpen = true" class="rounded-lg p-1.5 text-slate-300 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" aria-label="Abrir menú">
+        <button x-ref="openSidebar" @click="openSidebar()" aria-controls="mobile-navigation-drawer" :aria-expanded="sidebarOpen.toString()" class="rounded-lg p-1.5 text-slate-300 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" aria-label="Abrir menú">
             <x-icons.bars-3 class="h-6 w-6" />
         </button>
         <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-white">
@@ -95,19 +125,19 @@
     </div>
 
     {{-- Mobile drawer --}}
-    <div x-show="sidebarOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-50 lg:hidden" style="display: none;">
+    <div x-show="sidebarOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-50 lg:hidden" style="display: none;" aria-label="Navegación móvil">
         {{-- Backdrop --}}
-        <div class="absolute inset-0 bg-black/50" @click="sidebarOpen = false"></div>
+        <button type="button" class="absolute inset-0 h-full w-full cursor-default bg-[#14213d]/60" @click="closeSidebar()" aria-label="Cerrar menú"></button>
 
         {{-- Drawer panel --}}
-        <aside x-show="sidebarOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="absolute inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#14213d]">
+        <aside id="mobile-navigation-drawer" x-ref="mobileDrawer" x-show="sidebarOpen" x-on:keydown="trapFocus($event)" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="absolute inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#14213d]" role="dialog" aria-modal="true" aria-label="Menú principal">
             {{-- Close button --}}
             <div class="flex items-center justify-between px-4 pt-5 pb-2">
                 <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-white">
                     <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3155d9] text-xs font-black tracking-tight text-white">C</span>
                     <span class="text-sm font-bold tracking-tight text-white">Credidata</span>
                 </a>
-                <button @click="sidebarOpen = false" class="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" aria-label="Cerrar menú">
+                <button x-ref="closeSidebar" type="button" @click="closeSidebar()" class="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" aria-label="Cerrar menú">
                     <x-icons.x-mark class="h-5 w-5" />
                 </button>
             </div>
@@ -131,7 +161,7 @@
             @if(!auth()->user()->staff)
                 <x-dropdown align="top-right" width="48">
                     <x-slot name="trigger">
-                        <div class="mx-3 mb-2 flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10">
+                        <div class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10">
                             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
                                 {{ str(Auth::user()->name)->substr(0, 1)->upper() }}
                             </div>
@@ -153,7 +183,7 @@
                 {{-- Staff user section --}}
                 <x-dropdown align="top-right" width="48">
                     <x-slot name="trigger">
-                        <div class="flex cursor-pointer items-center gap-3 px-3 py-2 transition hover:bg-white/10">
+                        <div class="flex items-center gap-3 px-3 py-2 transition hover:bg-white/10">
                             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
                                 {{ str(Auth::user()->name)->substr(0, 1)->upper() }}
                             </div>

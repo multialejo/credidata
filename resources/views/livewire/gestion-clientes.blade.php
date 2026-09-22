@@ -1,8 +1,10 @@
-<div class="ui-data-table">
+<x-page-shell max-width="7xl">
+    <x-page-header eyebrow="Administración" title="Gestión de clientes" description="Consulta saldos, estados y accesos de los clientes." />
+<section class="ui-data-table">
     <div class="ui-data-table__header">
         <div>
             <h2 class="ui-data-table__title">Gestión de clientes</h2>
-            <p class="ui-data-table__description">Administrá saldos, estados y accesos de clientes.</p>
+            <p class="ui-data-table__description">Consulta saldos, estados y accesos de clientes.</p>
         </div>
         <button wire:click="resetFilters" type="button"
             class="ui-secondary-button">
@@ -12,14 +14,14 @@
 
     <div class="ui-data-table__filters sm:grid-cols-3 lg:grid-cols-3">
         <div>
-            <label class="mb-1 block text-xs font-medium text-slate-700">Buscar</label>
-            <input type="text" wire:model.live="buscar"
+            <label class="ui-label mb-1 text-xs" for="clientes-buscar">Buscar</label>
+            <input id="clientes-buscar" type="search" wire:model.live.debounce.300ms="buscar"
                 placeholder="Buscar por nombre, email o prefijo API Key"
                 class="ui-input w-full">
         </div>
         <div>
-            <label class="mb-1 block text-xs font-medium text-slate-700">Estado</label>
-            <select wire:model.live="estado"
+            <label class="ui-label mb-1 text-xs" for="clientes-estado">Estado</label>
+            <select id="clientes-estado" wire:model.live="estado"
                 class="ui-input w-full">
                 <option value="">Todos los estados</option>
                 <option value="activo">Activo</option>
@@ -37,48 +39,48 @@
             <table class="ui-data-table__table">
                 <caption class="sr-only">Listado de clientes</caption>
                 <thead>
-                    <tr class="border-b border-gray-200 text-left">
-                        <th class="py-2 pr-4 font-medium text-gray-600">Email</th>
-                        <th class="py-2 pr-4 font-medium text-gray-600">Nombre</th>
-                        <th class="py-2 pr-4 font-medium text-gray-600">Saldo</th>
-                        <th class="py-2 pr-4 font-medium text-gray-600">Estado</th>
-                        <th class="py-2 pr-4 font-medium text-gray-600">Prefijo API Key</th>
-                        <th class="py-2 pr-4 font-medium text-gray-600">Consultas hoy / total</th>
-                        <th class="py-2 font-medium text-gray-600">Acciones</th>
+                        <tr>
+                        <th scope="col">Email</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Saldo</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Prefijo API Key</th>
+                        <th scope="col">Consultas hoy / total</th>
+                        <th scope="col">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($clientes as $cliente)
-                        <tr class="border-b border-gray-100 hover:bg-gray-50">
-                            <td class="py-2 pr-4 text-gray-700 whitespace-nowrap">{{ $cliente->usuario->email ?? '—' }}</td>
-                            <td class="py-2 pr-4 text-gray-700 whitespace-nowrap">{{ $cliente->usuario->nombre ?? '—' }}</td>
-                            <td class="py-2 pr-4 font-medium text-gray-900">{{ $cliente->saldo_creditos }}</td>
-                            <td class="py-2 pr-4">
+                        <tr>
+                            <td class="whitespace-nowrap">{{ $cliente->usuario->email ?? '—' }}</td>
+                            <td class="whitespace-nowrap">{{ $cliente->usuario->nombre ?? '—' }}</td>
+                            <td class="font-semibold tabular-nums">{{ $cliente->saldo_creditos }}</td>
+                            <td>
                                 @php $estadoUsuario = $cliente->usuario->estado ?? null; @endphp
                                 @if($estadoUsuario === 'activo')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Activo</span>
+                                    <span class="ui-table-badge bg-emerald-100 text-emerald-800">Activo</span>
                                 @elseif($estadoUsuario === 'suspendido')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Suspendido</span>
+                                    <span class="ui-table-badge bg-rose-100 text-rose-800">Suspendido</span>
                                 @elseif($estadoUsuario === 'inactivo')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactivo</span>
+                                    <span class="ui-table-badge bg-slate-100 text-slate-700">Inactivo</span>
                                 @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">—</span>
+                                    <span class="ui-table-badge bg-slate-100 text-slate-700">—</span>
                                 @endif
                             </td>
-                            <td class="py-2 pr-4 font-mono text-sm text-gray-700">{{ $cliente->api_key_prefijo ?? '—' }}</td>
-                            <td class="py-2 pr-4 text-gray-700 whitespace-nowrap">
+                            <td class="font-mono text-xs">{{ $cliente->api_key_prefijo ?? '—' }}</td>
+                            <td class="whitespace-nowrap tabular-nums">
                                 {{ $cliente->consultas_hoy_count ?? 0 }} / {{ $cliente->consultas_count ?? 0 }}
                             </td>
-                            <td class="py-2">
+                            <td>
                                 <button wire:click="toggleDetalle({{ $cliente->id }})" type="button"
-                                    class="px-3 py-1 text-xs font-medium rounded-md border focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500
-                                        {{ $expandidoId === $cliente->id ? 'bg-gray-200 text-gray-800 border-gray-300' : 'bg-white text-indigo-700 border-indigo-300 hover:bg-indigo-50' }}">
+                                    class="ui-secondary-button min-h-9 px-3 py-1.5 text-xs
+                                        {{ $expandidoId === $cliente->id ? 'bg-slate-100' : '' }}">
                                     {{ $expandidoId === $cliente->id ? 'Ocultar' : 'Ver detalle' }}
                                 </button>
                             </td>
                         </tr>
                         @if($expandidoId === $cliente->id)
-                            <tr class="bg-gray-50">
+                            <tr class="bg-slate-50">
                                 <td colspan="7" class="px-4 py-4">
                                     @if($detalle && $detalle->id === $cliente->id)
                                         @php
@@ -86,25 +88,25 @@
                                         @endphp
 
                                         {{-- API Key --}}
-                                        <div class="mb-4 bg-white border border-gray-200 rounded-md p-3">
-                                            <h4 class="text-sm font-semibold text-gray-900 mb-2">API Key</h4>
+                                        <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4">
+                                            <h4 class="ui-section-title mb-3 text-base">API Key</h4>
                                             @if($tieneApiKey)
                                                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
                                                     <div class="flex gap-2">
-                                                        <dt class="text-gray-600">Prefijo:</dt>
-                                                        <dd class="font-mono text-gray-900">{{ $detalle->api_key_prefijo ?? '—' }}</dd>
+                                                        <dt class="text-slate-500">Prefijo:</dt>
+                                                        <dd class="font-mono text-[#14213d]">{{ $detalle->api_key_prefijo ?? '—' }}</dd>
                                                     </div>
                                                     <div class="flex gap-2">
-                                                        <dt class="text-gray-600">Creada:</dt>
-                                                        <dd class="text-gray-900">{{ $detalle->api_key_creada?->format('d/m/Y H:i') ?? '—' }}</dd>
+                                                        <dt class="text-slate-500">Creada:</dt>
+                                                        <dd class="text-[#14213d]">{{ $detalle->api_key_creada?->format('d/m/Y H:i') ?? '—' }}</dd>
                                                     </div>
                                                     <div class="flex gap-2">
-                                                        <dt class="text-gray-600">Revocada:</dt>
-                                                        <dd class="text-gray-900">
+                                                        <dt class="text-slate-500">Revocada:</dt>
+                                                        <dd class="text-[#14213d]">
                                                             @if($detalle->api_key_revocada)
                                                                 Sí
                                                                 @if($detalle->api_key_revocada_en)
-                                                                    <span class="text-gray-500">({{ $detalle->api_key_revocada_en->format('d/m/Y H:i') }})</span>
+                                                                    <span class="text-slate-500">({{ $detalle->api_key_revocada_en->format('d/m/Y H:i') }})</span>
                                                                 @endif
                                                             @else
                                                                 No
@@ -112,12 +114,12 @@
                                                         </dd>
                                                     </div>
                                                     <div class="flex gap-2">
-                                                        <dt class="text-gray-600">Último uso:</dt>
-                                                        <dd class="text-gray-900">{{ $detalle->api_key_ultimo_uso?->format('d/m/Y H:i') ?? '—' }}</dd>
+                                                        <dt class="text-slate-500">Último uso:</dt>
+                                                        <dd class="text-[#14213d]">{{ $detalle->api_key_ultimo_uso?->format('d/m/Y H:i') ?? '—' }}</dd>
                                                     </div>
                                                     <div class="flex gap-2 sm:col-span-2">
-                                                        <dt class="text-gray-600">IPs permitidas:</dt>
-                                                        <dd class="text-gray-900">
+                                                        <dt class="text-slate-500">IPs permitidas:</dt>
+                                                        <dd class="text-[#14213d]">
                                                             @if(!empty($detalle->api_key_ips_permitidas))
                                                                 {{ implode(', ', $detalle->api_key_ips_permitidas) }}
                                                             @else
@@ -126,8 +128,8 @@
                                                         </dd>
                                                     </div>
                                                     <div class="flex gap-2 sm:col-span-2">
-                                                        <dt class="text-gray-600">Alcance:</dt>
-                                                        <dd class="text-gray-900">
+                                                        <dt class="text-slate-500">Alcance:</dt>
+                                                        <dd class="text-[#14213d]">
                                                             @if(!empty($detalle->api_key_alcance))
                                                                 {{ implode(', ', $detalle->api_key_alcance) }}
                                                             @else
@@ -137,51 +139,51 @@
                                                     </div>
                                                 </dl>
                                             @else
-                                                <p class="text-sm text-gray-500">Sin API Key generada.</p>
+                                                <p class="text-sm text-slate-500">Sin API Key generada.</p>
                                             @endif
                                         </div>
 
                                         {{-- Consultas --}}
-                                        <div class="mb-4 bg-white border border-gray-200 rounded-md p-3">
-                                            <h4 class="text-sm font-semibold text-gray-900 mb-2">Últimas consultas</h4>
+                                        <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4">
+                                            <h4 class="ui-section-title mb-3 text-base">Últimas consultas</h4>
                                             @if($detalle->consultas->isNotEmpty())
                                                 <table class="ui-data-table__table ui-data-table__table--compact">
                                                     <thead>
-                                                        <tr class="border-b border-gray-200 text-left">
-                                                            <th class="py-1 pr-4 font-medium text-gray-600">Fecha</th>
-                                                            <th class="py-1 pr-4 font-medium text-gray-600">Tipo</th>
-                                                            <th class="py-1 pr-4 font-medium text-gray-600">Identificador</th>
-                                                            <th class="py-1 font-medium text-gray-600">Créditos</th>
+                                                        <tr>
+                                                            <th scope="col">Fecha</th>
+                                                            <th scope="col">Tipo</th>
+                                                            <th scope="col">Identificador</th>
+                                                            <th scope="col">Créditos</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         @foreach($detalle->consultas as $c)
-                                                            <tr class="border-b border-gray-100">
-                                                                <td class="py-1 pr-4 text-gray-700 whitespace-nowrap">{{ $c->fecha->format('d/m/Y H:i') }}</td>
-                                                                <td class="py-1 pr-4"><span class="uppercase text-xs font-medium bg-gray-100 px-2 py-0.5 rounded">{{ $c->tipo }}</span></td>
+                                                            <tr>
+                                                                <td class="whitespace-nowrap">{{ $c->fecha->format('d/m/Y H:i') }}</td>
+                                                                <td><span class="ui-table-badge bg-slate-100 uppercase text-slate-700">{{ $c->tipo }}</span></td>
                                                                 <td class="py-1 pr-4 font-mono text-sm">{{ $c->identificador }}</td>
-                                                                <td class="py-1 font-medium text-red-600">-{{ $c->creditos_gastados }}</td>
+                                                                <td class="font-medium tabular-nums text-rose-700">-{{ $c->creditos_gastados }}</td>
                                                             </tr>
                                                         @endforeach
                                                     </tbody>
                                                 </table>
                                             @else
-                                                <p class="text-sm text-gray-500">Sin consultas.</p>
+                                                <p class="text-sm text-slate-500">Sin consultas.</p>
                                             @endif
                                         </div>
 
                                         {{-- Recargas --}}
-                                        <div class="bg-white border border-gray-200 rounded-md p-3">
-                                            <h4 class="text-sm font-semibold text-gray-900 mb-2">Últimas recargas</h4>
+                                        <div class="rounded-xl border border-slate-200 bg-white p-4">
+                                            <h4 class="ui-section-title mb-3 text-base">Últimas recargas</h4>
                                             @if($detalle->recargas->isNotEmpty())
                                                 <table class="ui-data-table__table ui-data-table__table--compact">
                                                     <thead>
-                                                        <tr class="border-b border-gray-200 text-left">
-                                                            <th class="py-1 pr-4 font-medium text-gray-600">Fecha</th>
-                                                            <th class="py-1 pr-4 font-medium text-gray-600">Método</th>
-                                                            <th class="py-1 pr-4 font-medium text-gray-600">Monto USD</th>
-                                                            <th class="py-1 pr-4 font-medium text-gray-600">Créditos</th>
-                                                            <th class="py-1 font-medium text-gray-600">Estado</th>
+                                                        <tr>
+                                                            <th scope="col">Fecha</th>
+                                                            <th scope="col">Método</th>
+                                                            <th scope="col">Monto USD</th>
+                                                            <th scope="col">Créditos</th>
+                                                            <th scope="col">Estado</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -189,20 +191,20 @@
                                                             @php
                                                                 $colorRecarga = $r->estado->color();
                                                                 $estadoBadgeClasses = match($colorRecarga) {
-                                                                    'yellow' => 'bg-yellow-100 text-yellow-800',
-                                                                    'green'  => 'bg-green-100 text-green-800',
-                                                                    'red'    => 'bg-red-100 text-red-800',
+                                                                    'yellow' => 'bg-amber-100 text-amber-800',
+                                                                    'green'  => 'bg-emerald-100 text-emerald-800',
+                                                                    'red'    => 'bg-rose-100 text-rose-800',
                                                                     'orange' => 'bg-orange-100 text-orange-800',
-                                                                    default  => 'bg-gray-100 text-gray-800',
+                                                                    default  => 'bg-slate-100 text-slate-700',
                                                                 };
                                                             @endphp
-                                                            <tr class="border-b border-gray-100">
-                                                                <td class="py-1 pr-4 text-gray-700 whitespace-nowrap">{{ $r->fecha->format('d/m/Y H:i') }}</td>
-                                                                <td class="py-1 pr-4 text-gray-700">{{ $r->metodo }}</td>
-                                                                <td class="py-1 pr-4 text-gray-700">{{ number_format($r->monto_usd, 2) }}</td>
-                                                                <td class="py-1 pr-4 font-medium text-gray-900">{{ $r->creditos_obtenidos }}</td>
-                                                                <td class="py-1">
-                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $estadoBadgeClasses }}">
+                                                            <tr>
+                                                                <td class="whitespace-nowrap">{{ $r->fecha->format('d/m/Y H:i') }}</td>
+                                                                <td>{{ $r->metodo }}</td>
+                                                                <td>{{ number_format($r->monto_usd, 2) }}</td>
+                                                                <td class="font-medium tabular-nums">{{ $r->creditos_obtenidos }}</td>
+                                                                <td>
+                                                                    <span class="ui-table-badge {{ $estadoBadgeClasses }}">
                                                                         {{ $r->estado->label() }}
                                                                     </span>
                                                                 </td>
@@ -211,7 +213,7 @@
                                                     </tbody>
                                                 </table>
                                             @else
-                                                <p class="text-sm text-gray-500">Sin recargas.</p>
+                                                <p class="text-sm text-slate-500">Sin recargas.</p>
                                             @endif
                                         </div>
                                     @endif
@@ -231,4 +233,5 @@
     @endif
 
     <p wire:loading.delay role="status" class="sr-only">Actualizando resultados.</p>
-</div>
+</section>
+</x-page-shell>

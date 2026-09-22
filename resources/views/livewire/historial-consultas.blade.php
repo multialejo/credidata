@@ -1,23 +1,30 @@
-<x-data-table title="Historial de consultas" description="Consultas realizadas con el consumo de créditos asociado.">
+<x-page-shell max-width="7xl">
+    <x-page-header eyebrow="Consultas" title="Historial de consultas" description="Revisa tus consultas y el consumo de créditos asociado." />
+
+    <x-data-table title="Consultas registradas" description="Filtra por fecha, tipo o resultado.">
     <x-slot:actions>
-        <button wire:click="exportarCsv" class="ui-secondary-button">Exportar CSV</button>
+        <button type="button" wire:click="resetFilters" class="ui-secondary-button">Limpiar filtros</button>
+        <button type="button" wire:click="exportarCsv" wire:loading.attr="disabled" wire:target="exportarCsv" class="ui-secondary-button">
+            <span wire:loading.remove wire:target="exportarCsv">Exportar CSV</span>
+            <span wire:loading wire:target="exportarCsv">Exportando...</span>
+        </button>
     </x-slot:actions>
 
     <x-slot:filters>
         <div>
-            <label class="mb-1 block text-xs font-medium text-slate-700" for="consultas-desde">Desde</label>
+            <label class="ui-label mb-1 text-xs" for="consultas-desde">Desde</label>
             <input id="consultas-desde" type="date" wire:model.live="filtroFechaDesde" class="ui-input w-full">
         </div>
         <div>
-            <label class="mb-1 block text-xs font-medium text-slate-700" for="consultas-hasta">Hasta</label>
+            <label class="ui-label mb-1 text-xs" for="consultas-hasta">Hasta</label>
             <input id="consultas-hasta" type="date" wire:model.live="filtroFechaHasta" class="ui-input w-full">
         </div>
         <div>
-            <label class="mb-1 block text-xs font-medium text-slate-700" for="consultas-tipo">Tipo</label>
+            <label class="ui-label mb-1 text-xs" for="consultas-tipo">Tipo</label>
             <select id="consultas-tipo" wire:model.live="filtroTipo" class="ui-input w-full"><option value="">Todos</option><option value="cedula">Cédula</option><option value="ruc">RUC</option></select>
         </div>
         <div>
-            <label class="mb-1 block text-xs font-medium text-slate-700" for="consultas-resultado">Resultado</label>
+            <label class="ui-label mb-1 text-xs" for="consultas-resultado">Resultado</label>
             <select id="consultas-resultado" wire:model.live="filtroResultado" class="ui-input w-full"><option value="">Todos</option><option value="exito">Exitosas</option><option value="fallo">Fallidas</option></select>
         </div>
     </x-slot:filters>
@@ -36,4 +43,5 @@
             {{ $consultas->links() }}
         </x-slot:pagination>
     @endif
-</x-data-table>
+    </x-data-table>
+</x-page-shell>

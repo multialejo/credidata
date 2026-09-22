@@ -1,4 +1,5 @@
-<div class="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
+<x-page-shell max-width="7xl">
+    <x-page-header eyebrow="Administración" title="Configuración general" description="Controla los métodos de pago y los parámetros globales del sistema." />
     @php
         $transferenciaConfigurada = filled($transferenciaBanco) && filled($transferenciaNumeroCuenta);
         $etiquetasParametros = [
@@ -9,7 +10,7 @@
     @endphp
 
     @if (session('status'))
-        <div class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-sm text-emerald-900" role="status" aria-live="polite">
+        <div class="ui-alert ui-alert--success flex items-start gap-3" role="status" aria-live="polite">
             <svg class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
             </svg>
@@ -17,7 +18,7 @@
         </div>
     @endif
 
-    <section class="rounded-2xl border border-slate-200 bg-white" aria-labelledby="pagos-heading">
+    <section class="ui-card" aria-labelledby="pagos-heading">
         <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
             <div class="flex items-start gap-3">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#3155d9]">
@@ -77,7 +78,7 @@
         </div>
     </section>
 
-    <section class="rounded-2xl border border-slate-200 bg-white" aria-labelledby="transferencia-heading">
+    <section class="ui-card" aria-labelledby="transferencia-heading">
         <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div class="flex items-start gap-3">
@@ -100,36 +101,36 @@
                 <div>
                     <x-input-label for="transferenciaBanco" value="Banco" />
                     <x-text-input id="transferenciaBanco" wire:model="transferenciaBanco" type="text" class="mt-1.5 block w-full" placeholder="Banco Pichincha" />
-                    @error('transferenciaBanco') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @error('transferenciaBanco') <p class="ui-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <x-input-label for="transferenciaTipoCuenta" value="Tipo de cuenta" />
                     <x-text-input id="transferenciaTipoCuenta" wire:model="transferenciaTipoCuenta" type="text" class="mt-1.5 block w-full" placeholder="Cuenta de ahorros" />
-                    @error('transferenciaTipoCuenta') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @error('transferenciaTipoCuenta') <p class="ui-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <x-input-label for="transferenciaNumeroCuenta" value="Número de cuenta" />
                     <x-text-input id="transferenciaNumeroCuenta" wire:model="transferenciaNumeroCuenta" type="text" inputmode="numeric" class="mt-1.5 block w-full" placeholder="2204592986" maxlength="20" />
-                    @error('transferenciaNumeroCuenta') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @error('transferenciaNumeroCuenta') <p class="ui-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <x-input-label for="transferenciaTitular" value="Titular de la cuenta" />
                     <x-text-input id="transferenciaTitular" wire:model="transferenciaTitular" type="text" class="mt-1.5 block w-full" placeholder="Jean Paul Mayorga" />
-                    @error('transferenciaTitular') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @error('transferenciaTitular') <p class="ui-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <x-input-label for="transferenciaCedulaTitular" value="Cédula del titular" />
                     <x-text-input id="transferenciaCedulaTitular" wire:model="transferenciaCedulaTitular" type="text" inputmode="numeric" class="mt-1.5 block w-full" placeholder="1805752685" maxlength="10" />
-                    @error('transferenciaCedulaTitular') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @error('transferenciaCedulaTitular') <p class="ui-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <x-input-label for="transferenciaWhatsapp" value="WhatsApp para comprobantes" />
                     <x-text-input id="transferenciaWhatsapp" wire:model="transferenciaWhatsapp" type="text" inputmode="tel" class="mt-1.5 block w-full" placeholder="593991234567" maxlength="15" />
-                    @error('transferenciaWhatsapp') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @error('transferenciaWhatsapp') <p class="ui-error">{{ $message }}</p> @enderror
                 </div>
             </div>
             <div class="flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#3155d9] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2948bf] focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2 disabled:opacity-50" wire:loading.attr="disabled" wire:loading.class="opacity-60">
+                <button type="submit" class="ui-primary-button" wire:loading.attr="disabled" wire:loading.class="opacity-60">
                     <span wire:loading.remove wire:target="guardarDatosTransferencia">{{ __('Guardar datos bancarios') }}</span>
                     <span wire:loading wire:target="guardarDatosTransferencia">{{ __('Guardando...') }}</span>
                 </button>
@@ -137,7 +138,7 @@
         </form>
     </section>
 
-    <section class="rounded-2xl border border-slate-200 bg-white" aria-labelledby="avanzada-heading">
+    <section class="ui-card" aria-labelledby="avanzada-heading">
         <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
             <div class="flex items-start gap-3">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
@@ -173,8 +174,8 @@
                                     @if($isEditing)
                                         <form id="form-{{ $param->modulo }}-{{ $param->clave }}" wire:submit.prevent="guardar('{{ $param->modulo }}', '{{ $param->clave }}')" class="space-y-1">
                                             <label for="valor-{{ $param->modulo }}-{{ $param->clave }}" class="sr-only">{{ __('Nuevo valor para :clave', ['clave' => $param->clave]) }}</label>
-                                            <input id="valor-{{ $param->modulo }}-{{ $param->clave }}" type="text" wire:model="valorEditando" class="w-full rounded-lg border-slate-300 px-3 py-2 font-mono text-sm focus:border-[#3155d9] focus:ring-[#3155d9]" placeholder="{{ __('Ingrese un valor JSON válido') }}" autofocus>
-                                            @error('valorEditando') <p class="text-xs font-medium text-red-600">{{ $message }}</p> @enderror
+                                             <input id="valor-{{ $param->modulo }}-{{ $param->clave }}" type="text" wire:model="valorEditando" class="ui-input w-full font-mono" placeholder="{{ __('Ingrese un valor JSON válido') }}">
+                                             @error('valorEditando') <p class="ui-error">{{ $message }}</p> @enderror
                                         </form>
                                     @else
                                         <span class="block break-all font-mono text-xs leading-5 text-slate-600">{{ $displayValue }}</span>
@@ -182,13 +183,13 @@
                                 </div>
                                 <div class="flex items-center justify-end gap-2">
                                     @if($isEditing)
-                                        <button type="submit" form="form-{{ $param->modulo }}-{{ $param->clave }}" wire:loading.attr="disabled" class="inline-flex min-h-9 items-center rounded-lg bg-[#3155d9] px-3 text-xs font-semibold text-white transition hover:bg-[#2948bf] focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2 disabled:opacity-50">
+                                        <button type="submit" form="form-{{ $param->modulo }}-{{ $param->clave }}" wire:loading.attr="disabled" class="ui-primary-button min-h-9 px-3 py-1.5 text-xs">
                                             <span wire:loading.remove wire:target="guardar">{{ __('Guardar') }}</span>
                                             <span wire:loading wire:target="guardar">...</span>
                                         </button>
-                                        <button type="button" wire:click="cancelarEdicion" class="inline-flex min-h-9 items-center rounded-lg px-3 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#14213d] focus:outline-none focus:ring-2 focus:ring-[#3155d9]">{{ __('Cancelar') }}</button>
+                                        <button type="button" wire:click="cancelarEdicion" class="ui-secondary-button min-h-9 px-3 py-1.5 text-xs">{{ __('Cancelar') }}</button>
                                     @else
-                                        <button type="button" wire:click="iniciarEdicion('{{ $param->modulo }}', '{{ $param->clave }}')" class="inline-flex min-h-9 items-center rounded-lg border border-slate-300 px-3 text-xs font-semibold text-[#14213d] transition hover:border-[#3155d9] hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2">{{ __('Editar') }}</button>
+                                        <button type="button" wire:click="iniciarEdicion('{{ $param->modulo }}', '{{ $param->clave }}')" class="ui-secondary-button min-h-9 px-3 py-1.5 text-xs">{{ __('Editar') }}</button>
                                     @endif
                                 </div>
                             </div>
@@ -203,4 +204,4 @@
             @endforelse
         </div>
     </section>
-</div>
+</x-page-shell>

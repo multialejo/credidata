@@ -1,11 +1,11 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-slate-900">
+        <h2 class="ui-section-title">
             Información del perfil
         </h2>
 
         <p class="mt-1 text-sm text-slate-600">
-            Actualizá tu nombre y dirección de correo electrónico.
+            Actualiza tu nombre y dirección de correo electrónico.
         </p>
     </header>
 
@@ -30,16 +30,16 @@
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div>
-                    <p class="text-sm mt-2 text-slate-800">
+                    <p class="ui-alert ui-alert--warning mt-3">
                         Tu dirección de correo no está verificada.
 
-                        <button form="send-verification" class="underline text-sm text-slate-600 hover:text-slate-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3155d9]">
+                        <button form="send-verification" class="mt-2 font-semibold underline underline-offset-2 hover:text-[#3155d9] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3155d9]">
                             Enviar nuevo enlace de verificación.
                         </button>
                     </p>
 
                     @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-emerald-600">
+                        <p class="ui-alert ui-alert--success mt-3">
                             Se envió un nuevo enlace a tu correo electrónico.
                         </p>
                     @endif
@@ -56,7 +56,7 @@
                     x-show="show"
                     x-transition
                     x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-slate-600"
+                    class="ui-alert ui-alert--success"
                 >Guardado.</p>
             @endif
         </div>

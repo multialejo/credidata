@@ -1,20 +1,14 @@
-<div class="mx-auto max-w-7xl space-y-6 px-4 pt-6 sm:px-6 lg:px-8">
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-            <p class="ui-eyebrow">Área de cliente</p>
-            <h1 class="mt-1 text-2xl font-bold tracking-tight text-[#14213d] sm:text-3xl">Tu cuenta, en orden.</h1>
-        </div>
-        <p class="text-sm text-slate-500">Consulta tu saldo y gestiona tus créditos.</p>
-    </div>
+<x-page-shell max-width="7xl">
+    <x-page-header eyebrow="Área de cliente" title="Tu cuenta, en orden." description="Consulta tu saldo y gestiona tus créditos." />
 
-        <section class="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+        <section class="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]" aria-label="Resumen de cuenta">
             <div class="relative overflow-hidden rounded-2xl bg-[#14213d] p-6 text-white shadow-[0_20px_45px_-25px_rgba(20,33,61,0.8)] sm:p-8">
                 <div class="absolute -right-16 -top-20 h-56 w-56 rounded-full border-[28px] border-white/5"></div>
                 <div class="relative">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="text-sm font-medium text-slate-300">Saldo disponible</p>
-                            <p class="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">{{ number_format($saldo, 0) }}</p>
+                            <p class="mt-4 text-4xl font-bold tracking-tight tabular-nums sm:text-5xl">{{ number_format($saldo, 0) }}</p>
                             <p class="mt-1 text-sm text-slate-300">créditos para tus consultas</p>
                         </div>
                         <span class="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-200">Activo</span>
@@ -39,11 +33,11 @@
             </div>
         </section>
 
-        <section class="ui-card p-5 sm:p-6">
+        <section class="ui-card p-5 sm:p-6" aria-labelledby="movimientos-title">
             <div class="flex flex-col gap-2 border-b border-slate-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <p class="ui-eyebrow">Actividad reciente</p>
-                    <h2 class="mt-1 text-xl font-bold tracking-tight text-[#14213d]">Últimos movimientos</h2>
+                    <h2 id="movimientos-title" class="mt-1 text-xl font-bold tracking-tight text-[#14213d]">Últimos movimientos</h2>
                 </div>
                 <a href="{{ route('dashboard.consultas') }}" class="text-sm font-semibold text-[#3155d9] hover:text-[#2647c2] focus:outline-none focus:underline">Ver historial completo</a>
             </div>
@@ -82,10 +76,10 @@
                     @endforeach
                 </ul>
             @else
-                <div class="py-10 text-center">
+                <div class="ui-data-table__empty">
                     <p class="text-sm font-semibold text-slate-700">Aún no tienes movimientos.</p>
                     <p class="mt-1 text-sm text-slate-500">Cuando uses o recargues créditos, aparecerán aquí.</p>
                 </div>
             @endif
         </section>
-</div>
+</x-page-shell>

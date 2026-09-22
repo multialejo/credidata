@@ -1,11 +1,11 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-slate-900">
+        <h2 class="ui-section-title">
             Actualizar contraseña
         </h2>
 
         <p class="mt-1 text-sm text-slate-600">
-            Asegurate de usar una contraseña larga y segura para mantener tu cuenta protegida.
+            Asegúrate de usar una contraseña larga y segura para mantener tu cuenta protegida.
         </p>
     </header>
 
@@ -40,7 +40,7 @@
                     x-show="show"
                     x-transition
                     x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-slate-600"
+                    class="ui-alert ui-alert--success"
                 >Guardado.</p>
             @endif
         </div>
