@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminRecargaEvidenceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecargaPaypalReturnController;
 use App\Http\Controllers\RecargaPayphoneReturnController;
+use App\Http\Controllers\ReciboPdfController;
 use App\Livewire\ActivarColaborador;
 use App\Livewire\ConfigGeneral;
 use App\Livewire\EditarRegistro;
@@ -41,6 +42,7 @@ Route::middleware(['auth', 'cliente.verified', 'cliente.web'])->group(function (
     Route::get('/dashboard/consultas', HistorialConsultas::class)->name('dashboard.consultas');
     Route::get('/dashboard/api-key', GestionApiKey::class)->name('dashboard.api-key');
     Route::get('/dashboard/recibos', Recibos::class)->name('dashboard.recibos');
+    Route::get('/dashboard/recibos/{recarga}/pdf', ReciboPdfController::class)->name('dashboard.recibos.pdf');
     Route::get('/dashboard/colaborador', ActivarColaborador::class)->name('dashboard.colaborador');
     Route::get('/dashboard/colaborador/aportes/nuevo', EnviarAporte::class)->middleware('colaborador.activo')->name('dashboard.aportes.nuevo');
 });
