@@ -6,6 +6,7 @@
             'costoConsultaBase' => __('Costo base de consulta'),
             'tasaCambioUsdCreditos' => __('Tasa de cambio USD a créditos'),
             'ttlDatosExternosSegundos' => __('Duración de caché de datos externos'),
+            'creditosBienvenida' => __('Créditos de bienvenida'),
         ];
     @endphp
 

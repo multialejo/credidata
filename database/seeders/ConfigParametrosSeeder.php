@@ -15,6 +15,7 @@ class ConfigParametrosSeeder extends Seeder
             ['modulo' => 'financiero',     'clave' => 'recargaMinimaUsd',                 'valor' => json_encode('5.00')],
             ['modulo' => 'financiero',     'clave' => 'recompensaAporteCreditos',         'valor' => json_encode('2')],
             ['modulo' => 'financiero',     'clave' => 'umbralSaldoBajoCreditos',          'valor' => json_encode('10')],
+            ['modulo' => 'financiero',     'clave' => 'creditosBienvenida',               'valor' => json_encode(0)],
             ['modulo' => 'rateLimiting',   'clave' => 'limitePorMinutoPorDefecto',        'valor' => json_encode('30')],
             ['modulo' => 'rateLimiting',   'clave' => 'limitePorDiaPorDefecto',           'valor' => json_encode('1000')],
             ['modulo' => 'rateLimiting',   'clave' => 'maxIntentosFallidosConsecutivos',  'valor' => json_encode('10')],
@@ -30,6 +31,6 @@ class ConfigParametrosSeeder extends Seeder
             ['modulo' => 'recargas',       'clave' => 'metodoTransferenciaHabilitado',    'valor' => json_encode(true)],
         ];
 
-        DB::table('config_parametros')->insert($params);
+        DB::table('config_parametros')->insertOrIgnore($params);
     }
 }

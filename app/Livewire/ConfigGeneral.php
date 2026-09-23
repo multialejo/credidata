@@ -81,7 +81,7 @@ class ConfigGeneral extends Component
     public function guardar(string $modulo, string $clave): void
     {
         $this->validate([
-            'valorEditando' => ['required', function (string $attribute, mixed $value, Closure $fail): void {
+            'valorEditando' => ['required', function (string $attribute, mixed $value, Closure $fail) use ($modulo, $clave): void {
                 $decoded = json_decode($value);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     $fail('El valor debe ser JSON válido.');
@@ -91,6 +91,13 @@ class ConfigGeneral extends Component
 
                 if (! is_scalar($decoded)) {
                     $fail('El valor debe ser un escalar (string, int, float o bool).');
+
+                    return;
+                }
+
+                if ($modulo === 'financiero' && $clave === 'creditosBienvenida'
+                    && (! is_int($decoded) || $decoded < 0 || $decoded > 99_999_999)) {
+                    $fail('Los créditos de bienvenida deben ser un entero entre 0 y 99,999,999.');
                 }
             }],
         ]);

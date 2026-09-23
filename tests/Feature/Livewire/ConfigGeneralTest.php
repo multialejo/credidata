@@ -156,6 +156,20 @@ class ConfigGeneralTest extends TestCase
         $this->assertSame('1', json_decode($param->valor));
     }
 
+    public function test_creditos_bienvenida_requiere_un_entero_no_negativo(): void
+    {
+        $this->crearParametro(['clave' => 'creditosBienvenida', 'valor' => json_encode(0)]);
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->call('iniciarEdicion', 'financiero', 'creditosBienvenida')
+            ->set('valorEditando', '-1')
+            ->call('guardar', 'financiero', 'creditosBienvenida')
+            ->assertHasErrors(['valorEditando']);
+
+        $this->assertSame(0, json_decode(ConfigParametro::where('clave', 'creditosBienvenida')->value('valor')));
+    }
+
     // --- Log de auditoría ---
 
     public function test_guardar_crea_log_auditoria_con_antes_despues(): void

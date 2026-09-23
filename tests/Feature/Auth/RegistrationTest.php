@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\Cliente;
+use App\Models\ConfigParametro;
 use App\Models\Usuario;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,6 +39,31 @@ class RegistrationTest extends TestCase
 
         $this->assertNull($usuario->email_verified_at);
         Notification::assertSentTo($usuario, VerifyEmail::class);
+    }
+
+    public function test_new_users_receive_configured_welcome_credits(): void
+    {
+        Notification::fake();
+        ConfigParametro::create([
+            'modulo' => 'financiero',
+            'clave' => 'creditosBienvenida',
+            'valor' => json_encode(25),
+        ]);
+
+        $this->post('/register', [
+            'name' => 'Bonus User',
+            'email' => 'bonus@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ])->assertRedirect(route('verification.notice', absolute: false));
+
+        $usuario = Usuario::where('email', 'bonus@example.com')->firstOrFail();
+
+        $this->assertSame(25.0, (float) $usuario->cliente->saldo_creditos);
+        $this->assertDatabaseHas('logs_actividad', [
+            'accion' => 'CLIENTE_REGISTRADO',
+            'actor_id' => $usuario->id,
+        ]);
     }
 
     public function test_verification_notification_uses_spanish_copy(): void
