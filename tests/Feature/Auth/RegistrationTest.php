@@ -44,11 +44,9 @@ class RegistrationTest extends TestCase
     public function test_new_users_receive_configured_welcome_credits(): void
     {
         Notification::fake();
-        ConfigParametro::create([
-            'modulo' => 'financiero',
-            'clave' => 'creditosBienvenida',
-            'valor' => json_encode(25),
-        ]);
+        ConfigParametro::where('modulo', 'financiero')
+            ->where('clave', 'creditosBienvenida')
+            ->update(['valor' => json_encode(25)]);
 
         $this->post('/register', [
             'name' => 'Bonus User',

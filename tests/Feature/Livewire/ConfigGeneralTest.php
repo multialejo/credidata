@@ -158,7 +158,9 @@ class ConfigGeneralTest extends TestCase
 
     public function test_creditos_bienvenida_requiere_un_entero_no_negativo(): void
     {
-        $this->crearParametro(['clave' => 'creditosBienvenida', 'valor' => json_encode(0)]);
+        ConfigParametro::where('modulo', 'financiero')
+            ->where('clave', 'creditosBienvenida')
+            ->update(['valor' => json_encode(0)]);
 
         Livewire::actingAs($this->staffUsuario)
             ->test(ConfigGeneral::class)
@@ -274,7 +276,10 @@ class ConfigGeneralTest extends TestCase
             ->test(ConfigGeneral::class)
             ->call('toggleMetodoPago', 'metodo_inexistente');
 
-        $this->assertDatabaseCount('config_parametros', 0);
+        $this->assertDatabaseMissing('config_parametros', [
+            'modulo' => 'recargas',
+            'clave' => 'metodo_inexistente',
+        ]);
     }
 
     public function test_estados_metodos_pago_se_renderizan_en_vista(): void
