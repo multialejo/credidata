@@ -42,6 +42,10 @@
                         <p class="ui-alert ui-alert--success mt-3">
                             Se envió un nuevo enlace a tu correo electrónico.
                         </p>
+                    @elseif (session('status') === 'verification-link-cooldown')
+                        <p class="ui-alert ui-alert--info mt-3">
+                            Ya se envió un enlace hace poco. Esperá a que termine el tiempo indicado antes de solicitar otro.
+                        </p>
                     @endif
                 </div>
             @endif

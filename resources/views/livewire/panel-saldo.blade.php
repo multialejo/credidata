@@ -1,6 +1,12 @@
 <x-page-shell max-width="7xl">
     <x-page-header eyebrow="Área de cliente" title="Tu cuenta, en orden." description="Consulta tu saldo y gestiona tus créditos." />
 
+    @if (session('status') === 'email-verified')
+        <x-alert variant="success">
+            <strong>Correo verificado.</strong> Tu cuenta ya está lista. Revisa tu saldo disponible para empezar.
+        </x-alert>
+    @endif
+
         <section class="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]" aria-label="Resumen de cuenta">
             <div class="relative overflow-hidden rounded-2xl bg-[#14213d] p-6 text-white shadow-[0_20px_45px_-25px_rgba(20,33,61,0.8)] sm:p-8">
                 <div class="absolute -right-16 -top-20 h-56 w-56 rounded-full border-[28px] border-white/5"></div>

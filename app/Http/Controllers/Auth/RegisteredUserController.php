@@ -42,7 +42,6 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'nombre' => $request->name,
             'password' => Hash::make($request->password),
-            'email_verified_at' => now(),
             'estado' => 'activo',
             'roles' => ['cliente'],
         ]);
@@ -64,6 +63,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($usuario);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('verification.notice', absolute: false));
     }
 }

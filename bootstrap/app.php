@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureActiveColaborador;
 use App\Http\Middleware\EnsureCliente;
+use App\Http\Middleware\EnsureClienteEmailVerified;
 use App\Http\Middleware\EnsureStaff;
 use App\Http\Middleware\EnsureStaffRole;
 use App\Http\Middleware\EnsureStaffWeb;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'staff.role' => EnsureStaffRole::class,
             'staff.web' => EnsureStaffWeb::class,
             'cliente.web' => EnsureCliente::class,
+            'cliente.verified' => EnsureClienteEmailVerified::class,
             'colaborador.activo' => EnsureActiveColaborador::class,
             'swagger.available' => EnsureSwaggerAvailable::class,
         ]);

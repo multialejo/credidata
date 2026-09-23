@@ -2,19 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use LogicException;
 
-class Usuario extends Authenticatable
+class Usuario extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens;
     use Notifiable;
 
     protected $fillable = [
-        'uid', 'email', 'firebase_uid', 'password', 'nombre', 'name', 'estado', 'roles', 'tipo_acceso',
+        'uid', 'email', 'firebase_uid', 'password', 'nombre', 'name', 'email_verified_at', 'estado', 'roles', 'tipo_acceso',
     ];
 
     protected $casts = [

@@ -37,6 +37,7 @@ class RoleNavigationTest extends TestCase
         $usuario = Usuario::create([
             'email' => 'cliente-nav@test.com',
             'nombre' => 'Cliente',
+            'email_verified_at' => now(),
             'roles' => ['cliente'],
         ]);
         Cliente::create(['usuario_id' => $usuario->id]);

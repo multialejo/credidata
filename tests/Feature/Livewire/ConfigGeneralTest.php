@@ -41,6 +41,7 @@ class ConfigGeneralTest extends TestCase
             'uid' => 'cliente-uid',
             'email' => 'cliente@test.com',
             'nombre' => 'Juan Cliente',
+            'email_verified_at' => now(),
             'roles' => json_encode(['cliente']),
         ]);
     }
