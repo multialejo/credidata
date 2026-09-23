@@ -16,7 +16,7 @@
         <header class="fixed inset-x-0 top-0 z-40 border-b border-slate-200/70 bg-[#f7f5ef]/85 backdrop-blur-md" x-data="{ open: false }">
             <nav class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                 <a href="/" class="flex items-center gap-2.5" aria-label="CrediData inicio">
-                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#3155d9] text-base font-extrabold tracking-tight text-white shadow-sm">C</span>
+                    <x-application-logo class="h-9 w-9 shrink-0 text-[#3155d9]" />
                     <span class="text-lg font-extrabold tracking-tight text-[#14213d]">CrediData</span>
                 </a>
 
@@ -367,7 +367,7 @@
                 <div class="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
                     <div>
                         <a href="/" class="flex items-center gap-2.5">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#3155d9] text-base font-extrabold tracking-tight text-white">C</span>
+                            <x-application-logo class="h-9 w-9 shrink-0 text-white" />
                             <span class="text-lg font-extrabold tracking-tight text-white">CrediData</span>
                         </a>
                         <p class="mt-4 max-w-xs text-sm leading-relaxed">Acceso simple y confiable a datos públicos del Ecuador, para personas y desarrolladores.</p>

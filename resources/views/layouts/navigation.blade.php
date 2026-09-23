@@ -37,7 +37,7 @@
         <div class="flex h-full flex-col overflow-hidden bg-[#14213d] shadow-[4px_0_24px_-10px_rgba(20,33,61,0.35)]">
             {{-- Logo --}}
             <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-3 px-6 py-6 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#14213d]">
-                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#3155d9] text-sm font-black tracking-tight text-white">C</span>
+                <x-application-logo class="h-9 w-9 shrink-0 text-white" />
                 <span class="text-lg font-bold tracking-tight text-white">Credidata</span>
             </a>
 
@@ -119,7 +119,7 @@
             <x-icons.bars-3 class="h-6 w-6" />
         </button>
         <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-white">
-            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3155d9] text-xs font-black tracking-tight text-white">C</span>
+            <x-application-logo class="h-8 w-8 shrink-0 text-white" />
             <span class="text-sm font-bold tracking-tight text-white">Credidata</span>
         </a>
     </div>
@@ -134,7 +134,7 @@
             {{-- Close button --}}
             <div class="flex items-center justify-between px-4 pt-5 pb-2">
                 <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-white">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3155d9] text-xs font-black tracking-tight text-white">C</span>
+                    <x-application-logo class="h-8 w-8 shrink-0 text-white" />
                     <span class="text-sm font-bold tracking-tight text-white">Credidata</span>
                 </a>
                 <button x-ref="closeSidebar" type="button" @click="closeSidebar()" class="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" aria-label="Cerrar menú">

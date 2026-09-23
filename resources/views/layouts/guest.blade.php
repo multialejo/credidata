@@ -17,7 +17,7 @@
     <body class="font-sans text-[#14213d] antialiased">
         <div class="flex min-h-screen flex-col items-center justify-center bg-[#f7f5ef] px-4 py-12">
             <a href="/" class="rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2 focus:ring-offset-[#f7f5ef]">
-                <x-application-logo class="h-10 w-auto fill-[#14213d]" />
+                <x-application-logo class="h-10 w-[49px] text-[#14213d]" />
             </a>
 
             <div class="mt-8 w-full max-w-md">
