@@ -11,6 +11,9 @@ export default {
 
     theme: {
         extend: {
+            fontSize: {
+                sm: ['1rem', { lineHeight: '1.25rem' }],
+            },
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
