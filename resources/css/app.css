@@ -71,7 +71,7 @@
     }
 
     .ui-input {
-        @apply min-h-11 rounded-xl border-slate-300 bg-white text-sm shadow-sm placeholder:text-slate-400 focus:border-[#3155d9] focus:ring-[#3155d9] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500;
+        @apply min-h-11 rounded-xl border border-slate-300 bg-white text-sm shadow-sm placeholder:text-slate-400 focus:border-[#3155d9] focus:ring-[#3155d9] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500;
     }
 
     .ui-label {

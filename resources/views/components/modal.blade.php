@@ -17,6 +17,7 @@ $maxWidth = [
 <div
     x-data="{
         show: @js($show),
+        trigger: null,
         focusables() {
             // All focusable element types...
             let selector = 'a, button, input:not([type=\'hidden\']), textarea, select, details, [tabindex]:not([tabindex=\'-1\'])'
@@ -37,9 +38,10 @@ $maxWidth = [
             {{ $attributes->has('focusable') ? 'setTimeout(() => firstFocusable().focus(), 100)' : '' }}
         } else {
             document.body.classList.remove('overflow-y-hidden');
+            this.$nextTick(() => this.trigger?.focus());
         }
     })"
-    x-on:open-modal.window="$event.detail == '{{ $name }}' ? show = true : null"
+    x-on:open-modal.window="if ($event.detail == '{{ $name }}') { trigger = document.activeElement; show = true }"
     x-on:close-modal.window="$event.detail == '{{ $name }}' ? show = false : null"
     x-on:close.stop="show = false"
     x-on:keydown.escape.window="show = false"
@@ -52,6 +54,7 @@ $maxWidth = [
     <div
         x-show="show"
         class="fixed inset-0 transform transition-all"
+        aria-hidden="true"
         x-on:click="show = false"
         x-transition:enter="ease-out duration-300"
         x-transition:enter-start="opacity-0"
@@ -65,6 +68,10 @@ $maxWidth = [
 
     <div
         x-show="show"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="user-deletion-title"
+        aria-describedby="user-deletion-description"
         class="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_-24px_rgba(20,33,61,0.45)] transform transition-all sm:w-full {{ $maxWidth }} sm:mx-auto"
         x-transition:enter="ease-out duration-300"
         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"

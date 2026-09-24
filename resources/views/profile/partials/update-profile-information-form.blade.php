@@ -1,11 +1,11 @@
 <section>
     <header>
-        <h2 class="ui-section-title">
-            Información del perfil
+        <h2 id="account-heading" class="ui-section-title">
+            Datos de la cuenta
         </h2>
 
-        <p class="mt-1 text-sm text-slate-600">
-            Actualiza tu nombre y dirección de correo electrónico.
+        <p class="mt-1 text-sm leading-6 text-slate-600">
+            Actualizá tu nombre. El correo registrado se muestra como dato informativo.
         </p>
     </header>
 
@@ -13,55 +13,43 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-5">
         @csrf
         @method('patch')
 
         <div>
             <x-input-label for="name" value="Nombre" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+            <x-text-input id="name" name="name" type="text" class="mt-1" :value="old('name', $user->name)" required autofocus autocomplete="name" :aria-invalid="$errors->has('name') ? 'true' : null" :aria-describedby="$errors->has('name') ? 'name-error' : null" />
+            <x-input-error id="name-error" class="mt-2" :messages="$errors->get('name')" />
         </div>
 
         <div>
             <x-input-label for="email" value="Correo electrónico" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+            <x-text-input id="email" type="email" class="mt-1 bg-slate-50" :value="$user->email" readonly aria-describedby="email-help" />
+            <p id="email-help" class="ui-help">Por ahora, el correo no se puede modificar desde esta pantalla.</p>
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="ui-alert ui-alert--warning mt-3">
-                        Tu dirección de correo no está verificada.
+                <p class="ui-alert ui-alert--warning mt-3">Tu correo todavía no está verificado.</p>
+                <button form="send-verification" class="mt-2 min-h-11 text-sm font-semibold text-[#3155d9] underline underline-offset-4 hover:text-[#2647c2]">
+                    Enviar nuevo enlace de verificación
+                </button>
+            @endif
 
-                        <button form="send-verification" class="mt-2 font-semibold underline underline-offset-2 hover:text-[#3155d9] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3155d9]">
-                            Enviar nuevo enlace de verificación.
-                        </button>
-                    </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="ui-alert ui-alert--success mt-3">
-                            Se envió un nuevo enlace a tu correo electrónico.
-                        </p>
-                    @elseif (session('status') === 'verification-link-cooldown')
-                        <p class="ui-alert ui-alert--info mt-3">
-                            Ya se envió un enlace hace poco. Esperá a que termine el tiempo indicado antes de solicitar otro.
-                        </p>
-                    @endif
-                </div>
+            @if (session('status') === 'verification-link-sent')
+                <p role="status" class="ui-alert ui-alert--success mt-3">Se envió un nuevo enlace a tu correo electrónico.</p>
+            @elseif (session('status') === 'verification-link-cooldown')
+                <p role="status" class="ui-alert ui-alert--warning mt-3">Ya se envió un enlace hace poco. Esperá a que termine el tiempo indicado antes de solicitar otro.</p>
             @endif
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>Guardar</x-primary-button>
+            <x-primary-button>Guardar datos</x-primary-button>
 
             @if (session('status') === 'profile-updated')
                 <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
+                    role="status"
                     class="ui-alert ui-alert--success"
-                >Guardado.</p>
+                >Tus datos se guardaron correctamente.</p>
             @endif
         </div>
     </form>

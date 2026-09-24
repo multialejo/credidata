@@ -22,16 +22,19 @@ class ProfileUpdateTest extends TestCase
 
         $response->assertOk()
             ->assertSee('Perfil')
-            ->assertSee('Información del perfil')
+            ->assertSee('Datos de la cuenta')
             ->assertSee('Nombre')
             ->assertSee('Correo electrónico')
-            ->assertSee('Actualizar contraseña')
-            ->assertSee('Eliminar cuenta')
+            ->assertSee('Cambiar contraseña')
+            ->assertSee('Guardar contraseña')
+            ->assertSee('Cerrar sesión')
+            ->assertSee('Eliminar mi cuenta')
+            ->assertSee('Tu perfil')
             ->assertDontSee('Profile Information')
             ->assertDontSee('Update Password');
     }
 
-    public function test_profile_update_persists_nombre_and_email(): void
+    public function test_profile_update_persists_nombre_but_does_not_change_email(): void
     {
         $usuario = Usuario::create([
             'email' => 'before@test.com',
@@ -49,7 +52,28 @@ class ProfileUpdateTest extends TestCase
         $usuario->refresh();
 
         $this->assertEquals('Nuevo Nombre', $usuario->nombre);
-        $this->assertEquals('after@test.com', $usuario->email);
+        $this->assertEquals('before@test.com', $usuario->email);
+    }
+
+    public function test_profile_update_allows_name_change_with_existing_email(): void
+    {
+        $usuario = Usuario::create([
+            'email' => 'profile-name-only@test.com',
+            'nombre' => 'Original Name',
+            'roles' => ['cliente'],
+        ]);
+
+        $response = $this->actingAs($usuario)->patch(route('profile.update'), [
+            'name' => 'Nombre Actualizado',
+            'email' => 'profile-name-only@test.com',
+        ]);
+
+        $response->assertRedirect(route('profile.edit'));
+
+        $usuario->refresh();
+
+        $this->assertEquals('Nombre Actualizado', $usuario->nombre);
+        $this->assertEquals('profile-name-only@test.com', $usuario->email);
     }
 
     public function test_welcome_page_is_spanish(): void
