@@ -16,8 +16,9 @@
     </head>
     <body class="font-sans text-[#14213d] antialiased">
         <div class="flex min-h-screen flex-col items-center justify-center bg-[#f7f5ef] px-4 py-12">
-            <a href="/" class="rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2 focus:ring-offset-[#f7f5ef]">
+            <a href="/" class="flex items-center gap-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2 focus:ring-offset-[#f7f5ef]">
                 <x-application-logo class="h-10 w-[49px] text-[#14213d]" />
+                <span class="text-xl font-extrabold tracking-tight text-[#14213d]">CrediData</span>
             </a>
 
             <div class="mt-8 w-full max-w-md">

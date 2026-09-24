@@ -38,7 +38,7 @@
             {{-- Logo --}}
             <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-3 px-6 py-6 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#14213d]">
                 <x-application-logo class="h-9 w-9 shrink-0 text-white" />
-                <span class="text-lg font-bold tracking-tight text-white">Credidata</span>
+                <span class="text-xl font-extrabold tracking-tight text-white">CrediData</span>
             </a>
 
             @if(!auth()->user()->staff)
@@ -58,7 +58,7 @@
 
             {{-- User card --}}
             @if(!auth()->user()->staff)
-                <x-dropdown align="top-right" width="48">
+                <x-dropdown align="top-right" width="48" class="mx-4">
                     <x-slot name="trigger">
                         <div class="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
                             <div class="flex items-center gap-3">
@@ -120,7 +120,7 @@
         </button>
         <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-white">
             <x-application-logo class="h-8 w-8 shrink-0 text-white" />
-            <span class="text-sm font-bold tracking-tight text-white">Credidata</span>
+            <span class="text-xl font-extrabold tracking-tight text-white">CrediData</span>
         </a>
     </div>
 
@@ -135,7 +135,7 @@
             <div class="flex items-center justify-between px-4 pt-5 pb-2">
                 <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-white">
                     <x-application-logo class="h-8 w-8 shrink-0 text-white" />
-                    <span class="text-sm font-bold tracking-tight text-white">Credidata</span>
+                    <span class="text-xl font-extrabold tracking-tight text-white">CrediData</span>
                 </a>
                 <button x-ref="closeSidebar" type="button" @click="closeSidebar()" class="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" aria-label="Cerrar menú">
                     <x-icons.x-mark class="h-5 w-5" />
@@ -159,7 +159,7 @@
 
             {{-- User card --}}
             @if(!auth()->user()->staff)
-                <x-dropdown align="top-right" width="48">
+                <x-dropdown align="top-right" width="48" class="mx-3">
                     <x-slot name="trigger">
                         <div class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10">
                             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
