@@ -53,6 +53,27 @@ class GestionApiKey extends Component
         $this->scopes = $cliente->api_key_alcance ?? [];
     }
 
+    public function updatedScopes(): void
+    {
+        if (in_array('consulta:*', $this->scopes, true)) {
+            $this->scopes = ['consulta:*'];
+        }
+    }
+
+    public function agregarIpActual(): void
+    {
+        if ($this->ipDetectada === '') {
+            return;
+        }
+
+        $ips = array_values(array_filter(array_map('trim', preg_split('/\\R/', $this->ips) ?: [])));
+        if (! in_array($this->ipDetectada, $ips, true)) {
+            $ips[] = $this->ipDetectada;
+        }
+
+        $this->ips = implode("\n", $ips);
+    }
+
     public function generar(ApiKeyService $keys)
     {
         $this->validate(['alias' => ['nullable', 'string', 'max:100'], 'scopes' => ['array']]);

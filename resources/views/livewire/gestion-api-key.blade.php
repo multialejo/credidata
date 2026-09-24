@@ -84,8 +84,11 @@
     </div>
 
     <!-- Configuration Form Section -->
-    <form wire:submit.prevent="guardarConfiguracion" class="py-6 space-y-5">
-        <h2 class="ui-section-title">Configuración</h2>
+    <form wire:submit.prevent="guardarConfiguracion" class="py-6 space-y-6">
+        <div>
+            <h2 class="ui-section-title">Configuración de la API Key</h2>
+            <p class="mt-1 text-sm leading-6 text-slate-600">Define dónde puede usarse esta clave y qué consultas puede realizar.</p>
+        </div>
 
         <div class="grid gap-5 sm:grid-cols-2">
             <div>
@@ -101,21 +104,31 @@
                 <textarea id="key-ips" wire:model="ips" rows="3"
                     class="ui-input mt-1 w-full font-mono"
                     placeholder="192.168.1.1&#10;10.0.0.1"></textarea>
-                <p class="ui-help">
-                    Tu IP actual detectada: <code class="rounded bg-slate-100 px-1 font-mono text-slate-800">{{ $ipDetectada ?: 'desconocida' }}</code>
-                </p>
+                <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <p class="ui-help mt-0">Tu IP actual: <code class="rounded bg-slate-100 px-1 font-mono text-slate-800">{{ $ipDetectada ?: 'desconocida' }}</code></p>
+                </div>
+                <p class="ui-help">Si no agregas IPs, la clave podrá usarse desde cualquier dirección.</p>
                 @error('ips') <span class="ui-error block">{{ $message }}</span> @enderror
             </div>
         </div>
 
         <fieldset>
-            <legend class="ui-label mb-2">Permisos de consulta</legend>
-            <div class="flex flex-wrap gap-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                @foreach(['consulta:cedula', 'consulta:ruc', 'consulta:*'] as $scope)
-                    <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+            <legend class="ui-label mb-1">Permisos de consulta</legend>
+            <p class="mb-3 text-sm text-slate-600">Elige consultas específicas o acceso completo. El acceso completo incluye todas las consultas actuales y futuras.</p>
+            <div class="grid gap-3 sm:grid-cols-3">
+                @foreach([
+                    'consulta:cedula' => ['label' => 'Cédula', 'description' => 'Consultar datos de personas.'],
+                    'consulta:ruc' => ['label' => 'RUC', 'description' => 'Consultar datos de empresas.'],
+                    'consulta:*' => ['label' => 'Acceso completo', 'description' => 'Incluye consultas actuales y futuras.'],
+                ] as $scope => $permission)
+                    <label class="inline-flex min-h-11 cursor-pointer items-start gap-2 rounded-xl border border-slate-200 p-3 text-sm text-slate-700 has-[:checked]:border-[#3155d9] has-[:checked]:bg-[#e8edf9]">
                         <input type="checkbox" wire:model="scopes" value="{{ $scope }}"
-                            class="rounded border-slate-300 text-[#3155d9] focus:ring-[#3155d9]">
-                        <span class="font-mono text-xs">{{ $scope }}</span>
+                            @disabled($scope !== 'consulta:*' && in_array('consulta:*', $scopes, true))
+                            class="mt-0.5 rounded border-slate-300 text-[#3155d9] focus:ring-[#3155d9] disabled:cursor-not-allowed disabled:opacity-50">
+                        <span>
+                            <span class="block font-semibold">{{ $permission['label'] }}</span>
+                            <span class="mt-0.5 block text-xs leading-5 text-slate-600">{{ $permission['description'] }}</span>
+                        </span>
                     </label>
                 @endforeach
             </div>
@@ -131,29 +144,38 @@
         </div>
     </form>
 
-    <!-- Key Actions Footer -->
-    <div class="pt-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <p class="text-xs text-slate-500">Gestión del ciclo de vida de la API Key</p>
-        </div>
+    <!-- Key Lifecycle Actions -->
+    <section class="mt-2 border-t border-slate-200 pt-6" aria-labelledby="key-lifecycle-title">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="max-w-xl">
+                <h2 id="key-lifecycle-title" class="ui-section-title">Ciclo de vida de la API Key</h2>
+                @if($revocada)
+                    <p class="mt-1 text-sm leading-6 text-slate-600">La clave está revocada y no puede realizar consultas. Genera una nueva para restablecer el acceso con la configuración guardada.</p>
+                @else
+                    <p class="mt-1 text-sm leading-6 text-slate-600">Regenerar invalida inmediatamente la clave actual. Revocar desactiva el acceso sin crear una clave nueva.</p>
+                @endif
+            </div>
 
-        <div class="flex items-center gap-3">
-            @if($revocada)
-                <button type="button" wire:click="generar" wire:loading.attr="disabled"
-                    class="ui-primary-button">
-                    Generar nueva API Key
-                </button>
-            @else
-                <button type="button" wire:click="generar" wire:confirm="¿Generar una nueva API Key? La anterior se desactivará inmediatamente." wire:loading.attr="disabled"
-                    class="ui-secondary-button">
-                    Regenerar
-                </button>
-                <button type="button" wire:click="revocar" wire:confirm="¿Estás seguro de revocar esta API Key? Esta acción deshabilitará el acceso de forma permanente." wire:loading.attr="disabled"
-                    class="ui-secondary-button border-rose-300 text-rose-700 hover:border-rose-400 hover:bg-rose-50">
-                    Revocar
-                </button>
-            @endif
+            <div class="flex flex-wrap items-center gap-3 sm:justify-end">
+                @if($revocada)
+                    <button type="button" wire:click="generar" wire:loading.attr="disabled" class="ui-secondary-button">
+                        <span wire:loading.remove wire:target="generar">Generar nueva API Key</span>
+                        <span wire:loading wire:target="generar">Generando...</span>
+                    </button>
+                @else
+                    <button type="button" wire:click="generar" wire:confirm="¿Generar una nueva API Key? La anterior se desactivará inmediatamente." wire:loading.attr="disabled"
+                        class="ui-secondary-button">
+                        <span wire:loading.remove wire:target="generar">Regenerar clave</span>
+                        <span wire:loading wire:target="generar">Regenerando...</span>
+                    </button>
+                    <button type="button" wire:click="revocar" wire:confirm="¿Estás seguro de revocar esta API Key? Esta acción deshabilitará el acceso de forma permanente." wire:loading.attr="disabled"
+                        class="ui-danger-button">
+                        <span wire:loading.remove wire:target="revocar">Revocar clave</span>
+                        <span wire:loading wire:target="revocar">Revocando...</span>
+                    </button>
+                @endif
+            </div>
         </div>
-    </div>
+    </section>
 </section>
 </x-page-shell>
