@@ -99,12 +99,12 @@
   <span style="color: #86efac">-H "Accept: application/json"</span> \
   <span style="color: #f0abfc">-d '{"cedula":"1713175071"}'</span></code></pre>
         </div>
-
-        <div class="mt-5 grid gap-5 lg:grid-cols-2">
+        <br>
+        <div class="mt-5 grid gap-10 lg:grid-cols-2">
             <div>
                 <h3 class="text-sm font-bold text-[#14213d]">Respuesta exitosa · HTTP 200</h3>
                 <p class="mt-1 text-sm leading-6 text-slate-600">Extracto: <code class="font-mono text-xs">datos</code> contiene el resultado y <code class="font-mono text-xs">metadatos</code> informa el consumo.</p>
-                <pre class="mt-3 overflow-x-auto rounded-xl bg-slate-100 p-4 font-mono text-sm leading-5 text-slate-800"><code>{
+                <pre class="mt-3 overflow-x-auto rounded-xl bg-slate-100 p-4 font-mono text-xs leading-5 text-slate-800"><code>{
   "codigo": 200,
   "exito": true,
   "mensaje": "Consulta exitosa",
@@ -121,7 +121,7 @@
             </div>
             <div>
                 <h3 class="text-sm font-bold text-[#14213d]">Si la consulta falla</h3>
-                <ul class="mt-2 space-y-3 text-sm leading-6 text-slate-600 list-disc">
+                <ul class="mt-2 space-y-3 text-sm leading-6 text-slate-600">
                     <li><span class="font-semibold text-[#14213d]">401 · API Key:</span> revisa que el encabezado Bearer contenga una key activa y no revocada. No se consulta la fuente.</li>
                     <li><span class="font-semibold text-[#14213d]">402 · Saldo insuficiente:</span> recarga créditos y vuelve a intentar. La respuesta incluye <code class="font-mono text-xs">metadatos.creditos_restantes</code>.</li>
                     <li><span class="font-semibold text-[#14213d]">403 · Permiso insuficiente:</span> habilita <code class="font-mono text-xs">consulta:cedula</code> en tu API Key y vuelve a enviar la petición.</li>
@@ -129,6 +129,7 @@
                 </ul>
             </div>
         </div>
+        <br>
         <x-alert variant="info" class="mt-4">Una consulta sin resultados puede consumir créditos. Los errores de validación, autorización o saldo insuficiente no realizan la consulta.</x-alert>
     </section>
 
