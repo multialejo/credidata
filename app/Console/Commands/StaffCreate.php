@@ -14,11 +14,11 @@ class StaffCreate extends Command
         {email : Email del usuario staff}
         {--password= : Password (si se omite, se genera uno aleatorio de 16 chars y se imprime)}
         {--nombre=Staff Hurl : Nombre visible del usuario}
-        {--rol=admin : Rol staff (admin|validator|support)}';
+        {--rol=admin : Rol staff (admin|support)}';
 
     protected $description = 'Crea un Usuario con fila Staff asociada para tests / setup manual (uso interno)';
 
-    private const ROLES_VALIDOS = ['admin', 'validator', 'support'];
+    private const ROLES_VALIDOS = ['admin', 'support'];
 
     public function handle(): int
     {

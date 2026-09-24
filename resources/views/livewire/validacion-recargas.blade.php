@@ -4,7 +4,7 @@
         <x-alert variant="success">{{ session('status') }}</x-alert>
     @endif
     <section class="ui-card p-5 sm:p-7">
-        @if($esAdmin)
+        @if($puedeAcreditar)
             <form wire:submit="acreditar" enctype="multipart/form-data" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <x-input-label for="clienteEmail" value="Email del cliente" />
@@ -37,7 +37,7 @@
                 </div>
             </form>
         @else
-            <p class="ui-alert ui-alert--warning mt-4">Solo el rol admin puede acreditar transferencias.</p>
+            <p class="ui-alert ui-alert--warning mt-4">Solo admin o support pueden acreditar transferencias.</p>
         @endif
     </section>
 </x-page-shell>

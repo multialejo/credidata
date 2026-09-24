@@ -27,12 +27,16 @@ Route::get('/', function () {
 // Admin routes — staff only
 Route::middleware(['auth', 'staff.web'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/clientes', GestionClientes::class)->name('clientes');
-    Route::get('/logs', LogsActividad::class)->name('logs');
-    Route::get('/config', ConfigGeneral::class)->name('config');
     Route::get('/registros', EditarRegistro::class)->name('registros');
     Route::get('/recargas', ValidacionRecargas::class)->name('recargas');
     Route::get('/aportes', ValidacionAportes::class)->name('aportes');
     Route::get('/recargas/{recarga}/comprobante', AdminRecargaEvidenceController::class)->name('recargas.comprobante');
+});
+
+// Restricted administration tools — admin only.
+Route::middleware(['auth', 'staff.web', 'staff.role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/logs', LogsActividad::class)->name('logs');
+    Route::get('/config', ConfigGeneral::class)->name('config');
 });
 
 // Cliente dashboard — requires Cliente profile; staff is redirected to /admin/clientes

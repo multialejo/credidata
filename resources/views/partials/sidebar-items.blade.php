@@ -5,17 +5,22 @@ $isDesktop = $variant === 'desktop';
 @endphp
 
 @if(auth()->user()->staff)
+    @php($esAdmin = auth()->user()->staff->rol_staff === 'admin')
     @if($isDesktop)
         <x-nav-link :href="route('admin.clientes')" :active="request()->routeIs('admin.clientes')" icon="users">Clientes</x-nav-link>
-        <x-nav-link :href="route('admin.logs')" :active="request()->routeIs('admin.logs')" icon="document-text">Logs</x-nav-link>
-        <x-nav-link :href="route('admin.config')" :active="request()->routeIs('admin.config')" icon="cog-6-tooth">Configuración</x-nav-link>
+        @if($esAdmin)
+            <x-nav-link :href="route('admin.logs')" :active="request()->routeIs('admin.logs')" icon="document-text">Logs</x-nav-link>
+            <x-nav-link :href="route('admin.config')" :active="request()->routeIs('admin.config')" icon="cog-6-tooth">Configuración</x-nav-link>
+        @endif
         <x-nav-link :href="route('admin.registros')" :active="request()->routeIs('admin.registros')" icon="clipboard-document-list">Registros</x-nav-link>
         <x-nav-link :href="route('admin.recargas')" :active="request()->routeIs('admin.recargas')" icon="arrow-path">Recargas</x-nav-link>
         <x-nav-link :href="route('admin.aportes')" :active="request()->routeIs('admin.aportes')" icon="sparkles">Aportes</x-nav-link>
     @else
         <x-responsive-nav-link :href="route('admin.clientes')" :active="request()->routeIs('admin.clientes')" icon="users">Clientes</x-responsive-nav-link>
-        <x-responsive-nav-link :href="route('admin.logs')" :active="request()->routeIs('admin.logs')" icon="document-text">Logs</x-responsive-nav-link>
-        <x-responsive-nav-link :href="route('admin.config')" :active="request()->routeIs('admin.config')" icon="cog-6-tooth">Configuración</x-responsive-nav-link>
+        @if($esAdmin)
+            <x-responsive-nav-link :href="route('admin.logs')" :active="request()->routeIs('admin.logs')" icon="document-text">Logs</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('admin.config')" :active="request()->routeIs('admin.config')" icon="cog-6-tooth">Configuración</x-responsive-nav-link>
+        @endif
         <x-responsive-nav-link :href="route('admin.registros')" :active="request()->routeIs('admin.registros')" icon="clipboard-document-list">Registros</x-responsive-nav-link>
         <x-responsive-nav-link :href="route('admin.recargas')" :active="request()->routeIs('admin.recargas')" icon="arrow-path">Recargas</x-responsive-nav-link>
         <x-responsive-nav-link :href="route('admin.aportes')" :active="request()->routeIs('admin.aportes')" icon="sparkles">Aportes</x-responsive-nav-link>

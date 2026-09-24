@@ -77,7 +77,7 @@ class ExclusiveAccessRoleTest extends TestCase
         Colaborador::create(['usuario_id' => $cliente->id]);
 
         $staff = Usuario::create($this->datosUsuario(['staff', 'colaborador'], 'staff-colaborador@test.com'));
-        Staff::create(['usuario_id' => $staff->id, 'rol_staff' => 'validator']);
+        Staff::create(['usuario_id' => $staff->id, 'rol_staff' => 'support']);
         Colaborador::create(['usuario_id' => $staff->id]);
 
         $this->assertNotNull($cliente->fresh()->cliente);

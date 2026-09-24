@@ -33,6 +33,32 @@ class RoleNavigationTest extends TestCase
             ->assertSee('data-testid="home-link" href="'.route('admin.clientes').'"', false);
     }
 
+    public function test_support_no_ve_logs_ni_config_y_no_puede_acceder_a_esas_rutas(): void
+    {
+        $usuario = Usuario::create([
+            'email' => 'support-nav@test.com',
+            'nombre' => 'Support',
+            'roles' => ['staff'],
+        ]);
+        Staff::create(['usuario_id' => $usuario->id, 'rol_staff' => 'support']);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.clientes'))
+            ->assertOk()
+            ->assertSeeText('Clientes')
+            ->assertSeeText('Registros')
+            ->assertSeeText('Aportes')
+            ->assertSeeText('Recargas')
+            ->assertDontSeeText('Logs')
+            ->assertDontSeeText('Configuración');
+
+        $this->get(route('admin.logs'))->assertForbidden();
+        $this->get(route('admin.config'))->assertForbidden();
+        $this->get(route('admin.registros'))->assertOk();
+        $this->get(route('admin.aportes'))->assertOk();
+        $this->get(route('admin.recargas'))->assertOk();
+    }
+
     public function test_cliente_ve_solo_navegacion_de_cliente(): void
     {
         $usuario = Usuario::create([

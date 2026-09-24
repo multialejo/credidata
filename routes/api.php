@@ -48,6 +48,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('aportes/{aporte}/rechazar', [AdminAporteController::class, 'rechazar']);
         Route::get('recargas/{recarga}/comprobante', AdminRecargaEvidenceController::class);
         Route::post('recargas/acreditar', [AdminRecargaController::class, 'acreditar'])
-            ->middleware('staff.role:admin');
+            ->middleware('staff.role:admin,support');
     });
 });

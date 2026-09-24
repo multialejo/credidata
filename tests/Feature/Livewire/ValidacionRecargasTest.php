@@ -46,9 +46,16 @@ class ValidacionRecargasTest extends TestCase
         $this->assertDatabaseHas('recargas', ['metodo' => 'transferencia', 'referencia_externa' => 'BANK-LW-001']);
     }
 
-    public function test_non_admin_cannot_accredit(): void
+    public function test_support_can_accredit_direct_transfer(): void
     {
+        Storage::fake('local');
         Livewire::actingAs($this->support)->test(ValidacionRecargas::class)
-            ->assertDontSee('wire:model="clienteEmail"', false);
+            ->set('clienteEmail', 'cliente@test.com')->set('montoUsd', 5)
+            ->set('referenciaBancaria', 'BANK-LW-002')->set('motivo', 'Transferencia confirmada por soporte')
+            ->set('comprobante', UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf'))
+            ->call('acreditar')->assertHasNoErrors();
+
+        $this->assertSame(50, (int) $this->cliente->fresh()->saldo_creditos);
+        $this->assertDatabaseHas('recargas', ['metodo' => 'transferencia', 'referencia_externa' => 'BANK-LW-002']);
     }
 }

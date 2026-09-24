@@ -12,7 +12,7 @@ class EnsureStaff
     {
         $user = $request->user();
 
-        if (! $user || ! $user->staff) {
+        if (! $user || ! $user->staff || ! in_array($user->staff->rol_staff, ['admin', 'support'], true)) {
             return response()->json([
                 'codigo' => 403,
                 'exito' => false,

@@ -36,7 +36,7 @@ class ValidacionRecargas extends Component
 
     public function acreditar(): void
     {
-        abort_unless($this->esAdmin(), 403);
+        abort_unless($this->puedeAcreditar(), 403);
 
         $this->validate([
             'clienteEmail' => ['required', 'email', 'max:255'],
@@ -104,15 +104,15 @@ class ValidacionRecargas extends Component
         session()->flash('status', 'Transferencia acreditada correctamente.');
     }
 
-    private function esAdmin(): bool
+    private function puedeAcreditar(): bool
     {
-        return auth()->user()?->staff?->rol_staff === 'admin';
+        return in_array(auth()->user()?->staff?->rol_staff, ['admin', 'support'], true);
     }
 
     public function render()
     {
         return view('livewire.validacion-recargas', [
-            'esAdmin' => $this->esAdmin(),
+            'puedeAcreditar' => $this->puedeAcreditar(),
         ]);
     }
 }

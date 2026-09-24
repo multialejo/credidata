@@ -81,7 +81,7 @@ class StaffCreateTest extends TestCase
         $this->artisan('staff:create', [
             'email' => 'staff-audit@test.com',
             '--password' => 'x',
-            '--rol' => 'validator',
+            '--rol' => 'support',
         ])->assertExitCode(0);
 
         $usuario = Usuario::where('email', 'staff-audit@test.com')->firstOrFail();
@@ -94,7 +94,7 @@ class StaffCreateTest extends TestCase
         ]);
 
         $log = LogActividad::where('accion', 'STAFF_CREADO')->firstOrFail();
-        $this->assertSame('validator', $log->detalle['rol_staff']);
+        $this->assertSame('support', $log->detalle['rol_staff']);
         $this->assertSame('cli', $log->detalle['origen']);
     }
 
@@ -132,9 +132,9 @@ class StaffCreateTest extends TestCase
         $this->assertDatabaseCount('staff', 0);
     }
 
-    public function test_acepta_los_tres_roles_validos(): void
+    public function test_acepta_admin_y_support_como_roles_validos(): void
     {
-        foreach (['admin', 'validator', 'support'] as $rol) {
+        foreach (['admin', 'support'] as $rol) {
             $this->artisan('staff:create', [
                 'email' => "staff-{$rol}@test.com",
                 '--password' => 'x',
@@ -144,5 +144,16 @@ class StaffCreateTest extends TestCase
             $usuario = Usuario::where('email', "staff-{$rol}@test.com")->firstOrFail();
             $this->assertSame($rol, $usuario->staff->rol_staff);
         }
+    }
+
+    public function test_rechaza_validator_como_rol_deprecado(): void
+    {
+        $this->artisan('staff:create', [
+            'email' => 'staff-validator@test.com',
+            '--password' => 'x',
+            '--rol' => 'validator',
+        ])->assertExitCode(1);
+
+        $this->assertDatabaseMissing('usuarios', ['email' => 'staff-validator@test.com']);
     }
 }

@@ -9,15 +9,14 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureStaffRole
 {
     /**
-     * Requiere que el usuario autenticado tenga fila Staff con el rol indicado
-     * (ej. 'admin'). El middleware base `staff` ya garantiza la existencia de
-     * la fila; este middleware solo verifica el rol.
+     * Requiere que el usuario autenticado tenga fila Staff con uno de los roles
+     * indicados. El middleware base `staff` ya garantiza el acceso de staff.
      */
-    public function handle(Request $request, Closure $next, string $rol): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
 
-        if (! $user || ! $user->staff || $user->staff->rol_staff !== $rol) {
+        if (! $user || ! $user->staff || ! in_array($user->staff->rol_staff, $roles, true)) {
             return response()->json([
                 'codigo' => 403,
                 'exito' => false,
