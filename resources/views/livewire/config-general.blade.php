@@ -78,6 +78,67 @@
             @endforeach
         </div>
     </section>
+
+    <section class="ui-card" aria-labelledby="transferencia-heading">
+        <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div class="flex items-start gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                        <x-icons.arrows-right-left class="h-5 w-5" />
+                    </span>
+                    <div>
+                        <h2 id="transferencia-heading" class="text-lg font-bold text-[#14213d]">{{ __('Transferencia bancaria') }}</h2>
+                        <p class="mt-1 max-w-2xl text-sm leading-5 text-slate-500">{{ __('Estos datos se mostrarán a los clientes que elijan este método de pago.') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form wire:submit="guardarDatosTransferencia" class="space-y-6 px-5 py-6 sm:px-6">
+            <div>
+                <h3 class="text-sm font-semibold text-[#14213d]">{{ __('Datos de la cuenta') }}</h3>
+                <p class="mt-1 text-xs text-slate-500">{{ __('Completa todos los campos para que el cliente pueda identificar el pago.') }}</p>
+            </div>
+            <div class="grid gap-x-5 gap-y-5 sm:grid-cols-2">
+                <div>
+                    <x-input-label for="transferenciaBanco" value="Banco" />
+                    <x-text-input id="transferenciaBanco" wire:model="transferenciaBanco" type="text" class="mt-1.5 block w-full" placeholder="Banco Pichincha" />
+                    @error('transferenciaBanco') <p class="ui-error">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="transferenciaTipoCuenta" value="Tipo de cuenta" />
+                    <x-text-input id="transferenciaTipoCuenta" wire:model="transferenciaTipoCuenta" type="text" class="mt-1.5 block w-full" placeholder="Cuenta de ahorros" />
+                    @error('transferenciaTipoCuenta') <p class="ui-error">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="transferenciaNumeroCuenta" value="Número de cuenta" />
+                    <x-text-input id="transferenciaNumeroCuenta" wire:model="transferenciaNumeroCuenta" type="text" inputmode="numeric" class="mt-1.5 block w-full" placeholder="2204592986" maxlength="20" />
+                    @error('transferenciaNumeroCuenta') <p class="ui-error">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="transferenciaTitular" value="Titular de la cuenta" />
+                    <x-text-input id="transferenciaTitular" wire:model="transferenciaTitular" type="text" class="mt-1.5 block w-full" placeholder="Jean Paul Mayorga" />
+                    @error('transferenciaTitular') <p class="ui-error">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="transferenciaCedulaTitular" value="Cédula del titular" />
+                    <x-text-input id="transferenciaCedulaTitular" wire:model="transferenciaCedulaTitular" type="text" inputmode="numeric" class="mt-1.5 block w-full" placeholder="1805752685" maxlength="10" />
+                    @error('transferenciaCedulaTitular') <p class="ui-error">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="transferenciaWhatsapp" value="WhatsApp para comprobantes" />
+                    <x-text-input id="transferenciaWhatsapp" wire:model="transferenciaWhatsapp" type="text" inputmode="tel" class="mt-1.5 block w-full" placeholder="593991234567" maxlength="15" />
+                    @error('transferenciaWhatsapp') <p class="ui-error">{{ $message }}</p> @enderror
+                </div>
+            </div>
+            <div class="flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <button type="submit" class="ui-primary-button" wire:loading.attr="disabled" wire:loading.class="opacity-60">
+                    <span wire:loading.remove wire:target="guardarDatosTransferencia">{{ __('Guardar datos bancarios') }}</span>
+                    <span wire:loading wire:target="guardarDatosTransferencia">{{ __('Guardando...') }}</span>
+                </button>
+            </div>
+        </form>
+    </section>
+
 <section class="ui-card" aria-labelledby="avanzada-heading">
     <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
         <div class="flex items-start gap-3">
@@ -97,7 +158,6 @@
                 <!-- Encabezado de subsection mejorado -->
                 <div class="mb-3 flex items-center gap-3">
                     <div class="flex items-center gap-2">
-                        <span class="inline-block h-2 w-2 rounded-full bg-indigo-500"></span>
                         <div class="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
                                 <h3 class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-sm  uppercase tracking-wider text-[#14213d] border border-slate-200/60">
                                     {{ $modulo }}
