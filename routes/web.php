@@ -41,6 +41,7 @@ Route::middleware(['auth', 'cliente.verified', 'cliente.web'])->group(function (
     Route::get('/dashboard/recargas', Recargas::class)->name('dashboard.recargas');
     Route::get('/dashboard/consultas', HistorialConsultas::class)->name('dashboard.consultas');
     Route::get('/dashboard/api-key', GestionApiKey::class)->name('dashboard.api-key');
+    Route::view('/dashboard/documentacion', 'dashboard.documentacion')->name('dashboard.documentacion');
     Route::get('/dashboard/recibos', Recibos::class)->name('dashboard.recibos');
     Route::get('/dashboard/recibos/{recarga}/pdf', ReciboPdfController::class)->name('dashboard.recibos.pdf');
     Route::get('/dashboard/colaborador', ActivarColaborador::class)->name('dashboard.colaborador');

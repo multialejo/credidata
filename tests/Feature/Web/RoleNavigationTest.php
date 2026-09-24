@@ -28,6 +28,7 @@ class RoleNavigationTest extends TestCase
             ->assertDontSee('href="'.route('dashboard').'"', false)
             ->assertDontSee('href="'.route('dashboard.consultas').'"', false)
             ->assertDontSee('href="'.route('dashboard.api-key').'"', false)
+            ->assertDontSee('href="'.route('dashboard.documentacion').'"', false)
             ->assertDontSee('href="'.route('dashboard.recibos').'"', false)
             ->assertSee('data-testid="home-link" href="'.route('admin.clientes').'"', false);
     }
@@ -45,11 +46,50 @@ class RoleNavigationTest extends TestCase
         $response = $this->actingAs($usuario)->get(route('dashboard'));
 
         $response->assertOk()
-            ->assertSeeTextInOrder(['Saldo', 'Historial', 'API Key', 'Recibos'])
+            ->assertSeeTextInOrder(['Saldo', 'Historial', 'API Key', 'Recibos', 'Documentación'])
             ->assertDontSee('href="'.route('admin.logs').'"', false)
             ->assertDontSee('href="'.route('admin.config').'"', false)
             ->assertDontSee('href="'.route('admin.registros').'"', false)
             ->assertDontSee('href="'.route('admin.recargas').'"', false)
             ->assertSee('data-testid="home-link" href="'.route('dashboard').'"', false);
+    }
+
+    public function test_cliente_puede_abrir_documentacion_de_api(): void
+    {
+        $usuario = Usuario::create([
+            'email' => 'cliente-docs@test.com',
+            'nombre' => 'Cliente',
+            'email_verified_at' => now(),
+            'roles' => ['cliente'],
+        ]);
+        Cliente::create(['usuario_id' => $usuario->id]);
+
+        $this->actingAs($usuario)
+            ->get(route('dashboard.documentacion'))
+            ->assertOk()
+            ->assertSeeText('Quickstart')
+            ->assertSeeText('Consulta por cédula')
+            ->assertSeeText('Consulta por RUC')
+            ->assertSeeText('consulta:cedula')
+            ->assertSeeText('Prueba rápida con curl')
+            ->assertSeeText('fechaNacimiento')
+            ->assertSeeText('contacto.telefonos')
+            ->assertSeeText('actividadEconomica.codigo')
+            ->assertSeeText('fechas.inicioActividades')
+            ->assertSeeText('contacto.email')
+            ->assertSee('/api/v1/consulta/cedula', false)
+            ->assertSee('/api/v1/consulta/ruc', false)
+            ->assertSee('{"cedula":"1713175071"}', false)
+            ->assertDontSee("-d '{\"ruc\":\"0991234567001\"}'", false)
+            ->assertSeeText('En esta página')
+            ->assertSee('href="#quickstart"', false)
+            ->assertSee('href="#cedula-fields"', false)
+            ->assertSee('href="#ruc-fields"', false)
+            ->assertSee('href="#curl-example"', false)
+            ->assertSee('xl:self-stretch', false)
+            ->assertSee('sticky top-6', false)
+            ->assertSee('style="color: #f8fafc !important"', false)
+            ->assertSee('class="lg:pl-64"', false)
+            ->assertSee('name="viewport"', false);
     }
 }
