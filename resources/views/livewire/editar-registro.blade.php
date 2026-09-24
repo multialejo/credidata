@@ -1,16 +1,8 @@
 <x-page-shell max-width="7xl">
     <x-page-header eyebrow="Administración" title="Búsqueda y edición de registros" description="Consulta registros por cédula o RUC y actualiza información de contacto adicional." />
 
-    {{-- Flash Alert Banner --}}
     @if (session('status'))
-        <div class="ui-alert ui-alert--success flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <span>{{ session('status') }}</span>
-            </div>
-        </div>
+        <x-alert variant="success">{{ session('status') }}</x-alert>
     @endif
 
     <section class="ui-card p-5 sm:p-7">
@@ -48,7 +40,7 @@
                         <button type="submit" wire:loading.attr="disabled" wire:target="buscar"
                             class="ui-primary-button shrink-0">
                             <span wire:loading.remove wire:target="buscar">{{ __('Buscar') }}</span>
-                            <span wire:loading wire:target="buscar" class="flex items-center gap-1">
+                            <span wire:loading.inline-flex wire:target="buscar" class="items-center gap-1">
                                 <svg class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -117,7 +109,7 @@
                             <button type="submit" wire:loading.attr="disabled" wire:target="guardar"
                                 class="ui-primary-button">
                                 <span wire:loading.remove wire:target="guardar">{{ __('Guardar cambios') }}</span>
-                                <span wire:loading wire:target="guardar" class="flex items-center gap-1">
+                                <span wire:loading.inline-flex wire:target="guardar" class="items-center gap-1">
                                     <svg class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>

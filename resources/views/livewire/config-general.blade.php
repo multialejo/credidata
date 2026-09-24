@@ -11,12 +11,9 @@
     @endphp
 
     @if (session('status'))
-        <div class="ui-alert ui-alert--success flex items-start gap-3" role="status" aria-live="polite">
-            <svg class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
+        <x-alert variant="success">
             <span class="font-medium">{{ session('status') }}</span>
-        </div>
+        </x-alert>
     @endif
 
     <section class="ui-card" aria-labelledby="pagos-heading">
@@ -53,15 +50,10 @@
                         ])>{{ str($metodo['label'])->substr(0, 1) }}</span>
                         <span class="min-w-0">
                             <span class="block truncate text-base font-semibold text-[#14213d]">{{ $metodo['label'] }}</span>
-                            <span class="mt-0.5 block text-sm text-slate-500">{{ $metodo['habilitado'] ? __('Visible para clientes') : __('No visible para clientes') }}</span>
+                            <span class="mt-0.5 block text-sm text-slate-500">{{ $metodo['habilitado'] ? __('') : __('No visible para clientes') }}</span>
                         </span>
                     </span>
                     <span class="flex shrink-0 items-center gap-2">
-                        <span @class([
-                            'text-sm font-semibold',
-                            'text-emerald-700' => $metodo['habilitado'],
-                            'text-slate-500' => ! $metodo['habilitado'],
-                        ])>{{ $metodo['habilitado'] ? __('Visible') : __('Oculto') }}</span>
                         <span @class([
                             'relative h-6 w-11 rounded-full transition-colors',
                             'bg-emerald-500' => $metodo['habilitado'],

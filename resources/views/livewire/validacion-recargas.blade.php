@@ -1,16 +1,7 @@
 <x-page-shell max-width="5xl">
     <x-page-header eyebrow="Administración" title="Acreditar transferencia" description="Registra y valida manualmente una transferencia bancaria de un cliente." />
-{{-- Success Notification Banner (Placed at the top for immediate visibility) --}}
-    @if(session('status'))
-        <div class="ui-alert ui-alert--success flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                {{-- Success Icon --}}
-                <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <span>{{ session('status') }}</span>
-            </div>
-        </div>
+    @if (session('status'))
+        <x-alert variant="success">{{ session('status') }}</x-alert>
     @endif
     <section class="ui-card p-5 sm:p-7">
         @if($esAdmin)
