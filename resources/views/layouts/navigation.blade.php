@@ -58,7 +58,7 @@
 
             {{-- User card --}}
             @if(!auth()->user()->staff)
-                <x-dropdown align="top-right" width="48" class="mx-4">
+                <x-dropdown align="bottom-right" width="48" class="mx-4">
                     <x-slot name="trigger">
                         <div class="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
                             <div class="flex items-center gap-3">
@@ -92,7 +92,7 @@
                                 <p class="truncate text-base font-medium text-slate-300">{{ Auth::user()->name }}</p>
                                 <p class="truncate text-sm text-slate-400">{{ Auth::user()->email }}</p>
                             </div>
-                            <x-icons.chevron-down class="h-4 w-4 shrink-0 text-slate-400" />
+                            <x-icons.ellipsis-vertical class="h-4 w-4 shrink-0 text-slate-400" />
                         </div>
                     </x-slot>
                     <x-slot name="content">
@@ -191,7 +191,7 @@
                                 <p class="truncate text-base font-medium text-slate-300">{{ Auth::user()->name }}</p>
                                 <p class="truncate text-sm text-slate-400">{{ Auth::user()->email }}</p>
                             </div>
-                            <x-icons.chevron-down class="h-4 w-4 shrink-0 text-slate-400" />
+                            <x-icons.ellipsis-vertical class="h-4 w-4 shrink-0 text-slate-400" />
                         </div>
                     </x-slot>
                     <x-slot name="content">
