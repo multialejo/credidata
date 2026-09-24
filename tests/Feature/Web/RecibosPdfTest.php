@@ -60,6 +60,7 @@ class RecibosPdfTest extends TestCase
             ->test(Recibos::class)
             ->assertSee('Recibo')
             ->assertSee(route('dashboard.recibos.pdf', $completada))
+            ->assertSee('title="Descargar PDF"', false)
             ->assertSee('Descargar PDF')
             ->assertSee('No disponible');
     }

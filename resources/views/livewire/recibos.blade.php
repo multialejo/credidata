@@ -41,13 +41,14 @@
                     @if($r->estado === \App\Enums\EstadoRecarga::Completada)
                         <a
                             href="{{ route('dashboard.recibos.pdf', $r) }}"
-                            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-700 hover:text-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+                            title="Descargar PDF"
+                            class="group relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-[#3155d9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3155d9]"
                             aria-label="Descargar recibo PDF de la recarga del {{ $r->fecha->format('d/m/Y') }}"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4m-4 6v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 3.75h6l4.25 4.25v10.5A1.75 1.75 0 0 1 15.5 20.25h-8A1.75 1.75 0 0 1 5.75 18.5v-13A1.75 1.75 0 0 1 7.5 3.75Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 4v4.5h4.5M8.25 14.25h7.5m-7.5 2.5h5.5" />
                             </svg>
-                            Descargar PDF
                         </a>
                     @else
                         <span class="text-sm text-slate-500">No disponible</span>
