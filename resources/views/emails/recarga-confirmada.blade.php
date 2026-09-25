@@ -17,7 +17,6 @@
             <tr><td style="padding: 10px 0; color: #64748b; font-size: 14px; border-bottom: 1px solid #e2e8f0;">Saldo actual</td><td style="padding: 10px 0; color: #14213d; font-size: 14px; font-weight: 700; text-align: right; border-bottom: 1px solid #e2e8f0;">{{ number_format($saldoActual) }}</td></tr>
             <tr><td style="padding: 10px 0; color: #64748b; font-size: 14px;">Fecha</td><td style="padding: 10px 0; color: #14213d; font-size: 14px; text-align: right;">{{ $recarga->fecha?->format('Y-m-d H:i') ?? now()->format('Y-m-d H:i') }}</td></tr>
         </table>
-        <p style="color: #64748b; font-size: 12px; margin: 0;">Referencia: {{ $recarga->referencia_externa }}</p>
     </div>
 </body>
 </html>
