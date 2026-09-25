@@ -172,6 +172,23 @@ class ConfigGeneralTest extends TestCase
         $this->assertSame(0, json_decode(ConfigParametro::where('clave', 'creditosBienvenida')->value('valor')));
     }
 
+    public function test_limite_diario_de_colaboracion_requiere_entero_no_negativo(): void
+    {
+        ConfigParametro::where('modulo', 'colaboracion')
+            ->where('clave', 'limiteDiarioPorIdentificador')
+            ->update(['valor' => json_encode(3)]);
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->call('iniciarEdicion', 'colaboracion', 'limiteDiarioPorIdentificador')
+            ->set('valorEditando', '1.5')
+            ->call('guardar', 'colaboracion', 'limiteDiarioPorIdentificador')
+            ->assertHasErrors(['valorEditando']);
+
+        $this->assertSame(3, json_decode(ConfigParametro::where('modulo', 'colaboracion')
+            ->where('clave', 'limiteDiarioPorIdentificador')->value('valor')));
+    }
+
     // --- Log de auditoría ---
 
     public function test_guardar_crea_log_auditoria_con_antes_despues(): void

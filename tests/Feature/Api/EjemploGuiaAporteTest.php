@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Aporte;
 use App\Models\Cliente;
 use App\Models\Colaborador;
+use App\Models\ConfigParametro;
 use App\Models\Usuario;
 use App\Services\ApiKeyService;
 use Google\Cloud\Firestore\DocumentReference;
@@ -88,9 +90,106 @@ class EjemploGuiaAporteTest extends TestCase
             ->assertJsonValidationErrors('valor');
     }
 
+    public function test_reenvio_de_aporte_pendiente_identico_devuelve_el_mismo_aporte(): void
+    {
+        $this->mockSujeto(['contacto' => ['telefonos' => ['0990000000'], 'emails' => [], 'direcciones' => []]]);
+        $usuario = Usuario::create(['uid' => 'pendiente-identico', 'email' => 'pendiente-identico@test.com', 'nombre' => 'Guia', 'roles' => ['cliente']]);
+        $cliente = Cliente::create(['usuario_id' => $usuario->id, 'saldo_creditos' => 0]);
+        $colaborador = Colaborador::create(['usuario_id' => $usuario->id, 'estado_colaborador' => 'activo', 'terminos_version' => 1, 'terminos_aceptados_en' => now()]);
+        $aporte = Aporte::create([
+            'colaborador_id' => $colaborador->id,
+            'identificador_relacionado' => self::IDENTIFICADOR,
+            'tipo_dato' => 'telefono',
+            'valor' => '0991234567',
+            'estado' => 'pendiente',
+            'fecha' => now(),
+        ]);
+        $key = app(ApiKeyService::class)->issue($cliente, ['scopes' => ['colaboradores:aportes'], 'ips' => []], $usuario->id);
 
+        $this->withHeader('Authorization', 'Bearer '.$key)
+            ->postJson('/api/v1/colaboradores/datos', [
+                'identificador' => self::IDENTIFICADOR,
+                'tipo_dato' => 'telefono',
+                'valor' => '0991234567',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('datos.aporte.id', $aporte->id);
 
+        $this->assertSame(1, Aporte::where('colaborador_id', $colaborador->id)->count());
+    }
 
+    public function test_no_permita_aportar_un_valor_ya_publicado(): void
+    {
+        $this->mockSujeto(['contacto' => ['telefonos' => ['0991234567'], 'emails' => [], 'direcciones' => []]]);
+        $key = $this->apiKeyDeColaboradorActivo();
+
+        $this->withHeader('Authorization', 'Bearer '.$key)
+            ->postJson('/api/v1/colaboradores/datos', [
+                'identificador' => self::IDENTIFICADOR,
+                'tipo_dato' => 'telefono',
+                'valor' => '0991234567',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('valor');
+
+        $this->assertDatabaseCount('aportes', 0);
+    }
+
+    public function test_aplica_el_limite_diario_por_identificador(): void
+    {
+        $this->mockSujeto(['contacto' => ['telefonos' => ['0990000000'], 'emails' => [], 'direcciones' => []]]);
+        $key = $this->apiKeyDeColaboradorActivo();
+        $colaborador = Colaborador::firstOrFail();
+        ConfigParametro::where('modulo', 'colaboracion')->where('clave', 'limiteDiarioPorIdentificador')->update(['valor' => json_encode(1)]);
+        ConfigParametro::where('modulo', 'colaboracion')->where('clave', 'limiteDiarioPorColaborador')->update(['valor' => json_encode(10)]);
+        Aporte::create([
+            'colaborador_id' => $colaborador->id,
+            'identificador_relacionado' => self::IDENTIFICADOR,
+            'tipo_dato' => 'email',
+            'valor' => 'anterior@example.com',
+            'estado' => 'pendiente',
+            'fecha' => now(),
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$key)
+            ->postJson('/api/v1/colaboradores/datos', [
+                'identificador' => self::IDENTIFICADOR,
+                'tipo_dato' => 'telefono',
+                'valor' => '0991234567',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('identificador');
+
+        $this->assertSame(1, Aporte::where('colaborador_id', $colaborador->id)->count());
+    }
+
+    public function test_aplica_el_limite_diario_general_del_colaborador(): void
+    {
+        $this->mockSujeto(['contacto' => ['telefonos' => ['0990000000'], 'emails' => [], 'direcciones' => []]]);
+        $key = $this->apiKeyDeColaboradorActivo();
+        $colaborador = Colaborador::firstOrFail();
+        ConfigParametro::where('modulo', 'colaboracion')->where('clave', 'limiteDiarioPorIdentificador')->update(['valor' => json_encode(10)]);
+        ConfigParametro::where('modulo', 'colaboracion')->where('clave', 'limiteDiarioPorColaborador')->update(['valor' => json_encode(1)]);
+        Aporte::create([
+            'colaborador_id' => $colaborador->id,
+            'identificador_relacionado' => '0920000000',
+            'tipo_dato' => 'email',
+            'valor' => 'anterior@example.com',
+            'estado' => 'pendiente',
+            'fecha' => now(),
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$key)
+            ->postJson('/api/v1/colaboradores/datos', [
+                'identificador' => self::IDENTIFICADOR,
+                'tipo_dato' => 'telefono',
+                'valor' => '0991234567',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('colaborador');
+
+        $this->assertSame(1, Aporte::where('colaborador_id', $colaborador->id)->count());
+    }
 
     private function apiKeyDeColaboradorActivo(): string
     {

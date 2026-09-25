@@ -99,6 +99,11 @@ class ConfigGeneral extends Component
                     && (! is_int($decoded) || $decoded < 0 || $decoded > 99_999_999)) {
                     $fail('Los créditos de bienvenida deben ser un entero entre 0 y 99,999,999.');
                 }
+
+                if ($modulo === 'colaboracion' && in_array($clave, ['limiteDiarioPorIdentificador', 'limiteDiarioPorColaborador'], true)
+                    && (! is_int($decoded) || $decoded < 0 || $decoded > 1_000_000)) {
+                    $fail('Los límites diarios deben ser enteros entre 0 y 1,000,000.');
+                }
             }],
         ]);
 

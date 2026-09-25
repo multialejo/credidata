@@ -22,6 +22,8 @@ class ConfigParametrosSeeder extends Seeder
             ['modulo' => 'colaboracion',   'clave' => 'umbralSuspensionTasaRechazo',      'valor' => json_encode('0.5')],
             ['modulo' => 'colaboracion',   'clave' => 'diasEvaluacionTasa',               'valor' => json_encode('30')],
             ['modulo' => 'colaboracion',   'clave' => 'recompensaNuevoRegistroCreditos',  'valor' => json_encode('1')],
+            ['modulo' => 'colaboracion',   'clave' => 'limiteDiarioPorIdentificador',     'valor' => json_encode(3)],
+            ['modulo' => 'colaboracion',   'clave' => 'limiteDiarioPorColaborador',      'valor' => json_encode(10)],
             ['modulo' => 'apiKeys',        'clave' => 'diasSugerenciaRotacion',           'valor' => json_encode('90')],
             ['modulo' => 'apiKeys',        'clave' => 'diasNotificacionAnticipada',        'valor' => json_encode('7')],
             ['modulo' => 'cache',          'clave' => 'ttlDatosExternosSegundos',         'valor' => json_encode('86400')],

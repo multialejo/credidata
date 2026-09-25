@@ -53,23 +53,78 @@ class ColaboracionService
             throw ValidationException::withMessages(['colaborador' => 'El colaborador no está activo.']);
         }
 
+        $recoveryQuery = Aporte::query()
+            ->where('colaborador_id', $colaborador->id)
+            ->where('identificador_relacionado', $identificador)
+            ->where('tipo_dato', $tipo)
+            ->where('valor', $valor)
+            ->where('aplicacion_pendiente', true);
+        $recuperable = (clone $recoveryQuery)->latest('id')->first();
+        if ($recuperable) {
+            return $this->aplicarPendiente($recuperable, $this->destination($identificador, $tipo), $ip);
+        }
+
+        $pendingQuery = Aporte::query()
+            ->where('colaborador_id', $colaborador->id)
+            ->where('identificador_relacionado', $identificador)
+            ->where('tipo_dato', $tipo)
+            ->where('valor', $valor)
+            ->where('estado', 'pendiente')
+            ->where('aplicacion_pendiente', false);
+        $pendiente = (clone $pendingQuery)->latest('id')->first();
+        if ($pendiente) {
+            return $pendiente;
+        }
+
         $destination = $this->destination($identificador, $tipo);
-        $aporte = Aporte::query()->where('colaborador_id', $colaborador->id)->where('identificador_relacionado', $identificador)
-            ->where('tipo_dato', $tipo)->where('valor', $valor)->where('aplicacion_pendiente', true)->latest('id')->first();
-        if ($aporte) {
-            return $this->aplicarPendiente($aporte, $destination, $ip);
+        if ($this->containsValue($destination['actual'], $valor)) {
+            throw ValidationException::withMessages(['valor' => 'Este dato ya está registrado para el identificador indicado.']);
         }
 
-        if ($this->hasValue($destination['actual'])) {
-            return DB::transaction(function () use ($colaborador, $identificador, $tipo, $valor) {
-                return Aporte::create(['colaborador_id' => $colaborador->id, 'identificador_relacionado' => $identificador, 'tipo_dato' => $tipo, 'valor' => $valor, 'estado' => 'pendiente', 'fecha' => now()]);
-            });
-        }
+        $aporte = DB::transaction(function () use ($colaborador, $identificador, $tipo, $valor, $destination, $recoveryQuery, $pendingQuery) {
+            $colaborador = Colaborador::query()->lockForUpdate()->findOrFail($colaborador->id);
+            if ($colaborador->estado_colaborador !== 'activo') {
+                throw ValidationException::withMessages(['colaborador' => 'El colaborador no está activo.']);
+            }
 
-        $aporte = DB::transaction(fn () => Aporte::create([
-            'colaborador_id' => $colaborador->id, 'identificador_relacionado' => $identificador,
-            'tipo_dato' => $tipo, 'valor' => $valor, 'estado' => 'pendiente', 'fecha' => now(), 'aplicacion_pendiente' => true,
-        ]));
+            $recuperable = (clone $recoveryQuery)->latest('id')->first();
+            if ($recuperable) {
+                return $recuperable;
+            }
+            $pendiente = (clone $pendingQuery)->latest('id')->first();
+            if ($pendiente) {
+                return $pendiente;
+            }
+
+            $inicioDia = now()->startOfDay();
+            $solicitudesHoy = Aporte::query()
+                ->where('colaborador_id', $colaborador->id)
+                ->whereBetween('fecha', [$inicioDia, now()]);
+            $porIdentificador = (clone $solicitudesHoy)
+                ->where('identificador_relacionado', $identificador)
+                ->count();
+            $total = $solicitudesHoy->count();
+            if ($porIdentificador >= $this->limiteDiario('limiteDiarioPorIdentificador', 3)) {
+                throw ValidationException::withMessages(['identificador' => 'Alcanzaste el límite diario de aportes para este identificador.']);
+            }
+            if ($total >= $this->limiteDiario('limiteDiarioPorColaborador', 10)) {
+                throw ValidationException::withMessages(['colaborador' => 'Alcanzaste el límite diario de aportes.']);
+            }
+
+            return Aporte::create([
+                'colaborador_id' => $colaborador->id,
+                'identificador_relacionado' => $identificador,
+                'tipo_dato' => $tipo,
+                'valor' => $valor,
+                'estado' => 'pendiente',
+                'fecha' => now(),
+                'aplicacion_pendiente' => ! $this->hasValue($destination['actual']),
+            ]);
+        });
+
+        if (! $aporte->aplicacion_pendiente) {
+            return $aporte;
+        }
 
         return $this->aplicarPendiente($aporte, $destination, $ip);
     }
@@ -90,6 +145,9 @@ class ColaboracionService
             }
 
             $destination = $this->destination($aporte->identificador_relacionado, $aporte->tipo_dato);
+            if ($this->containsValue($destination['actual'], $aporte->valor)) {
+                throw ValidationException::withMessages(['aporte' => 'Este dato ya está registrado para el identificador indicado.']);
+            }
             $this->writeDestination($destination, $aporte->valor);
             $aporte->update(['estado' => 'aprobado', 'revisado_por' => $staff->id, 'comentario_revision' => $comentario, 'revisado_en' => now()]);
             $this->acreditar($aporte, $this->recompensa('financiero', 'recompensaAporteCreditos'), $ip);
@@ -191,5 +249,18 @@ class ColaboracionService
     private function hasValue(mixed $value): bool
     {
         return is_array($value) ? count($value) > 0 : filled($value);
+    }
+
+    private function containsValue(mixed $actual, string $value): bool
+    {
+        return is_array($actual) ? in_array($value, $actual, true) : (is_string($actual) && $actual === $value);
+    }
+
+    private function limiteDiario(string $clave, int $defecto): int
+    {
+        $value = ConfigParametro::where('modulo', 'colaboracion')->where('clave', $clave)->value('valor');
+        $decoded = json_decode($value ?? 'null');
+
+        return is_int($decoded) && $decoded >= 0 ? $decoded : $defecto;
     }
 }
