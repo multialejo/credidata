@@ -242,6 +242,82 @@
         </section>
     </section>
 
+<section id="contribution-api" class="ui-card scroll-mt-8 p-5 sm:p-7" aria-labelledby="contribution-api-title">
+    <div class="flex flex-col gap-3 border-b border-slate-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+            <h2 id="contribution-api-title" class="ui-section-title text-xl font-bold text-[#14213d]">Endpoint de aportes</h2>
+            <p class="mt-1 text-sm leading-6 text-slate-600">Registra un dato de contacto para una cédula o RUC mediante el endpoint de colaboradores.</p>
+        </div>
+    </div>
+
+    <h3 class="mt-5 text-sm font-bold text-[#14213d]">Requisitos</h3>
+    <ul class="mt-2 space-y-1.5 text-sm leading-6 text-slate-600">
+        <li>API Key activa con el permiso <code class="font-mono text-xs">colaboradores:aportes</code> o el comodín <code class="font-mono text-xs">colaboradores:*</code>.</li>
+        <li>Perfil de colaborador activo. Para activarlo, usa <code class="font-mono text-xs">POST /api/v1/colaboradores/registro</code> con el permiso <code class="font-mono text-xs">colaboradores:registro</code>.</li>
+        <li>Si la API Key restringe IPs, la dirección IP de la petición debe estar permitida.</li>
+        <li>Los envíos están sujetos a límites diarios configurables por colaborador e identificador.</li>
+    </ul>
+
+    <h3 class="mt-6 text-sm font-bold text-[#14213d]">Parámetros</h3>
+    <div class="mt-2 overflow-x-auto rounded-xl border border-slate-200">
+        <table class="w-full min-w-[38rem] text-left text-sm">
+            <caption class="sr-only">Parámetros del endpoint para registrar aportes</caption>
+            <thead class="bg-[#14213d] text-xs uppercase tracking-wide text-white"><tr><th scope="col" class="px-4 py-3 font-semibold">Campo</th><th scope="col" class="px-4 py-3 font-semibold">Valores</th><th scope="col" class="px-4 py-3 font-semibold">Regla</th></tr></thead>
+            <tbody class="divide-y divide-slate-100 text-slate-600">
+                <tr><th scope="row" class="px-4 py-3 font-mono text-xs font-semibold text-[#14213d]">identificador</th><td class="px-4 py-3">Cédula o RUC</td><td class="px-4 py-3">Obligatorio; debe ser un identificador ecuatoriano válido.</td></tr>
+                <tr><th scope="row" class="px-4 py-3 font-mono text-xs font-semibold text-[#14213d]">tipo_dato</th><td class="px-4 py-3"><code class="font-mono text-xs">telefono</code>, <code class="font-mono text-xs">email</code>, <code class="font-mono text-xs">direccion</code></td><td class="px-4 py-3">Obligatorio.</td></tr>
+                <tr><th scope="row" class="px-4 py-3 font-mono text-xs font-semibold text-[#14213d]">valor</th><td class="px-4 py-3">Texto</td><td class="px-4 py-3">Obligatorio, máximo 500 caracteres. Teléfono: 10 dígitos comenzando en 0; email: dirección válida; dirección: mínimo 5 caracteres.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="mt-6 text-sm font-bold text-[#14213d]">Respuesta · HTTP 201</h3>
+    <p class="mt-1 text-sm leading-6 text-slate-600">El estado del aporte determina el resultado. Un campo vacío puede aprobarse de inmediato; una reescritura queda pendiente de revisión. Los reenvíos idénticos pendientes devuelven el aporte existente y un dato ya publicado no puede aportarse otra vez.</p>
+    <pre class="mt-3 overflow-x-auto rounded-xl bg-slate-100 p-4 font-mono text-xs leading-5 text-slate-800"><code>{
+  "codigo": 201,
+  "exito": true,
+  "mensaje": "Aporte registrado",
+  "datos": {
+    "aporte": {
+      "id": 1,
+      "identificador": "1713175071",
+      "tipo_dato": "telefono",
+      "valor": "0991234567",
+      "estado": "aprobado",
+      "comentario": null,
+      "recompensa_creditos": 1,
+      "fecha": "2026-09-25T16:41:37+00:00",
+      "revisado_en": null
+    }
+  }
+}</code></pre>
+    <div class="mt-4 rounded-xl bg-[#eef1fb] p-4">
+        <p class="text-sm font-semibold text-[#14213d]">Interpreta <code class="font-mono text-xs">datos.aporte.estado</code></p>
+        <ul class="mt-2 space-y-1.5 text-sm leading-6 text-slate-600">
+            <li><code class="font-mono text-xs text-[#14213d]">aprobado</code> — el campo estaba vacío, el dato se aplicó y se acreditó la recompensa configurada.</li>
+            <li><code class="font-mono text-xs text-[#14213d]">pendiente</code> — el campo ya tenía un valor; el aporte espera revisión y no acredita créditos hasta aprobarse.</li>
+            <li><code class="font-mono text-xs text-[#14213d]">rechazado</code> — la revisión no aceptó el aporte.</li>
+        </ul>
+        <p class="mt-2 text-sm leading-6 text-slate-600">El valor de <code class="font-mono text-xs">recompensa_creditos</code> lo determina la configuración de Credidata y puede cambiar.</p>
+    </div>
+
+    <h3 class="mt-6 text-sm font-bold text-[#14213d]">Errores frecuentes</h3>
+    <div class="mt-2 overflow-x-auto rounded-xl border border-slate-200">
+        <table class="w-full min-w-[42rem] text-left text-sm">
+            <caption class="sr-only">Errores comunes al registrar aportes por API</caption>
+            <thead class="bg-[#14213d] text-xs uppercase tracking-wide text-white"><tr><th scope="col" class="px-4 py-3 font-semibold">HTTP</th><th scope="col" class="px-4 py-3 font-semibold">error.tipo</th><th scope="col" class="px-4 py-3 font-semibold">Causa y acción</th></tr></thead>
+            <tbody class="divide-y divide-slate-100 text-slate-600">
+                <tr><td class="px-4 py-3 font-mono text-xs text-[#14213d]">401</td><td class="px-4 py-3 font-mono text-xs">API_KEY_REQUERIDA</td><td class="px-4 py-3">Falta la cabecera <code class="font-mono text-xs">Authorization</code>; envía la API Key como Bearer.</td></tr>
+                <tr><td class="px-4 py-3 font-mono text-xs text-[#14213d]">401</td><td class="px-4 py-3 font-mono text-xs">API_KEY_REVOCADA</td><td class="px-4 py-3">La key fue rotada o revocada; usa una key activa.</td></tr>
+                <tr><td class="px-4 py-3 font-mono text-xs text-[#14213d]">403</td><td class="px-4 py-3 font-mono text-xs">PERMISO_INSUFICIENTE</td><td class="px-4 py-3">Falta <code class="font-mono text-xs">colaboradores:aportes</code>; habilítalo desde el panel.</td></tr>
+                <tr><td class="px-4 py-3 font-mono text-xs text-[#14213d]">403</td><td class="px-4 py-3 font-mono text-xs">IP_NO_PERMITIDA</td><td class="px-4 py-3">La IP de la petición no está en la lista permitida de la key.</td></tr>
+                <tr><td class="px-4 py-3 font-mono text-xs text-[#14213d]">403</td><td class="px-4 py-3 font-mono text-xs">COLABORADOR_NO_ACTIVO</td><td class="px-4 py-3">Activa el perfil de colaborador.</td></tr>
+                <tr><td class="px-4 py-3 font-mono text-xs text-[#14213d]">422</td><td class="px-4 py-3 font-mono text-xs">VALIDACION</td><td class="px-4 py-3">Revisa el identificador, formato del valor, límites diarios o si el dato ya está publicado.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
     </div>
 
     <aside class="hidden xl:block xl:self-stretch" aria-label="Índice de documentación">
@@ -252,6 +328,7 @@
                 <li><a href="#cedula-fields" class="block rounded-r-lg py-2 text-slate-600 underline-offset-4 transition hover:bg-[#e8edf9] hover:text-[#2647c2] hover:underline focus-visible:text-[#2647c2]">Consulta por cédula</a></li>
                 <li><a href="#ruc-fields" class="block rounded-r-lg py-2 text-slate-600 underline-offset-4 transition hover:bg-[#e8edf9] hover:text-[#2647c2] hover:underline focus-visible:text-[#2647c2]">Consulta por RUC</a></li>
                 <li><a href="#curl-example" class="block rounded-r-lg py-2 text-slate-600 underline-offset-4 transition hover:bg-[#e8edf9] hover:text-[#2647c2] hover:underline focus-visible:text-[#2647c2]">Prueba con curl</a></li>
+                <li><a href="#contribution-api" class="block rounded-r-lg py-2 text-slate-600 underline-offset-4 transition hover:bg-[#e8edf9] hover:text-[#2647c2] hover:underline focus-visible:text-[#2647c2]">Endpoint de aportes</a></li>
             </ul>
         </nav>
     </aside>

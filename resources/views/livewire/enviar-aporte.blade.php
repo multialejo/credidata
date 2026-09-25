@@ -17,70 +17,11 @@
   <span style="color: #86efac">-H "Authorization: Bearer $CREDIDATA_API_KEY"</span> \
   <span style="color: #86efac">-H "Content-Type: application/json"</span> \
   <span style="color: #86efac">-H "Accept: application/json"</span> \
-  <span style="color: #f0abfc">-d '{"identificador":"1713175071","tipo_dato":"telefono","valor":"+593 99 123 4567"}'</span></code></pre>
+  <span style="color: #f0abfc">-d '{"identificador":"1713175071","tipo_dato":"telefono","valor":"0991234567"}'</span></code></pre>
         </div>
-        <h3 class="mt-6 text-sm font-bold text-[#14213d]">Requisitos</h3>
-        <ul class="mt-2 space-y-1.5 text-sm leading-6 text-slate-600">
-            <li>API Key activa con el permiso <code class="font-mono text-xs">colaboradores:aportes</code>, o el comodín <code class="font-mono text-xs">colaboradores:*</code>.</li>
-            <li>Colaborador activo. Si aún no lo eres, actívalo con <code class="font-mono text-xs">POST /api/v1/colaboradores/registro</code> y el permiso <code class="font-mono text-xs">colaboradores:registro</code>.</li>
-            <li>Si tu API Key restringe IPs, la de la petición debe estar en la lista permitida.</li>
-        </ul>
-        <h3 class="mt-6 text-sm font-bold text-[#14213d]">Parámetros</h3>
-        <div class="mt-2 overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead><tr class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><th class="py-2 pr-4 font-semibold">Campo</th><th class="py-2 pr-4 font-semibold">Valores</th><th class="py-2 font-semibold">Regla</th></tr></thead>
-                <tbody class="divide-y divide-slate-100 text-slate-600">
-                    <tr><td class="py-2 pr-4 font-mono text-xs text-[#14213d]">identificador</td><td class="py-2 pr-4">Cédula o RUC</td><td class="py-2">Obligatorio. Debe superar la validación de identificador ecuatoriano.</td></tr>
-                    <tr><td class="py-2 pr-4 font-mono text-xs text-[#14213d]">tipo_dato</td><td class="py-2 pr-4"><code class="font-mono text-xs">telefono</code>, <code class="font-mono text-xs">email</code>, <code class="font-mono text-xs">direccion</code></td><td class="py-2">Obligatorio.</td></tr>
-                    <tr><td class="py-2 pr-4 font-mono text-xs text-[#14213d]">valor</td><td class="py-2 pr-4">Texto</td><td class="py-2">Obligatorio, máximo 500 caracteres. El formato se valida según <code class="font-mono text-xs">tipo_dato</code>: email válido, teléfono de 7 a 30 caracteres, dirección de al menos 5.</td></tr>
-                </tbody>
-            </table>
-        </div>
-        <h3 class="mt-6 text-sm font-bold text-[#14213d]">Respuesta · HTTP 201</h3>
-        <p class="mt-1 text-sm leading-6 text-slate-600">El ejemplo siguiente corresponde a un campo que <strong class="font-semibold text-[#14213d]">estaba vacío</strong>. Si el campo ya tenía un valor, el mismo cuerpo devuelve <code class="font-mono text-xs">"estado": "pendiente"</code> en lugar de <code class="font-mono text-xs">"aprobado"</code> y <code class="font-mono text-xs">recompensa_creditos</code> llega en <code class="font-mono text-xs">null</code>.</p>
-        <pre class="mt-2 overflow-x-auto rounded-xl bg-slate-100 p-4 font-mono text-xs leading-5 text-slate-800"><code>{
-  "codigo": 201,
-  "exito": true,
-  "mensaje": "Aporte registrado",
-  "datos": {
-    "aporte": {
-      "id": 1,
-      "identificador": "1713175071",
-      "tipo_dato": "telefono",
-      "valor": "+593 99 123 4567",
-      "estado": "aprobado",
-      "comentario": null,
-      "recompensa_creditos": 1,
-      "fecha": "2026-09-25T16:41:37+00:00",
-      "revisado_en": null
-    }
-  }
-}</code></pre>
-        <div class="mt-4 rounded-xl border-l-4 border-[#2647c2] bg-[#eef1fb] p-4">
-            <p class="text-sm font-semibold text-[#14213d]">Lee siempre <code class="font-mono text-xs">datos.aporte.estado</code></p>
-            <p class="mt-1 text-sm leading-6 text-slate-600">Ambas respuestas devuelven HTTP 201, pero no significan lo mismo:</p>
-            <ul class="mt-2 space-y-1.5 text-sm leading-6 text-slate-600">
-                <li><span class="font-mono text-xs text-[#14213d]">aprobado</span> — el campo estaba vacío, así que se aplicó al instante y se acreditaron los créditos de recompensa.</li>
-                <li><span class="font-mono text-xs text-[#14213d]">pendiente</span> — el campo ya tenía un valor, así que tu aporte es una reescritura y espera revisión humana. No se acreditan créditos hasta que se apruebe.</li>
-            </ul>
-            <p class="mt-2 text-sm leading-6 text-slate-600">También existe <span class="font-mono text-xs">rechazado</span>, que indica que la revisión no lo aceptó.</p>
-            <p class="mt-2 text-sm leading-6 text-slate-600">El monto de <span class="font-mono text-xs">recompensa_creditos</span> lo fija la configuración de Credidata y puede cambiar.</p>
-        </div>
-        <h3 class="mt-6 text-sm font-bold text-[#14213d]">Errores frecuentes</h3>
-        <div class="mt-2 overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead><tr class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><th class="py-2 pr-4 font-semibold">HTTP</th><th class="py-2 pr-4 font-semibold">error.tipo</th><th class="py-2 font-semibold">Causa</th></tr></thead>
-                <tbody class="divide-y divide-slate-100 text-slate-600">
-                    <tr><td class="py-2 pr-4 font-mono text-xs text-[#14213d]">401</td><td class="py-2 pr-4 font-mono text-xs">API_KEY_REQUERIDA</td><td class="py-2">Falta la cabecera <code class="font-mono text-xs">Authorization</code>.</td></tr>
-                    <tr><td class="py-2 pr-4 font-mono text-xs text-[#14213d]">401</td><td class="py-2 pr-4 font-mono text-xs">API_KEY_REVOCADA</td><td class="py-2">La key fue rotada o revocada. Usa la más reciente.</td></tr>
-                    <tr><td class="py-2 pr-4 font-mono text-xs text-[#14213d]">403</td><td class="py-2 pr-4 font-mono text-xs">PERMISO_INSUFICIENTE</td><td class="py-2">La key no tiene <code class="font-mono text-xs">colaboradores:aportes</code>. Amplíalo desde el panel; la propia API no puede hacerlo.</td></tr>
-                    <tr><td class="py-2 pr-4 font-mono text-xs text-[#14213d]">403</td><td class="py-2 pr-4 font-mono text-xs">IP_NO_PERMITIDA</td><td class="py-2">Tu key restringe IPs y la de esta petición no está en la lista.</td></tr>
-                    <tr><td class="py-2 pr-4 font-mono text-xs text-[#14213d]">403</td><td class="py-2 pr-4 font-mono text-xs">COLABORADOR_NO_ACTIVO</td><td class="py-2">Te falta activar el colaborador.</td></tr>
-                </tbody>
-            </table>
-        </div>
+        <p class="mt-5 text-sm leading-6 text-slate-600">Consulta los requisitos, parámetros, respuestas y errores del endpoint en <a class="font-semibold text-[#3155d9] underline underline-offset-2 hover:text-[#2647c2]" href="{{ route('dashboard.documentacion') }}#contribution-api">la documentación de la API</a>.</p>
     </section>
-    <details class="ui-card group p-5 sm:p-7">
+    <details id="web-form" class="ui-card group p-5 sm:p-7">
         <summary class="flex cursor-pointer list-none items-center justify-between gap-3">
             <span>
                 <span class="ui-section-title text-xl">Prefiero el formulario</span>

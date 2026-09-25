@@ -69,7 +69,7 @@
                     "Colaboradores"
                 ],
                 "summary": "Registra un aporte",
-                "description": "Requiere API Key Bearer activa y scope colaboradores:aportes (o wildcard aplicable), además de colaborador cliente activo. Un campo sin valor se aprueba automáticamente; una reescritura queda pendiente.",
+                "description": "Requiere API Key Bearer activa y scope colaboradores:aportes (o wildcard aplicable), además de colaborador cliente activo. El teléfono debe tener exactamente 10 dígitos y comenzar con 0. Los reenvíos idénticos pendientes devuelven la solicitud existente; los datos ya publicados se rechazan. Aplican límites diarios configurables por identificador y colaborador. Un campo sin valor se aprueba automáticamente; una reescritura queda pendiente.",
                 "operationId": "51d5571d215158d7383974472f9bfd87",
                 "requestBody": {
                     "required": true,
