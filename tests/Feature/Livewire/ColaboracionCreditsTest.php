@@ -88,6 +88,20 @@ class ColaboracionCreditsTest extends TestCase
             ->assertSeeText('se acreditaron 1 créditos a tu cuenta');
     }
 
+    public function test_enviar_aporte_rechaza_telefono_con_formato_no_canonico(): void
+    {
+        $usuario = $this->crearUsuario();
+        Colaborador::create(['usuario_id' => $usuario->id]);
+
+        Livewire::actingAs($usuario)
+            ->test(EnviarAporte::class)
+            ->set('identificador', '1713175071')
+            ->set('tipoDato', 'telefono')
+            ->set('valor', '099 123 4567')
+            ->call('enviar')
+            ->assertHasErrors(['valor']);
+    }
+
     private function crearUsuario(): Usuario
     {
         $usuario = Usuario::create([

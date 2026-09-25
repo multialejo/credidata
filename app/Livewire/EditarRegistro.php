@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\LogActividad;
+use App\Rules\AporteLista;
 use App\Rules\EcuadorianIdentificador;
 use Google\Cloud\Firestore\DocumentSnapshot;
 use Illuminate\Support\Facades\Log;
@@ -34,6 +35,30 @@ class EditarRegistro extends Component
     /** Direcciones de contacto (una por línea en la UI). */
     public string $direcciones = '';
 
+    protected function reglasContacto(): array
+    {
+        return [
+            'telefonos' => ['nullable', 'string', new AporteLista('telefono')],
+            'emails' => ['nullable', 'string', new AporteLista('email')],
+            'direcciones' => ['nullable', 'string', new AporteLista('direccion')],
+        ];
+    }
+
+    public function updatedTelefonos(): void
+    {
+        $this->validateOnly('telefonos', $this->reglasContacto());
+    }
+
+    public function updatedEmails(): void
+    {
+        $this->validateOnly('emails', $this->reglasContacto());
+    }
+
+    public function updatedDirecciones(): void
+    {
+        $this->validateOnly('direcciones', $this->reglasContacto());
+    }
+
     public function buscar(): void
     {
         $this->validate([
@@ -63,6 +88,7 @@ class EditarRegistro extends Component
     {
         $this->validate([
             'identificador' => ['required', new EcuadorianIdentificador],
+            ...$this->reglasContacto(),
         ]);
 
         $doc = $this->leerDocumento();

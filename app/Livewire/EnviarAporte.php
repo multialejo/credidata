@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Rules\AporteValor;
 use App\Rules\EcuadorianIdentificador;
 use App\Services\ColaboracionService;
 use Livewire\Component;
@@ -20,7 +21,11 @@ class EnviarAporte extends Component
 
     public function enviar(ColaboracionService $service): void
     {
-        $this->validate(['identificador' => ['required', 'string', new EcuadorianIdentificador], 'tipoDato' => ['required', 'in:telefono,email,direccion'], 'valor' => ['required', 'string', 'max:500']]);
+        $this->validate([
+            'identificador' => ['required', 'string', new EcuadorianIdentificador],
+            'tipoDato' => ['required', 'in:telefono,email,direccion'],
+            'valor' => ['required', 'string', 'max:500', new AporteValor($this->tipoDato)],
+        ]);
         $aporte = $service->registrarAporte(auth()->user()->colaborador, $this->identificador, $this->tipoDato, $this->valor, request()->ip());
         $this->resultado = $aporte->estado;
         $this->recompensaAcreditada = $aporte->recompensa_creditos ? (int) $aporte->recompensa_creditos : null;

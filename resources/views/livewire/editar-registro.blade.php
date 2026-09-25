@@ -66,10 +66,10 @@
                             <label for="telefonos" class="ui-label mb-1 text-xs">
                                 {{ __('Teléfonos') }}
                             </label>
-                            <textarea id="telefonos" wire:model="telefonos" rows="4"
-                                placeholder="{{ __('Ej. 0991234567&#10;022345678') }}"
+                            <textarea id="telefonos" wire:model.blur="telefonos" rows="4" inputmode="numeric"
+                                placeholder="{{ __('Ej. 0991234567&#10;0223456789') }}"
                                 class="ui-input w-full font-mono"></textarea>
-                            <p class="ui-help">{{ __('Un teléfono por línea') }}</p>
+                            <p class="ui-help">{{ __('Un teléfono por línea: exactamente 10 dígitos, comenzando con 0 y sin espacios.') }}</p>
                             @error('telefonos') <p class="ui-error">{{ $message }}</p> @enderror
                         </div>
 
@@ -78,10 +78,10 @@
                             <label for="emails" class="ui-label mb-1 text-xs">
                                 {{ __('Emails') }}
                             </label>
-                            <textarea id="emails" wire:model="emails" rows="4"
+                            <textarea id="emails" wire:model.blur="emails" rows="4"
                                 placeholder="{{ __('Ej. contacto@ejemplo.com&#10;ventas@ejemplo.com') }}"
                                 class="ui-input w-full font-mono"></textarea>
-                            <p class="ui-help">{{ __('Un email por línea') }}</p>
+                            <p class="ui-help">{{ __('Un email válido por línea, hasta 254 caracteres.') }}</p>
                             @error('emails') <p class="ui-error">{{ $message }}</p> @enderror
                         </div>
 
@@ -90,10 +90,10 @@
                             <label for="direcciones" class="ui-label mb-1 text-xs">
                                 {{ __('Direcciones') }}
                             </label>
-                            <textarea id="direcciones" wire:model="direcciones" rows="4"
+                            <textarea id="direcciones" wire:model.blur="direcciones" rows="4"
                                 placeholder="{{ __('Ej. Av. Amazonas N24-181&#10;Calle Calle 10 y Loja') }}"
                                 class="ui-input w-full"></textarea>
-                            <p class="ui-help">{{ __('Una dirección por línea') }}</p>
+                            <p class="ui-help">{{ __('Una dirección por línea, con al menos 5 caracteres.') }}</p>
                             @error('direcciones') <p class="ui-error">{{ $message }}</p> @enderror
                         </div>
                     </div>

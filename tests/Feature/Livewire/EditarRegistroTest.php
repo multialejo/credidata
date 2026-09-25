@@ -187,7 +187,7 @@ class EditarRegistroTest extends TestCase
     {
         $this->mockDocumento(self::CEDULA, $this->documentoBase([
             'contacto' => [
-                'telefonos' => ['0991234567', '022345678'],
+                'telefonos' => ['0991234567', '0223456789'],
                 'emails' => ['cliente@test.com', 'secundario@test.com'],
                 'direcciones' => ['Av. Amazonas N37-123'],
             ],
@@ -198,7 +198,7 @@ class EditarRegistroTest extends TestCase
             ->set('identificador', self::CEDULA)
             ->call('buscar')
             ->assertSet('encontrado', true)
-            ->assertSet('telefonos', "0991234567\n022345678")
+            ->assertSet('telefonos', "0991234567\n0223456789")
             ->assertSet('emails', "cliente@test.com\nsecundario@test.com");
     }
 
@@ -250,6 +250,48 @@ class EditarRegistroTest extends TestCase
         $this->assertSame('1985-06-15', $captured['fechaNacimiento']);
         $this->assertSame(['dinardap'], $captured['fuentesUtilizadas']);
         $this->assertSame('2025-06-18T10:00:00+00:00', $captured['ultimaActualizacion']);
+    }
+
+    public function test_guardar_rechaza_telefono_con_formato_invalido_sin_escribir_firestore(): void
+    {
+        $this->mockDocumento(self::CEDULA, $this->documentoBase());
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(EditarRegistro::class)
+            ->set('identificador', self::CEDULA)
+            ->call('buscar')
+            ->set('telefonos', "0991234567\n099 765 4321")
+            ->assertHasErrors('telefonos')
+            ->call('guardar')
+            ->assertHasErrors('telefonos');
+    }
+
+    public function test_guardar_rechaza_email_invalido_sin_escribir_firestore(): void
+    {
+        $this->mockDocumento(self::CEDULA, $this->documentoBase());
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(EditarRegistro::class)
+            ->set('identificador', self::CEDULA)
+            ->call('buscar')
+            ->set('emails', "valido@example.com\nno-es-email")
+            ->assertHasErrors('emails')
+            ->call('guardar')
+            ->assertHasErrors('emails');
+    }
+
+    public function test_guardar_rechaza_direccion_corta_sin_escribir_firestore(): void
+    {
+        $this->mockDocumento(self::CEDULA, $this->documentoBase());
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(EditarRegistro::class)
+            ->set('identificador', self::CEDULA)
+            ->call('buscar')
+            ->set('direcciones', "Av. Amazonas\nDir")
+            ->assertHasErrors('direcciones')
+            ->call('guardar')
+            ->assertHasErrors('direcciones');
     }
 
     // --- Log de auditoría ---

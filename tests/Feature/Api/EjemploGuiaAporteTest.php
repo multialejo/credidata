@@ -16,9 +16,9 @@ use Mockery;
 use Tests\TestCase;
 
 /**
- * La vista enviar-aporte.blade.php publica un ejemplo de curl y una respuesta de muestra.
- * Esta clase ejecuta ese ejemplo literal contra el endpoint real: si el contrato deriva,
- * el ejemplo vuelve a mentir y el test cae.
+ * La pantalla enviar-aporte.blade.php publica el curl y documentacion.blade.php describe
+ * la respuesta de muestra. Esta clase ejecuta el cuerpo literal contra el endpoint real:
+ * si el contrato deriva, la guia vuelve a mentir y el test cae.
  *
  * El sujeto de Firestore se mockea en cada prueba porque el estado de un documento real
  * depende de lo que haya aportado antes, y eso decide entre "aprobado" y "pendiente".
@@ -39,7 +39,7 @@ class EjemploGuiaAporteTest extends TestCase
             ->postJson('/api/v1/colaboradores/datos', [
                 'identificador' => self::IDENTIFICADOR,
                 'tipo_dato' => 'telefono',
-                'valor' => '+593 99 123 4567',
+                'valor' => '0991234567',
             ]);
 
         $response->assertCreated()->assertJsonPath('exito', true)->assertJsonPath('mensaje', 'Aporte registrado');
@@ -60,19 +60,37 @@ class EjemploGuiaAporteTest extends TestCase
     public function test_una_reescritura_queda_pendiente_sin_acreditar_creditos(): void
     {
         // Campo con valor: la guia promete estado "pendiente" y recompensa en null.
-        $this->mockSujeto(['contacto' => ['telefonos' => ['+593 99 000 0000'], 'emails' => [], 'direcciones' => []]]);
+        $this->mockSujeto(['contacto' => ['telefonos' => ['0990000000'], 'emails' => [], 'direcciones' => []]]);
         $key = $this->apiKeyDeColaboradorActivo();
 
         $response = $this->withHeader('Authorization', 'Bearer '.$key)
             ->postJson('/api/v1/colaboradores/datos', [
                 'identificador' => self::IDENTIFICADOR,
                 'tipo_dato' => 'telefono',
-                'valor' => '+593 99 123 4567',
+                'valor' => '0991234567',
             ])->assertCreated();
 
         $this->assertSame('pendiente', $response->json('datos.aporte.estado'));
         $this->assertNull($response->json('datos.aporte.recompensa_creditos'), 'Una reescritura no acredita todavia');
     }
+
+    public function test_rechaza_telefono_con_formato_no_canonico(): void
+    {
+        $key = $this->apiKeyDeColaboradorActivo();
+
+        $this->withHeader('Authorization', 'Bearer '.$key)
+            ->postJson('/api/v1/colaboradores/datos', [
+                'identificador' => self::IDENTIFICADOR,
+                'tipo_dato' => 'telefono',
+                'valor' => '099 123 4567',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('valor');
+    }
+
+
+
+
 
     private function apiKeyDeColaboradorActivo(): string
     {
