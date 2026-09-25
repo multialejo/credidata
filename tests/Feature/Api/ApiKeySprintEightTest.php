@@ -52,6 +52,47 @@ class ApiKeySprintEightTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_rotation_no_puede_ampliar_el_alcance(): void
+    {
+        $this->withToken($this->apiKey)->postJson('/api/v1/api-key/rotar', ['scopes' => ['colaboradores:aportes']])
+            ->assertForbidden()->assertJsonPath('error.tipo', 'ALCANCE_AMPLIADO_NO_PERMITIDO');
+
+        $this->assertSame(['consulta:cedula', 'consulta:ruc'], $this->cliente->fresh()->api_key_alcance);
+    }
+
+    public function test_rotation_no_puede_ampliar_el_alcance_con_wildcard(): void
+    {
+        $this->withToken($this->apiKey)->postJson('/api/v1/api-key/rotar', ['scopes' => ['colaboradores:*']])
+            ->assertForbidden()->assertJsonPath('error.tipo', 'ALCANCE_AMPLIADO_NO_PERMITIDO');
+    }
+
+    public function test_rotation_puede_reducir_el_alcance(): void
+    {
+        $this->withToken($this->apiKey)->postJson('/api/v1/api-key/rotar', ['scopes' => ['consulta:cedula']])
+            ->assertOk();
+
+        $this->assertSame(['consulta:cedula'], $this->cliente->fresh()->api_key_alcance);
+    }
+
+    public function test_rotation_no_puede_ampliar_las_ips_permitidas(): void
+    {
+        // Una lista vacía significa "cualquier IP": por eso vaciarla amplía en vez de reducir.
+        $this->cliente->update(['api_key_ips_permitidas' => ['127.0.0.1']]);
+
+        $this->withToken($this->apiKey)->postJson('/api/v1/api-key/rotar', ['ips' => []])
+            ->assertForbidden()->assertJsonPath('error.tipo', 'ALCANCE_AMPLIADO_NO_PERMITIDO');
+    }
+
+    public function test_rotation_no_puede_sustituir_las_ips_permitidas(): void
+    {
+        $this->cliente->update(['api_key_ips_permitidas' => ['127.0.0.1']]);
+
+        $this->withToken($this->apiKey)->postJson('/api/v1/api-key/rotar', ['ips' => ['198.51.100.7']])
+            ->assertForbidden()->assertJsonPath('error.tipo', 'ALCANCE_AMPLIADO_NO_PERMITIDO');
+
+        $this->assertSame(['127.0.0.1'], $this->cliente->fresh()->api_key_ips_permitidas);
+    }
+
     public function test_inactive_client_is_rejected_by_api(): void
     {
         $this->usuario->update(['estado' => 'suspendido']);

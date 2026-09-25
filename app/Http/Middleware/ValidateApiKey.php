@@ -39,8 +39,7 @@ class ValidateApiKey
         }
 
         $alcance = $cliente->api_key_alcance ?? [];
-        $permitido = empty($permisos) || collect($permisos)->contains(fn (string $permiso) => in_array($permiso, $alcance, true) || in_array(strtok($permiso, ':').':*', $alcance, true)
-        );
+        $permitido = empty($permisos) || collect($permisos)->contains(fn (string $permiso) => ApiKeyService::cubre($alcance, $permiso));
 
         if (! $permitido) {
             return response()->json([
@@ -60,6 +59,9 @@ class ValidateApiKey
         }
 
         $request->merge(['cliente_autenticado' => $cliente]);
+        // Convención: en una ruta `api.key` $request->user() es el dueño de la key y auth()->user()
+        // sigue siendo null (no hay sesión). Un guard explícito nunca debe caer en ese usuario.
+        $request->setUserResolver(fn (?string $guard = null) => $guard === null ? $cliente->usuario : null);
 
         return $next($request);
     }

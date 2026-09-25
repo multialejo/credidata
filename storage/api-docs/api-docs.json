@@ -21,6 +21,7 @@
                     "Colaboradores"
                 ],
                 "summary": "Activa un colaborador",
+                "description": "Requiere API Key Bearer activa y scope colaboradores:registro (o wildcard aplicable).",
                 "operationId": "b80f52404138c6e19f27d8464e6a5d60",
                 "requestBody": {
                     "required": true,
@@ -57,7 +58,7 @@
                 },
                 "security": [
                     {
-                        "SanctumBearer": []
+                        "ApiKeyBearer": []
                     }
                 ]
             }
@@ -68,7 +69,7 @@
                     "Colaboradores"
                 ],
                 "summary": "Registra un aporte",
-                "description": "Requiere colaborador cliente activo. Un campo sin valor se aprueba automáticamente; una reescritura queda pendiente.",
+                "description": "Requiere API Key Bearer activa y scope colaboradores:aportes (o wildcard aplicable), además de colaborador cliente activo. Un campo sin valor se aprueba automáticamente; una reescritura queda pendiente.",
                 "operationId": "51d5571d215158d7383974472f9bfd87",
                 "requestBody": {
                     "required": true,
@@ -115,7 +116,7 @@
                 },
                 "security": [
                     {
-                        "SanctumBearer": []
+                        "ApiKeyBearer": []
                     }
                 ]
             }
@@ -126,6 +127,7 @@
                     "Colaboradores"
                 ],
                 "summary": "Consulta un aporte propio",
+                "description": "Requiere API Key Bearer activa y scope colaboradores:aportes (o wildcard aplicable).",
                 "operationId": "15b0ea51236cfe6be9aa1103216c353b",
                 "parameters": [
                     {
@@ -150,7 +152,7 @@
                 },
                 "security": [
                     {
-                        "SanctumBearer": []
+                        "ApiKeyBearer": []
                     }
                 ]
             }
@@ -1128,7 +1130,7 @@
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": "API Key",
-                "description": "API Key de cliente con scopes e IP permitida."
+                "description": "API Key de cliente con scopes e IP permitida. Cubre la API de consultas (/v1/consulta/*) y la de colaboradores (/v1/colaboradores/*)."
             },
             "SanctumBearer": {
                 "type": "http",

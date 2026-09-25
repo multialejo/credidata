@@ -41,6 +41,12 @@ class OpenApiDocumentationTest extends TestCase
         $this->assertArrayHasKey('ApiKeyBearer', $specification['components']['securitySchemes']);
         $this->assertArrayHasKey('SanctumBearer', $specification['components']['securitySchemes']);
 
+        // Definir el esquema no basta: las operaciones de colaboradores deben *aplicarlo*, o la
+        // documentación pediría un token de sesión que estas rutas ya no aceptan.
+        $this->assertSame([['ApiKeyBearer' => []]], $specification['paths']['/api/v1/colaboradores/registro']['post']['security']);
+        $this->assertSame([['ApiKeyBearer' => []]], $specification['paths']['/api/v1/colaboradores/datos']['post']['security']);
+        $this->assertSame([['ApiKeyBearer' => []]], $specification['paths']['/api/v1/colaboradores/aportes/{aporte}']['get']['security']);
+
         $this->get('/api/documentation')->assertOk();
         $this->get('/docs')->assertOk()->assertJsonPath('openapi', '3.0.0');
         $css = $this->get('/docs/asset/swagger-ui.css')->assertOk();

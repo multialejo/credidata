@@ -114,12 +114,12 @@
 
         <fieldset>
             <legend class="ui-label mb-1">Permisos de consulta</legend>
-            <p class="mb-3 text-sm text-slate-600">Elige consultas específicas o acceso completo. El acceso completo incluye todas las consultas actuales y futuras.</p>
+            <p class="mb-3 text-sm text-slate-600">Elige consultas específicas o acceso completo. El acceso completo incluye todas las consultas actuales y futuras. Estos permisos son de solo lectura.</p>
             <div class="grid gap-3 sm:grid-cols-3">
                 @foreach([
                     'consulta:cedula' => ['label' => 'Cédula', 'description' => 'Consultar datos de personas.'],
                     'consulta:ruc' => ['label' => 'RUC', 'description' => 'Consultar datos de empresas.'],
-                    'consulta:*' => ['label' => 'Acceso completo', 'description' => 'Incluye consultas actuales y futuras.'],
+                    'consulta:*' => ['label' => 'Acceso completo a consultas', 'description' => 'Incluye consultas actuales y futuras.'],
                 ] as $scope => $permission)
                     <label class="inline-flex min-h-11 cursor-pointer items-start gap-2 rounded-xl border border-slate-200 p-3 text-sm text-slate-700 has-[:checked]:border-[#3155d9] has-[:checked]:bg-[#e8edf9]">
                         <input type="checkbox" wire:model="scopes" value="{{ $scope }}"
@@ -133,6 +133,28 @@
                 @endforeach
             </div>
             @error('scopes') <span class="ui-error block">{{ $message }}</span> @enderror
+        </fieldset>
+
+        <fieldset>
+            <legend class="ui-label mb-1">Permisos de colaboración</legend>
+            <p class="mb-3 text-sm text-slate-600">Permiten activar tu perfil de colaborador y enviar o consultar tus aportes. Son independientes de los permisos de consulta.</p>
+            <div class="grid gap-3 sm:grid-cols-3">
+                @foreach([
+                    'colaboradores:registro' => ['label' => 'Activación', 'description' => 'Aceptar los términos del programa de colaboradores.'],
+                    'colaboradores:aportes' => ['label' => 'Aportes', 'description' => 'Enviar y consultar tus aportes de datos.'],
+                    'colaboradores:*' => ['label' => 'Acceso completo a colaboración', 'description' => 'Incluye permisos de colaboración actuales y futuros.'],
+                ] as $scope => $permission)
+                    <label class="inline-flex min-h-11 cursor-pointer items-start gap-2 rounded-xl border border-slate-200 p-3 text-sm text-slate-700 has-[:checked]:border-[#3155d9] has-[:checked]:bg-[#e8edf9]">
+                        <input type="checkbox" wire:model="scopes" value="{{ $scope }}"
+                            @disabled($scope !== 'colaboradores:*' && in_array('colaboradores:*', $scopes, true))
+                            class="mt-0.5 rounded border-slate-300 text-[#3155d9] focus:ring-[#3155d9] disabled:cursor-not-allowed disabled:opacity-50">
+                        <span>
+                            <span class="block font-semibold">{{ $permission['label'] }}</span>
+                            <span class="mt-0.5 block text-xs leading-5 text-slate-600">{{ $permission['description'] }}</span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
         </fieldset>
 
         <div class="flex justify-end pt-2">

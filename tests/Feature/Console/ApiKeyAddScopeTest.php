@@ -31,6 +31,19 @@ class ApiKeyAddScopeTest extends TestCase
             ->expectsOutput('Scopes actualizados: 0')->assertExitCode(0);
     }
 
+    public function test_rechaza_un_scope_inexistente_sin_escribirlo(): void
+    {
+        $active = $this->client('active-legacy', ['consulta:cedula']);
+
+        // Un scope que no existe en ApiKeyService::SCOPES no debe persistirse: la página de
+        // configuración lo cargaría sin casilla que desmarcar y el cliente quedaría sin poder guardar.
+        $this->artisan('apikey:add-scope', ['scope' => 'colaboradores:legacy'])
+            ->expectsOutputToContain('El scope "colaboradores:legacy" no existe.')
+            ->assertExitCode(1);
+
+        $this->assertEquals(['consulta:cedula'], $active->refresh()->api_key_alcance);
+    }
+
     private function client(string $uid, ?array $scope, bool $revoked = false): Cliente
     {
         $user = Usuario::create([

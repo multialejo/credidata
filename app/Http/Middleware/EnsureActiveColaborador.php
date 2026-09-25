@@ -14,7 +14,13 @@ class EnsureActiveColaborador
         $colaborador = $user?->colaborador;
 
         if (! $user?->cliente || ! $colaborador || $colaborador->estado_colaborador !== 'activo') {
-            abort(403, 'Se requiere un colaborador cliente activo.');
+            return response()->json([
+                'codigo' => 403, 'exito' => false,
+                'mensaje' => 'Se requiere un colaborador cliente activo.',
+                'error' => ['tipo' => 'COLABORADOR_NO_ACTIVO', 'detalle' => null],
+                'datos' => null,
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 403);
         }
 
         return $next($request);

@@ -47,16 +47,21 @@ class GestionApiKey extends Component
         $this->rotacionSugerida = $cliente->api_key_rotacion_sugerida_en;
         $this->revocada = $cliente->api_key_revocada;
         $this->ipsPermitidas = $cliente->api_key_ips_permitidas;
-        $this->alcance = $cliente->api_key_alcance;
         $this->alias = $cliente->api_key_alias ?? '';
         $this->ips = implode("\n", $cliente->api_key_ips_permitidas ?? []);
-        $this->scopes = $cliente->api_key_alcance ?? [];
+        // Un scope desconocido (typo de un comando en consola) no tiene casilla que desmarcar:
+        // si se cargara tal cual, guardarConfiguracion lo rechazaría y el cliente quedaría
+        // bloqueado sin salida. Se descarta al cargar para que la siguiente guarda lo limpie.
+        $this->scopes = $this->alcance = array_values(array_intersect($cliente->api_key_alcance ?? [], ApiKeyService::SCOPES));
     }
 
     public function updatedScopes(): void
     {
-        if (in_array('consulta:*', $this->scopes, true)) {
-            $this->scopes = ['consulta:*'];
+        foreach (['consulta', 'colaboradores'] as $familia) {
+            if (in_array("{$familia}:*", $this->scopes, true)) {
+                $this->scopes = array_values(array_filter($this->scopes,
+                    fn (string $scope) => str_starts_with($scope, "{$familia}:") ? $scope === "{$familia}:*" : true));
+            }
         }
     }
 

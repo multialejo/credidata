@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Cliente;
+use App\Services\ApiKeyService;
 use Illuminate\Console\Command;
 
 class ApiKeyAddScope extends Command
@@ -14,6 +15,12 @@ class ApiKeyAddScope extends Command
     public function handle(): int
     {
         $scope = $this->argument('scope');
+        if (! in_array($scope, ApiKeyService::SCOPES, true)) {
+            $this->error("El scope \"{$scope}\" no existe. Válidos: ".implode(', ', ApiKeyService::SCOPES));
+
+            return self::FAILURE;
+        }
+
         $updated = 0;
         Cliente::query()->where('api_key_revocada', false)->whereNotNull('api_key_hash')->chunkById(100, function ($clientes) use ($scope, &$updated): void {
             foreach ($clientes as $cliente) {

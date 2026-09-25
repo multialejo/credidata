@@ -12,7 +12,13 @@ use Illuminate\Validation\ValidationException;
 
 class ApiKeyService
 {
-    public const SCOPES = ['consulta:cedula', 'consulta:ruc', 'consulta:*'];
+    public const SCOPES = ['consulta:cedula', 'consulta:ruc', 'consulta:*', 'colaboradores:registro', 'colaboradores:aportes', 'colaboradores:*'];
+
+    /** Un permiso está cubierto por una concesión exacta o por el comodín de su familia. */
+    public static function cubre(array $otorgados, string $pedido): bool
+    {
+        return in_array($pedido, $otorgados, true) || in_array(explode(':', $pedido)[0].':*', $otorgados, true);
+    }
 
     public function issue(Cliente $cliente, array $options = [], ?int $actorId = null, string $ip = 'sistema', string $action = 'API_KEY_GENERADA'): string
     {

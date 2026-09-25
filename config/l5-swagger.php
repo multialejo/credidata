@@ -194,7 +194,7 @@ return [
                     'type' => 'http',
                     'scheme' => 'bearer',
                     'bearerFormat' => 'API Key',
-                    'description' => 'API Key de cliente con scopes e IP permitida.',
+                    'description' => 'API Key de cliente con scopes e IP permitida. Cubre la API de consultas (/v1/consulta/*) y la de colaboradores (/v1/colaboradores/*).',
                 ],
                 'SanctumBearer' => [
                     'type' => 'http',

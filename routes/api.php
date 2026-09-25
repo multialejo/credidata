@@ -21,6 +21,13 @@ Route::middleware('api.key')->group(function () {
     Route::post('/v1/api-key/rotar', [ApiKeyController::class, 'rotar']);
 });
 
+Route::post('v1/colaboradores/registro', [ColaboradorController::class, 'registro'])
+    ->middleware('api.key:colaboradores:registro');
+Route::middleware(['api.key:colaboradores:aportes', 'colaborador.activo'])->prefix('v1/colaboradores')->group(function () {
+    Route::post('datos', [ColaboradorController::class, 'datos']);
+    Route::get('aportes/{aporte}', [ColaboradorController::class, 'show']);
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -34,12 +41,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('v1/recargas/payphone')->group(function () {
         Route::post('/transaccion', [RecargaPayphoneController::class, 'crearTransaccion']);
         Route::post('/{id}/confirmar', [RecargaPayphoneController::class, 'confirmar']);
-    });
-
-    Route::post('v1/colaboradores/registro', [ColaboradorController::class, 'registro']);
-    Route::middleware('colaborador.activo')->prefix('v1/colaboradores')->group(function () {
-        Route::post('datos', [ColaboradorController::class, 'datos']);
-        Route::get('aportes/{aporte}', [ColaboradorController::class, 'show']);
     });
 
     Route::middleware(['staff'])->prefix('v1/admin')->group(function () {

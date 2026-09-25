@@ -30,7 +30,13 @@ class ColaboradorController extends Controller
 
     public function show(Aporte $aporte): JsonResponse
     {
-        abort_unless($aporte->colaborador_id === request()->user()->colaborador->id, 403);
+        if ($aporte->colaborador_id !== request()->user()->colaborador->id) {
+            return response()->json([
+                'codigo' => 403, 'exito' => false, 'mensaje' => 'El aporte pertenece a otro colaborador.',
+                'error' => ['tipo' => 'APORTE_NO_PROPIETARIO', 'detalle' => null], 'datos' => null,
+                'metadatos' => ['timestamp' => now()->toIso8601String()],
+            ], 403);
+        }
 
         return response()->json(['codigo' => 200, 'exito' => true, 'mensaje' => 'Aporte', 'datos' => ['aporte' => new AporteResource($aporte)]]);
     }
