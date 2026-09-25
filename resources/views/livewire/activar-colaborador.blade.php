@@ -3,7 +3,6 @@
     <section class="ui-card p-5 sm:p-7">
     @if(session('status')) <x-alert variant="success" class="mb-6">{{ session('status') }}</x-alert> @endif
     @if($colaborador)
-        <p class="text-sm leading-6 text-slate-600">Perfil activo desde {{ $colaborador->terminos_aceptados_en?->format('d/m/Y H:i') }}. Términos: {{ $colaborador->terminos_version }}.</p>
         <div class="mt-5 grid gap-3 sm:grid-cols-3">
             <div class="rounded-xl bg-[#e8edf9] p-4">
                 <p class="ui-eyebrow text-[#3155d9]">Créditos obtenidos</p>
