@@ -12,7 +12,7 @@ $isDesktop = $variant === 'desktop';
             <x-nav-link :href="route('admin.logs')" :active="request()->routeIs('admin.logs')" icon="document-text">Logs</x-nav-link>
             <x-nav-link :href="route('admin.config')" :active="request()->routeIs('admin.config')" icon="cog-6-tooth">Configuración</x-nav-link>
         @endif
-        <x-nav-link :href="route('admin.registros')" :active="request()->routeIs('admin.registros')" icon="clipboard-document-list">Registros</x-nav-link>
+        <x-nav-link :href="route('admin.registros')" :active="request()->routeIs('admin.registros')" icon="clipboard-document-list">Edición de Registros</x-nav-link>
         <x-nav-link :href="route('admin.recargas')" :active="request()->routeIs('admin.recargas')" icon="arrow-path">Recargas</x-nav-link>
         <x-nav-link :href="route('admin.aportes')" :active="request()->routeIs('admin.aportes')" icon="sparkles">Aportes</x-nav-link>
     @else
@@ -21,7 +21,7 @@ $isDesktop = $variant === 'desktop';
             <x-responsive-nav-link :href="route('admin.logs')" :active="request()->routeIs('admin.logs')" icon="document-text">Logs</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('admin.config')" :active="request()->routeIs('admin.config')" icon="cog-6-tooth">Configuración</x-responsive-nav-link>
         @endif
-        <x-responsive-nav-link :href="route('admin.registros')" :active="request()->routeIs('admin.registros')" icon="clipboard-document-list">Registros</x-responsive-nav-link>
+        <x-responsive-nav-link :href="route('admin.registros')" :active="request()->routeIs('admin.registros')" icon="clipboard-document-list">Edición de Registros</x-responsive-nav-link>
         <x-responsive-nav-link :href="route('admin.recargas')" :active="request()->routeIs('admin.recargas')" icon="arrow-path">Recargas</x-responsive-nav-link>
         <x-responsive-nav-link :href="route('admin.aportes')" :active="request()->routeIs('admin.aportes')" icon="sparkles">Aportes</x-responsive-nav-link>
     @endif
