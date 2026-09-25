@@ -45,7 +45,7 @@ $isDesktop = $variant === 'desktop';
     <p class="px-3 pt-4 pb-1 text-[0.7rem] font-bold uppercase tracking-[0.18em] text-slate-500">Desarrolladores</p>
     @if($isDesktop)
         <x-nav-link :href="route('dashboard.documentacion')" :active="request()->routeIs('dashboard.documentacion')" icon="book-open">Documentación</x-nav-link>
-        <x-nav-link :href="route('dashboard.colaborador')" :active="request()->routeIs('dashboard.colaborador')" icon="user-group">Colaborador</x-nav-link>
+        <x-nav-link :href="route('dashboard.colaborador')" :active="request()->routeIs('dashboard.colaborador')" icon="user-group">Colaboración</x-nav-link>
         @if(auth()->user()->colaborador?->estado_colaborador === 'activo')
             <x-nav-link :href="route('dashboard.aportes.nuevo')" :active="request()->routeIs('dashboard.aportes.nuevo')" icon="plus-circle">Aportar</x-nav-link>
         @endif
@@ -55,7 +55,7 @@ $isDesktop = $variant === 'desktop';
             <x-icons.currency-dollar class="h-5 w-5 shrink-0" />
             Precios
         </span>
-        <x-responsive-nav-link :href="route('dashboard.colaborador')" :active="request()->routeIs('dashboard.colaborador')" icon="user-group">Colaborador</x-responsive-nav-link>
+        <x-responsive-nav-link :href="route('dashboard.colaborador')" :active="request()->routeIs('dashboard.colaborador')" icon="user-group">Colaboración</x-responsive-nav-link>
         @if(auth()->user()->colaborador?->estado_colaborador === 'activo')
             <x-responsive-nav-link :href="route('dashboard.aportes.nuevo')" :active="request()->routeIs('dashboard.aportes.nuevo')" icon="plus-circle">Aportar</x-responsive-nav-link>
         @endif

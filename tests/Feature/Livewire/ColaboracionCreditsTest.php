@@ -11,6 +11,7 @@ use App\Models\Colaborador;
 use App\Models\Usuario;
 use App\Services\ColaboracionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Mockery;
 use Tests\TestCase;
@@ -19,7 +20,7 @@ class ColaboracionCreditsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_perfil_de_colaborador_muestra_creditos_obtenidos(): void
+    public function test_perfil_de_colaborador_muestra_resumen_operativo(): void
     {
         $usuario = $this->crearUsuario();
         Colaborador::create([
@@ -31,10 +32,70 @@ class ColaboracionCreditsTest extends TestCase
 
         Livewire::actingAs($usuario)
             ->test(ActivarColaborador::class)
-            ->assertSeeText('Créditos obtenidos')
+            ->assertSeeText('Tu actividad de colaboración')
+            ->assertSeeText('Créditos acreditados')
             ->assertSeeText('7')
-            ->assertSeeText('Aportes aprobados')
-            ->assertSeeText('3');
+            ->assertSeeText('Estado de tus aportes')
+            ->assertSeeText('Aprobados')
+            ->assertSeeText('3')
+            ->assertDontSeeText('Aportes recientes')
+            ->assertDontSeeText('Aún no tienes aportes');
+    }
+
+    public function test_tablero_muestra_metricas_y_limite_diario_sin_exponer_aportes(): void
+    {
+        $usuario = $this->crearUsuario();
+        $colaborador = Colaborador::create([
+            'usuario_id' => $usuario->id,
+            'creditos_acreditados' => 2,
+            'aportes_aprobados' => 1,
+            'aportes_rechazados' => 0,
+        ]);
+        DB::table('config_parametros')
+            ->where('modulo', 'colaboracion')
+            ->where('clave', 'limiteDiarioPorColaborador')
+            ->update(['valor' => json_encode(4)]);
+
+        Aporte::create([
+            'colaborador_id' => $colaborador->id,
+            'identificador_relacionado' => '1713175071',
+            'tipo_dato' => 'telefono',
+            'valor' => '0991234567',
+            'estado' => 'pendiente',
+            'fecha' => now(),
+        ]);
+        Aporte::create([
+            'colaborador_id' => $colaborador->id,
+            'identificador_relacionado' => '1713175071',
+            'tipo_dato' => 'email',
+            'valor' => 'persona@example.com',
+            'estado' => 'aprobado',
+            'recompensa_creditos' => 2,
+            'fecha' => now()->subDay(),
+        ]);
+
+        Livewire::actingAs($usuario)
+            ->test(ActivarColaborador::class)
+            ->assertSeeText('Pendientes de revisión')
+            ->assertSeeText('1 / 4')
+            ->assertSeeText('Créditos acreditados')
+            ->assertSeeText('Estado de tus aportes')
+            ->assertDontSeeText('Aportes recientes')
+            ->assertDontSee('1713175071')
+            ->assertDontSee('0991234567')
+            ->assertDontSee('persona@example.com');
+    }
+
+    public function test_vista_de_activacion_conserva_terminos_para_quien_aun_no_es_colaborador(): void
+    {
+        $usuario = $this->crearUsuario();
+
+        Livewire::actingAs($usuario)
+            ->test(ActivarColaborador::class)
+            ->assertSeeText('Programa de colaboradores')
+            ->assertSeeText('Antes de empezar')
+            ->assertSeeText('Activar colaboración')
+            ->assertSeeText(ColaboracionService::TERMINOS);
     }
 
     public function test_panel_de_saldo_muestra_recompensa_de_colaboracion(): void

@@ -73,6 +73,7 @@ class RoleNavigationTest extends TestCase
 
         $response->assertOk()
             ->assertSeeTextInOrder(['Saldo', 'Historial', 'API Key', 'Recibos', 'Documentación'])
+            ->assertSeeText('Colaboración')
             ->assertDontSee('href="'.route('admin.logs').'"', false)
             ->assertDontSee('href="'.route('admin.config').'"', false)
             ->assertDontSee('href="'.route('admin.registros').'"', false)
