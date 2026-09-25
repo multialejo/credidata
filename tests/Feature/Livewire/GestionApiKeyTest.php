@@ -47,7 +47,7 @@ class GestionApiKeyTest extends TestCase
     {
         Livewire::actingAs($this->usuario)
             ->test(GestionApiKey::class)
-            ->set('scopes', ['consulta:cedula', 'colaboradores:registro', 'colaboradores:aportes', 'colaboradores:*'])
+            ->set('scopes', ['consulta:cedula', 'colaboradores:aportes', 'colaboradores:*'])
             ->assertSet('scopes', ['consulta:cedula', 'colaboradores:*']);
     }
 
@@ -100,6 +100,8 @@ class GestionApiKeyTest extends TestCase
             ->assertSee('Si no agregas IPs, la clave podrá usarse desde cualquier dirección.')
             ->assertSee('Ciclo de vida de la API Key')
             ->assertSee('Regenerar invalida inmediatamente la clave actual.')
+            ->assertSee('Aportes')
+            ->assertDontSee('Acceso completo a colaboración')
             ->assertSee('Revocar clave');
     }
 }

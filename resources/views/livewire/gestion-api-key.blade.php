@@ -137,16 +137,13 @@
 
         <fieldset>
             <legend class="ui-label mb-1">Permisos de colaboración</legend>
-            <p class="mb-3 text-sm text-slate-600">Permiten activar tu perfil de colaborador y enviar o consultar tus aportes. Son independientes de los permisos de consulta.</p>
-            <div class="grid gap-3 sm:grid-cols-3">
+            <p class="mb-3 text-sm text-slate-600">Este permiso permite enviar o consultar tus aportes. Activa tu perfil desde el programa de colaboradores. Es independiente de los permisos de consulta.</p>
+            <div class="grid gap-3 sm:grid-cols-1">
                 @foreach([
-                    'colaboradores:registro' => ['label' => 'Activación', 'description' => 'Aceptar los términos del programa de colaboradores.'],
                     'colaboradores:aportes' => ['label' => 'Aportes', 'description' => 'Enviar y consultar tus aportes de datos.'],
-                    'colaboradores:*' => ['label' => 'Acceso completo a colaboración', 'description' => 'Incluye permisos de colaboración actuales y futuros.'],
                 ] as $scope => $permission)
                     <label class="inline-flex min-h-11 cursor-pointer items-start gap-2 rounded-xl border border-slate-200 p-3 text-sm text-slate-700 has-[:checked]:border-[#3155d9] has-[:checked]:bg-[#e8edf9]">
                         <input type="checkbox" wire:model="scopes" value="{{ $scope }}"
-                            @disabled($scope !== 'colaboradores:*' && in_array('colaboradores:*', $scopes, true))
                             class="mt-0.5 rounded border-slate-300 text-[#3155d9] focus:ring-[#3155d9] disabled:cursor-not-allowed disabled:opacity-50">
                         <span>
                             <span class="block font-semibold">{{ $permission['label'] }}</span>
