@@ -3,23 +3,19 @@
         <x-page-header title="Tu perfil" description="Actualizá tus datos y protegé el acceso a tu cuenta." class="mb-0" />
     </x-slot>
 
-    <x-page-shell max-width="3xl" class="space-y-6">
+    <x-page-shell max-width="6xl" class="grid gap-6 lg:grid-cols-2">
         <!-- Información Personal -->
         <section aria-labelledby="account-heading" class="ui-card p-5 sm:p-8">
-            <div class="max-w-xl">
-                @include('profile.partials.update-profile-information-form')
-            </div>
+            @include('profile.partials.update-profile-information-form')
         </section>
 
         <!-- Seguridad -->
         <section aria-labelledby="security-heading" class="ui-card p-5 sm:p-8">
-            <div class="max-w-xl">
-                @include('profile.partials.update-password-form')
-            </div>
+            @include('profile.partials.update-password-form')
         </section>
 
         <!-- Sesión activa -->
-        <section aria-labelledby="session-heading" class="ui-card p-5 sm:p-8">
+        <section aria-labelledby="session-heading" class="ui-card p-5 sm:p-8 lg:col-span-2">
             <div class="max-w-xl">
                 <header>
                     <h2 id="session-heading" class="ui-section-title">Sesión</h2>
@@ -88,7 +84,7 @@
         --}}
 
         <!-- Zona de peligro -->
-        <section aria-labelledby="danger-heading" class="ui-card border-rose-200 bg-rose-50/50 p-5 sm:p-8">
+        <section aria-labelledby="danger-heading" class="ui-card border-rose-200 bg-rose-50/50 p-5 sm:p-8 lg:col-span-2">
             <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 id="danger-heading" class="ui-section-title text-rose-900">Eliminar cuenta</h2>
