@@ -198,41 +198,36 @@
                     </div>
                 </div>
 
-                <div class="rounded-2xl bg-[#0a1023] p-4 shadow-2xl ring-1 ring-white/10">
-                    <div class="flex items-center gap-1.5 border-b border-white/10 px-3 pb-3">
-                        <span class="h-3 w-3 rounded-full bg-red-400"></span>
-                        <span class="h-3 w-3 rounded-full bg-yellow-400"></span>
-                        <span class="h-3 w-3 rounded-full bg-emerald-400"></span>
-                        <span class="ml-3 font-mono text-xs text-slate-500">consulta-cedula.sh</span>
-                    </div>
-                    <pre class="overflow-x-auto p-4 font-mono text-[13px] leading-relaxed">
-<code><span class="text-slate-400">$</span> <span class="text-sky-300">curl</span> -X POST <span class="text-sky-300">https://api.credidata.app/api/v1/consulta/cedula</span> \
-  <span class="text-sky-300">-H</span> <span class="text-emerald-300">"Authorization: Bearer cd_sk_tu_api_key"</span> \
-  <span class="text-sky-300">-H</span> <span class="text-emerald-300">"Content-Type: application/json"</span> \
-  <span class="text-sky-300">-d</span> <span class="text-emerald-300">'{"cedula":"1700000000"}'</span>
-
-<span class="text-slate-400"># respuesta</span>
-{
-  <span class="text-fuchsia-300">"codigo"</span>: <span class="text-amber-300">200</span>,
-  <span class="text-fuchsia-300">"exito"</span>: <span class="text-amber-300">true</span>,
-  <span class="text-fuchsia-300">"mensaje"</span>: <span class="text-amber-300">null</span>,
-  <span class="text-fuchsia-300">"datos"</span>: {
-    <span class="text-fuchsia-300">"cedula"</span>: <span class="text-emerald-300">"1700000000"</span>,
-    <span class="text-fuchsia-300">"nombres"</span>: <span class="text-emerald-300">"PÉREZ GARCÍA JUAN CARLOS"</span>,
-    <span class="text-fuchsia-300">"profesion"</span>: <span class="text-emerald-300">"Ingeniero de Sistemas"</span>,
-    <span class="text-fuchsia-300">"fechaNacimiento"</span>: <span class="text-emerald-300">"1990-05-14"</span>,
-    <span class="text-fuchsia-300">"lugarNacimiento"</span>: <span class="text-emerald-300">"Quito, Pichincha"</span>,
-    <span class="text-fuchsia-300">"ubicacion"</span>: {
-      <span class="text-fuchsia-300">"provincia"</span>: <span class="text-emerald-300">"Pichincha"</span>,
-      <span class="text-fuchsia-300">"canton"</span>: <span class="text-emerald-300">"Quito"</span>
+                <div class="space-y-3">
+                    <x-code-copy title="consulta-cedula.sh" label="Ejemplo de petición">
+curl -X POST "https://api.credidata.app/api/v1/consulta/cedula" \
+  -H "Authorization: Bearer cd_sk_tu_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"cedula":"1700000000"}'
+                    </x-code-copy>
+                    <div class="overflow-hidden rounded-xl bg-[#0a1023] ring-1 ring-white/10">
+                        <div class="border-b border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-300">Respuesta de ejemplo</div>
+                        <pre class="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-slate-100">{
+  "codigo": 200,
+  "exito": true,
+  "mensaje": null,
+  "datos": {
+    "cedula": "1700000000",
+    "nombres": "PÉREZ GARCÍA JUAN CARLOS",
+    "profesion": "Ingeniero de Sistemas",
+    "fechaNacimiento": "1990-05-14",
+    "lugarNacimiento": "Quito, Pichincha",
+    "ubicacion": {
+      "provincia": "Pichincha",
+      "canton": "Quito"
     },
-    <span class="text-fuchsia-300">"contacto"</span>: { <span class="text-fuchsia-300">"telefonos"</span>: [], <span class="text-fuchsia-300">"emails"</span>: [], <span class="text-fuchsia-300">"direcciones"</span>: [] }
+    "contacto": { "telefonos": [], "emails": [], "direcciones": [] }
   },
-  <span class="text-fuchsia-300">"metadatos"</span>: {
-    <span class="text-fuchsia-300">"timestamp"</span>: <span class="text-emerald-300">"2026-09-19T12:00:00Z"</span>
+  "metadatos": {
+    "timestamp": "2026-09-19T12:00:00Z"
   }
-}</code>
-                    </pre>
+}</pre>
+                    </div>
                 </div>
             </div>
         </section>

@@ -8,17 +8,13 @@
             </div>
             <span class="font-mono text-xs font-semibold uppercase tracking-wide text-slate-500">POST · JSON</span>
         </div>
-        <div class="mt-4 overflow-hidden rounded-xl bg-[#0d1630] ring-1 ring-[#14213d]/10">
-            <div class="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
-                <span class="text-xs font-semibold text-slate-300">Terminal</span>
-                <span class="font-mono text-xs text-slate-400">colaboradores-datos</span>
-            </div>
-            <pre class="overflow-x-auto p-4 font-mono text-sm leading-6" style="color: #f8fafc !important"><code style="color: #f8fafc !important"><span style="color: #93c5fd">curl</span> -X POST <span style="color: #fcd34d">"{{ url('/api/v1/colaboradores/datos') }}"</span> \
-  <span style="color: #86efac">-H "Authorization: Bearer $CREDIDATA_API_KEY"</span> \
-  <span style="color: #86efac">-H "Content-Type: application/json"</span> \
-  <span style="color: #86efac">-H "Accept: application/json"</span> \
-  <span style="color: #f0abfc">-d '{"identificador":"1713175071","tipo_dato":"telefono","valor":"0991234567"}'</span></code></pre>
-        </div>
+        <x-code-copy class="mt-4" title="colaboradores-datos">
+curl -X POST "{{ url('/api/v1/colaboradores/datos') }}" \
+  -H "Authorization: Bearer $CREDIDATA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{"identificador":"1713175071","tipo_dato":"telefono","valor":"0991234567"}'
+        </x-code-copy>
         <p class="mt-5 text-sm leading-6 text-slate-600">Consulta los requisitos, parámetros, respuestas y errores del endpoint en <a class="font-semibold text-[#3155d9] underline underline-offset-2 hover:text-[#2647c2]" href="{{ route('dashboard.documentacion') }}#contribution-api">la documentación de la API</a>.</p>
     </section>
     <details id="web-form" class="ui-card group p-5 sm:p-7">
