@@ -101,7 +101,7 @@ class AporteAuthorizationTest extends TestCase
         $usuario = $this->cliente('colaborador-revocado', true);
         $aporte = Aporte::create(['colaborador_id' => $usuario->colaborador->id, 'identificador_relacionado' => '1713175071', 'tipo_dato' => 'telefono', 'valor' => '0991234567', 'estado' => 'pendiente', 'fecha' => now()]);
         $key = $this->apiKey($usuario, ['colaboradores:aportes']);
-        $usuario->cliente->update(['api_key_revocada' => true, 'api_key_revocada_en' => now()]);
+        $usuario->cliente->apiKeys()->firstOrFail()->update(['revocada' => true, 'revocada_en' => now()]);
 
         $this->withHeader('Authorization', 'Bearer '.$key)->getJson("/api/v1/colaboradores/aportes/{$aporte->id}")
             ->assertUnauthorized()->assertJsonPath('error.tipo', 'API_KEY_REVOCADA');
@@ -162,7 +162,11 @@ class AporteAuthorizationTest extends TestCase
 
     private function apiKey(Usuario $usuario, array $scopes, array $ips = []): string
     {
-        return app(ApiKeyService::class)->issue($usuario->cliente, ['scopes' => $scopes, 'ips' => $ips], $usuario->id);
+        return app(ApiKeyService::class)->issue($usuario->cliente, [
+            'name' => 'Test integration '.($usuario->cliente->apiKeys()->count() + 1),
+            'scopes' => $scopes,
+            'ips' => $ips,
+        ], $usuario->id);
     }
 
     private function colaboradorSuspendido(string $suffix): Usuario

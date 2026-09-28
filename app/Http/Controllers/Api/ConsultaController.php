@@ -32,6 +32,7 @@ class ConsultaController extends Controller
         ]);
 
         $cliente = $request->cliente_autenticado;
+        $apiKeyId = $request->api_key_autenticada->id;
 
         if (! $cliente) {
             return response()->json([
@@ -68,9 +69,9 @@ class ConsultaController extends Controller
         // 2. Check Firestore cache
         $cache = $this->dinardapService->obtenerCache($cedula);
         if ($cache !== null) {
-            DB::transaction(function () use ($cliente, $costo, $cedula, $cache, $request, &$consulta) {
+            DB::transaction(function () use ($cliente, $apiKeyId, $costo, $cedula, $cache, $request, &$consulta) {
                 $this->debitarCliente($cliente, $costo);
-                $consulta = $this->registrarConsulta($cliente, $cedula, $costo, true, $cache, $request->ip());
+                $consulta = $this->registrarConsulta($cliente, $apiKeyId, $cedula, $costo, true, $cache, $request->ip());
                 $this->registrarLog($cliente, $consulta->id, $cedula, $costo, $request->ip());
             });
 
@@ -92,19 +93,19 @@ class ConsultaController extends Controller
         try {
             $resultado = $this->dinardapService->consultar($cedula);
         } catch (ConnectionException $e) {
-            return $this->respondFuenteNoDisponible($cliente, $cedula, $costo, $request->ip());
+            return $this->respondFuenteNoDisponible($cliente, $apiKeyId, $cedula, $costo, $request->ip());
         }
 
         if ($resultado['status'] === 'not_found') {
-            return $this->respondSujetoNoEncontrado($cliente, $cedula, $costo, $request->ip());
+            return $this->respondSujetoNoEncontrado($cliente, $apiKeyId, $cedula, $costo, $request->ip());
         }
 
         // 4. Success
         $this->dinardapService->guardarCache($cedula, $resultado['data']);
 
-        DB::transaction(function () use ($cliente, $costo, $cedula, $resultado, $request, &$consulta) {
+        DB::transaction(function () use ($cliente, $apiKeyId, $costo, $cedula, $resultado, $request, &$consulta) {
             $this->debitarCliente($cliente, $costo);
-            $consulta = $this->registrarConsulta($cliente, $cedula, $costo, true, $resultado['data'], $request->ip());
+            $consulta = $this->registrarConsulta($cliente, $apiKeyId, $cedula, $costo, true, $resultado['data'], $request->ip());
             $this->registrarLog($cliente, $consulta->id, $cedula, $costo, $request->ip());
         });
 
@@ -129,6 +130,7 @@ class ConsultaController extends Controller
         ]);
 
         $cliente = $request->cliente_autenticado;
+        $apiKeyId = $request->api_key_autenticada->id;
         $ruc = $request->string('ruc')->toString();
         $costo = $this->getCostoConsulta();
 
@@ -157,14 +159,14 @@ class ConsultaController extends Controller
         }
 
         $encontrado = count($establecimientos) > 0;
-        DB::transaction(function () use ($cliente, $ruc, $costo, $establecimientos, $request, &$clienteBloqueado, &$consulta): void {
+        DB::transaction(function () use ($cliente, $apiKeyId, $ruc, $costo, $establecimientos, $request, &$clienteBloqueado, &$consulta): void {
             $clienteBloqueado = Cliente::query()->lockForUpdate()->findOrFail($cliente->id);
             if ($clienteBloqueado->saldo_creditos < $costo) {
                 throw new \RuntimeException('Saldo insuficiente para realizar la consulta.');
             }
             $this->debitarCliente($clienteBloqueado, $costo);
             $consulta = Consulta::create([
-                'cliente_id' => $clienteBloqueado->id, 'tipo' => 'ruc', 'identificador' => $ruc,
+                'cliente_id' => $clienteBloqueado->id, 'api_key_id' => $apiKeyId, 'tipo' => 'ruc', 'identificador' => $ruc,
                 'creditos_gastados' => $costo, 'resultado_json' => ['ruc' => $ruc, 'establecimientos' => $establecimientos],
                 'fuentes_utilizadas' => ['catastro_sri'], 'exitosa' => true, 'ip_origen' => $request->ip(), 'origen' => 'api',
             ]);
@@ -194,16 +196,15 @@ class ConsultaController extends Controller
 
     private function debitarCliente(Cliente $cliente, int $costo): void
     {
-        $cliente->timestamps = false;
-        $cliente->updateQuietly(['api_key_ultimo_uso' => now()]);
         $cliente->decrement('saldo_creditos', $costo);
         $cliente->refresh();
     }
 
-    private function registrarConsulta(Cliente $cliente, string $cedula, int $creditosGastados, bool $exitosa, ?array $datos, string $ip): Consulta
+    private function registrarConsulta(Cliente $cliente, int $apiKeyId, string $cedula, int $creditosGastados, bool $exitosa, ?array $datos, string $ip): Consulta
     {
         return Consulta::create([
             'cliente_id' => $cliente->id,
+            'api_key_id' => $apiKeyId,
             'tipo' => 'cedula',
             'identificador' => $cedula,
             'creditos_gastados' => $creditosGastados,
@@ -229,12 +230,12 @@ class ConsultaController extends Controller
         ]);
     }
 
-    private function respondFuenteNoDisponible(Cliente $cliente, string $cedula, int $costo, string $ip)
+    private function respondFuenteNoDisponible(Cliente $cliente, int $apiKeyId, string $cedula, int $costo, string $ip)
     {
         $consulta = null;
 
-        DB::transaction(function () use ($cliente, $cedula, $ip, &$consulta) {
-            $consulta = $this->registrarConsulta($cliente, $cedula, 0, false, null, $ip);
+        DB::transaction(function () use ($cliente, $apiKeyId, $cedula, $ip, &$consulta) {
+            $consulta = $this->registrarConsulta($cliente, $apiKeyId, $cedula, 0, false, null, $ip);
             $this->registrarLog($cliente, $consulta->id, $cedula, 0, $ip);
         });
 
@@ -255,13 +256,13 @@ class ConsultaController extends Controller
         ], 503);
     }
 
-    private function respondSujetoNoEncontrado(Cliente $cliente, string $cedula, int $costo, string $ip)
+    private function respondSujetoNoEncontrado(Cliente $cliente, int $apiKeyId, string $cedula, int $costo, string $ip)
     {
         $consulta = null;
 
-        DB::transaction(function () use ($cliente, $costo, $cedula, $ip, &$consulta) {
+        DB::transaction(function () use ($cliente, $apiKeyId, $costo, $cedula, $ip, &$consulta) {
             $this->debitarCliente($cliente, $costo);
-            $consulta = $this->registrarConsulta($cliente, $cedula, $costo, true, null, $ip);
+            $consulta = $this->registrarConsulta($cliente, $apiKeyId, $cedula, $costo, true, null, $ip);
             $this->registrarLog($cliente, $consulta->id, $cedula, $costo, $ip);
         });
 

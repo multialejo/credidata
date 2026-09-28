@@ -33,11 +33,11 @@
                         1
                     </span>
                 </div>
-                <h3 class="mt-4 font-semibold text-[#14213d]">Genera tu API Key</h3>
+                <h3 class="mt-4 font-semibold text-[#14213d]">Crea una clave para tu aplicación</h3>
                 <p class="mt-1.5 text-sm leading-relaxed text-slate-600">
-                    Crea y administra tus credenciales desde la sección de
+                    Cada sistema debe usar su propia clave. Adminístralas desde
                     <a class="inline-flex items-center gap-1 font-semibold text-[#3155d9] hover:underline underline-offset-2" href="{{ route('dashboard.api-key') }}">
-                        API Key
+                        Claves API
                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                         </svg>
@@ -56,7 +56,7 @@
                 </div>
                 <h3 class="mt-4 font-semibold text-[#14213d]">Habilita el permiso</h3>
                 <p class="mt-1.5 text-sm leading-relaxed text-slate-600">
-                    Activa los scopes necesarios:
+                    Activa el scope en la clave de esa aplicación:
                     <code class="inline-block rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-xs text-slate-800 shadow-2xs">consulta:cedula</code>,
                     <code class="inline-block rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-xs text-slate-800 shadow-2xs">consulta:ruc</code> o ambos.
                 </p>
@@ -124,8 +124,9 @@
                 <ul class="mt-2 space-y-3 text-sm leading-6 text-slate-600">
                     <li><span class="font-semibold text-[#14213d]">401 · API Key:</span> revisa que el encabezado Bearer contenga una key activa y no revocada. No se consulta la fuente.</li>
                     <li><span class="font-semibold text-[#14213d]">402 · Saldo insuficiente:</span> recarga créditos y vuelve a intentar. La respuesta incluye <code class="font-mono text-xs">metadatos.creditos_restantes</code>.</li>
-                    <li><span class="font-semibold text-[#14213d]">403 · Permiso insuficiente:</span> habilita <code class="font-mono text-xs">consulta:cedula</code> en tu API Key y vuelve a enviar la petición.</li>
+                    <li><span class="font-semibold text-[#14213d]">403 · Acceso denegado:</span> habilita <code class="font-mono text-xs">consulta:cedula</code> en la clave de esta aplicación y revisa su lista de IPs permitidas.</li>
                     <li><span class="font-semibold text-[#14213d]">422 · Cédula inválida:</span> corrige el valor indicado en <code class="font-mono text-xs">errors.cedula</code>. La validación no consume créditos.</li>
+                    <li><span class="font-semibold text-[#14213d]">503 · Fuente no disponible:</span> Dinardap no respondió. No se consumen créditos; vuelve a intentar cuando el servicio esté disponible.</li>
                 </ul>
             </div>
         </div>
@@ -252,8 +253,8 @@
 
     <h3 class="mt-5 text-sm font-bold text-[#14213d]">Requisitos</h3>
     <ul class="mt-2 space-y-1.5 text-sm leading-6 text-slate-600">
-        <li>API Key activa con el permiso <code class="font-mono text-xs">colaboradores:aportes</code> o el comodín <code class="font-mono text-xs">colaboradores:*</code>.</li>
-        <li>Perfil de colaborador activo. Para activarlo, usa <code class="font-mono text-xs">POST /api/v1/colaboradores/registro</code> con el permiso <code class="font-mono text-xs">colaboradores:registro</code>.</li>
+        <li>Una API Key dedicada a colaboración, con el permiso <code class="font-mono text-xs">colaboradores:aportes</code>. Evita usar comodines o combinarla con permisos de consulta.</li>
+        <li>Perfil de colaborador activo. Para activarlo, usa una clave independiente con <code class="font-mono text-xs">colaboradores:registro</code> en <code class="font-mono text-xs">POST /api/v1/colaboradores/registro</code>.</li>
         <li>Si la API Key restringe IPs, la dirección IP de la petición debe estar permitida.</li>
         <li>Los envíos están sujetos a límites diarios configurables por colaborador e identificador.</li>
     </ul>

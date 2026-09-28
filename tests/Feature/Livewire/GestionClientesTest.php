@@ -51,7 +51,12 @@ class GestionClientesTest extends TestCase
         $this->cliente = Cliente::create([
             'usuario_id' => $this->clienteUsuario->id,
             'saldo_creditos' => 50,
-            'api_key_prefijo' => 'cd_sk_test1',
+        ]);
+        $this->cliente->apiKeys()->create([
+            'nombre' => 'Sistema de pruebas',
+            'prefijo' => 'testkey1',
+            'hash' => bcrypt('client-secret'),
+            'alcance' => ['consulta:cedula'],
         ]);
     }
 
@@ -123,13 +128,18 @@ class GestionClientesTest extends TestCase
 
     public function test_filtro_por_prefijo_api_key(): void
     {
-        $this->crearClienteAdicional(['cliente' => ['api_key_prefijo' => 'cd_sk_other']]);
+        $clienteAdicional = $this->crearClienteAdicional();
+        $clienteAdicional->apiKeys()->create([
+            'nombre' => 'Otro sistema',
+            'prefijo' => 'otherkey',
+            'hash' => bcrypt('other-secret'),
+        ]);
 
         Livewire::actingAs($this->staffUsuario)
             ->test(GestionClientes::class)
-            ->set('buscar', 'cd_sk_test1')
-            ->assertSee('cd_sk_test1')
-            ->assertDontSee('cd_sk_other');
+            ->set('buscar', 'testkey1')
+            ->assertSee('Juan Cliente')
+            ->assertDontSee('Cliente 2');
     }
 
     public function test_filtro_por_estado(): void
@@ -151,7 +161,8 @@ class GestionClientesTest extends TestCase
             ->assertSee('Juan Cliente')
             ->assertSee('50')
             ->assertSee('Activo')
-            ->assertSee('cd_sk_test1');
+            ->assertSee('API Keys')
+            ->assertSee('1');
     }
 
     public function test_paginacion_diez_por_pagina(): void
@@ -212,19 +223,19 @@ class GestionClientesTest extends TestCase
 
     public function test_detalle_muestra_info_api_key(): void
     {
-        $this->cliente->update([
-            'api_key_creada' => now()->subDays(5),
-            'api_key_ips_permitidas' => ['192.168.1.1', '10.0.0.1'],
-            'api_key_alcance' => ['consultar_cedula', 'consultar_ruc'],
+        $this->cliente->apiKeys()->firstOrFail()->update([
+            'creada_en' => now()->subDays(5),
+            'ips_permitidas' => ['192.168.1.1', '10.0.0.1'],
+            'alcance' => ['consulta:cedula', 'consulta:ruc'],
         ]);
 
         Livewire::actingAs($this->staffUsuario)
             ->test(GestionClientes::class)
             ->set('expandidoId', $this->cliente->id)
-            ->assertSee('cd_sk_test1')
+            ->assertSee('cd_sk_testkey1')
             ->assertSee('192.168.1.1')
             ->assertSee('10.0.0.1')
-            ->assertSee('consultar_cedula');
+            ->assertSee('consulta:cedula');
     }
 
     public function test_toggle_detalle_cierra_el_detalle(): void

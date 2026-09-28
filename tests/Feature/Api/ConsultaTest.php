@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\ApiKey;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
 use App\Models\Consulta;
@@ -21,6 +22,8 @@ class ConsultaTest extends TestCase
 
     private Cliente $cliente;
 
+    private ApiKey $apiKey;
+
     private string $cedula = '1713175071';
 
     protected function setUp(): void
@@ -36,14 +39,12 @@ class ConsultaTest extends TestCase
             'roles' => json_encode(['cliente']),
         ]);
 
-        $this->cliente = Cliente::create([
-            'usuario_id' => $usuario->id,
-            'saldo_creditos' => 100,
-            'api_key_prefijo' => substr($this->validApiKey, 6, 8),
-            'api_key_hash' => $apiKeyHash,
-            'api_key_creada' => now(),
-            'api_key_revocada' => false,
-            'api_key_alcance' => ['consulta:cedula'],
+        $this->cliente = Cliente::create(['usuario_id' => $usuario->id, 'saldo_creditos' => 100]);
+        $this->apiKey = $this->cliente->apiKeys()->create([
+            'nombre' => 'Cedula test',
+            'prefijo' => substr($this->validApiKey, 6, 8),
+            'hash' => $apiKeyHash,
+            'alcance' => ['consulta:cedula'],
         ]);
 
         ConfigParametro::create([
@@ -93,7 +94,7 @@ class ConsultaTest extends TestCase
 
     public function test_with_revoked_api_key(): void
     {
-        $this->cliente->update(['api_key_revocada' => true]);
+        $this->apiKey->update(['revocada' => true]);
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer '.$this->validApiKey,
@@ -244,8 +245,9 @@ class ConsultaTest extends TestCase
             'cedula' => $this->cedula,
         ]);
 
-        $this->cliente->refresh();
-        $this->assertNotNull($this->cliente->api_key_ultimo_uso);
+        $this->apiKey->refresh();
+        $this->assertNotNull($this->apiKey->ultimo_uso_en);
+        $this->assertDatabaseHas('consultas', ['api_key_id' => $this->apiKey->id]);
     }
 
     public function test_returns_normalized_data_structure(): void

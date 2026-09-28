@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\ApiKey;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
 use App\Models\Consulta;
@@ -22,6 +23,8 @@ class ConsultaRucTest extends TestCase
 
     private Cliente $cliente;
 
+    private ApiKey $apiKey;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -30,10 +33,12 @@ class ConsultaRucTest extends TestCase
             'uid' => 'ruc-test-client', 'email' => 'ruc@test.com', 'nombre' => 'RUC Test',
             'roles' => json_encode(['cliente']),
         ]);
-        $this->cliente = Cliente::create([
-            'usuario_id' => $usuario->id, 'saldo_creditos' => 10,
-            'api_key_hash' => Hash::make(substr(self::API_KEY, 15)), 'api_key_prefijo' => substr(self::API_KEY, 6, 8),
-            'api_key_revocada' => false, 'api_key_alcance' => ['consulta:ruc'],
+        $this->cliente = Cliente::create(['usuario_id' => $usuario->id, 'saldo_creditos' => 10]);
+        $this->apiKey = $this->cliente->apiKeys()->create([
+            'nombre' => 'RUC test',
+            'hash' => Hash::make(substr(self::API_KEY, 15)),
+            'prefijo' => substr(self::API_KEY, 6, 8),
+            'alcance' => ['consulta:ruc'],
         ]);
         ConfigParametro::create(['modulo' => 'consulta', 'clave' => 'costoConsultaBase', 'valor' => json_encode(1)]);
     }
@@ -52,6 +57,7 @@ class ConsultaRucTest extends TestCase
         $response->assertJsonPath('metadatos.creditos_gastados', 1);
         $this->assertSame(9.0, (float) $this->cliente->refresh()->saldo_creditos);
         $this->assertDatabaseHas('consultas', ['tipo' => 'ruc', 'identificador' => self::RUC, 'exitosa' => true]);
+        $this->assertDatabaseHas('consultas', ['tipo' => 'ruc', 'api_key_id' => $this->apiKey->id]);
         $this->assertDatabaseHas('logs_actividad', ['accion' => 'CONSULTA_RUC']);
     }
 
@@ -83,10 +89,27 @@ class ConsultaRucTest extends TestCase
 
     public function test_missing_scope_returns_forbidden(): void
     {
-        $this->cliente->update(['api_key_alcance' => ['consulta:cedula']]);
+        $this->apiKey->update(['alcance' => ['consulta:cedula']]);
 
         $this->withHeaders($this->headers())->postJson('/api/v1/consulta/ruc', ['ruc' => self::RUC])
             ->assertStatus(403)->assertJsonPath('error.tipo', 'PERMISO_INSUFICIENTE');
+    }
+
+    public function test_clave_de_otro_sistema_no_hereda_scopes_del_cliente_ni_de_su_otra_clave(): void
+    {
+        $otraClave = $this->cliente->apiKeys()->create([
+            'nombre' => 'Aplicación de cédulas',
+            'prefijo' => '87654321',
+            'hash' => Hash::make(str_repeat('d', 64)),
+            'alcance' => ['consulta:cedula'],
+        ]);
+
+        $this->withToken('cd_sk_87654321_'.str_repeat('d', 64))
+            ->postJson('/api/v1/consulta/ruc', ['ruc' => self::RUC])
+            ->assertForbidden()->assertJsonPath('error.tipo', 'PERMISO_INSUFICIENTE');
+
+        $this->assertSame(['consulta:ruc'], $this->apiKey->fresh()->alcance);
+        $this->assertSame(['consulta:cedula'], $otraClave->fresh()->alcance);
     }
 
     public function test_insufficient_balance_does_not_call_service(): void

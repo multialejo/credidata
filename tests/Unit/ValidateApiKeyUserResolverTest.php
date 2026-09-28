@@ -18,7 +18,7 @@ class ValidateApiKeyUserResolverTest extends TestCase
     {
         $usuario = Usuario::create(['uid' => 'resolver', 'email' => 'resolver@test.com', 'nombre' => 'Resolver', 'roles' => ['cliente']]);
         $cliente = Cliente::create(['usuario_id' => $usuario->id, 'saldo_creditos' => 0]);
-        $key = app(ApiKeyService::class)->issue($cliente, ['scopes' => ['consulta:cedula'], 'ips' => []], $usuario->id);
+        $key = app(ApiKeyService::class)->issue($cliente, ['name' => 'Resolver test', 'scopes' => ['consulta:cedula'], 'ips' => []], $usuario->id);
 
         $request = Request::create('/api/v1/consulta/cedula', 'POST', [], [], [], [
             'HTTP_AUTHORIZATION' => 'Bearer '.$key,
@@ -31,6 +31,8 @@ class ValidateApiKeyUserResolverTest extends TestCase
         }, 'consulta:cedula');
 
         $this->assertNotNull($captured, 'El middleware debe dejar pasar la petición.');
+        $this->assertSame($cliente->id, $captured->cliente_autenticado->id);
+        $this->assertSame($cliente->id, $captured->api_key_autenticada->cliente_id);
         $this->assertSame($usuario->id, $captured->user()?->id);
         $this->assertNull($captured->user('sanctum'));
         $this->assertNull($captured->user('web'));

@@ -47,7 +47,7 @@ class ColaboracionService
         });
     }
 
-    public function registrarAporte(Colaborador $colaborador, string $identificador, string $tipo, string $valor, string $ip): Aporte
+    public function registrarAporte(Colaborador $colaborador, string $identificador, string $tipo, string $valor, string $ip, ?int $apiKeyId = null): Aporte
     {
         if ($colaborador->estado_colaborador !== 'activo') {
             throw ValidationException::withMessages(['colaborador' => 'El colaborador no está activo.']);
@@ -81,7 +81,7 @@ class ColaboracionService
             throw ValidationException::withMessages(['valor' => 'Este dato ya está registrado para el identificador indicado.']);
         }
 
-        $aporte = DB::transaction(function () use ($colaborador, $identificador, $tipo, $valor, $destination, $recoveryQuery, $pendingQuery) {
+        $aporte = DB::transaction(function () use ($colaborador, $identificador, $tipo, $valor, $apiKeyId, $destination, $recoveryQuery, $pendingQuery) {
             $colaborador = Colaborador::query()->lockForUpdate()->findOrFail($colaborador->id);
             if ($colaborador->estado_colaborador !== 'activo') {
                 throw ValidationException::withMessages(['colaborador' => 'El colaborador no está activo.']);
@@ -113,6 +113,7 @@ class ColaboracionService
 
             return Aporte::create([
                 'colaborador_id' => $colaborador->id,
+                'api_key_id' => $apiKeyId,
                 'identificador_relacionado' => $identificador,
                 'tipo_dato' => $tipo,
                 'valor' => $valor,

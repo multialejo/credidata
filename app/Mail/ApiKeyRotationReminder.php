@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\Cliente;
+use App\Models\ApiKey;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -13,7 +13,7 @@ class ApiKeyRotationReminder extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public readonly Cliente $cliente) {}
+    public function __construct(public readonly ApiKey $apiKey) {}
 
     public function envelope(): Envelope
     {
@@ -22,6 +22,6 @@ class ApiKeyRotationReminder extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.api-key-rotation-reminder');
+        return new Content(view: 'emails.api-key-rotation-reminder', with: ['apiKey' => $this->apiKey]);
     }
 }

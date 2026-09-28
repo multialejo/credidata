@@ -16,7 +16,6 @@ use OpenApi\Annotations as OA;
  * @OA\Server(url="/", description="Servidor actual")
  *
  * @OA\Tag(name="Consultas", description="Consultas cobrables con API Key")
- * @OA\Tag(name="API Key", description="Administración de la API Key autenticada")
  * @OA\Tag(name="Sesión", description="Usuario autenticado")
  * @OA\Tag(name="Recargas PayPal", description="Recargas de cliente con PayPal")
  * @OA\Tag(name="Recargas Payphone", description="Recargas de cliente con Payphone")
@@ -58,15 +57,16 @@ class OpenApi
     /**
      * @OA\Post(
      *   path="/api/v1/consulta/cedula", tags={"Consultas"}, summary="Consulta una cédula",
-     *   description="Requiere API Key Bearer activa, IP permitida y scope consulta:cedula (o wildcard aplicable). Las respuestas 404 consumen créditos.", security={{"ApiKeyBearer":{}}},
+     *   description="Requiere una API Key Bearer activa, IP permitida y scope consulta:cedula (o wildcard aplicable). Asigna una clave independiente a cada aplicación. Las respuestas 404 consumen créditos; un 503 por indisponibilidad de Dinardap no consume créditos.", security={{"ApiKeyBearer":{}}},
      *
      *   @OA\RequestBody(required=true, @OA\JsonContent(required={"cedula"}, @OA\Property(property="cedula", type="string", example="0912345678", description="Identificador ecuatoriano válido."))),
      *
      *   @OA\Response(response=200, description="Consulta exitosa", @OA\JsonContent(allOf={@OA\Schema(ref="#/components/schemas/Respuesta"), @OA\Schema(@OA\Property(property="datos", ref="#/components/schemas/ConsultaCedula"))})),
-     *   @OA\Response(response=401, description="API Key inválida, revocada, sin scope o IP no permitida", @OA\JsonContent(ref="#/components/schemas/Respuesta")),
+     *   @OA\Response(response=401, description="API Key ausente, inválida o revocada", @OA\JsonContent(ref="#/components/schemas/Respuesta")),
+     *   @OA\Response(response=403, description="Cliente inactivo, scope insuficiente o IP no permitida", @OA\JsonContent(ref="#/components/schemas/Respuesta")),
      *   @OA\Response(response=402, description="Saldo insuficiente", @OA\JsonContent(ref="#/components/schemas/Respuesta")),
      *   @OA\Response(response=404, description="No se encontraron datos; es una consulta cobrable", @OA\JsonContent(ref="#/components/schemas/Respuesta")),
-     *   @OA\Response(response=422, description="Cédula inválida"), @OA\Response(response=503, description="Dinardap no disponible", @OA\JsonContent(ref="#/components/schemas/Respuesta"))
+     *   @OA\Response(response=422, description="Cédula inválida"), @OA\Response(response=503, description="Dinardap no disponible; no se consumen créditos", @OA\JsonContent(ref="#/components/schemas/Respuesta"))
      * )
      */
     public function consultaCedula(): void {}
@@ -74,25 +74,15 @@ class OpenApi
     /**
      * @OA\Post(
      *   path="/api/v1/consulta/ruc", tags={"Consultas"}, summary="Consulta establecimientos por RUC",
-     *   description="Requiere API Key Bearer activa, IP permitida y scope consulta:ruc (o wildcard aplicable). Un 404 sin establecimientos es exitoso y cobrable.", security={{"ApiKeyBearer":{}}},
+     *   description="Requiere una API Key Bearer activa, IP permitida y scope consulta:ruc (o wildcard aplicable). Asigna una clave independiente a cada aplicación. Un 404 sin establecimientos es exitoso y cobrable.", security={{"ApiKeyBearer":{}}},
      *
      *   @OA\RequestBody(required=true, @OA\JsonContent(required={"ruc"}, @OA\Property(property="ruc", type="string", minLength=13, maxLength=13, pattern="^[0-9]+$", example="0991234567001"))),
      *
-     *   @OA\Response(response=200, description="Establecimientos encontrados", @OA\JsonContent(ref="#/components/schemas/Respuesta")), @OA\Response(response=401, description="API Key no autorizada"), @OA\Response(response=402, description="Saldo insuficiente"),
-     *   @OA\Response(response=404, description="No se encontraron establecimientos; datos contiene ruc y establecimientos vacío", @OA\JsonContent(ref="#/components/schemas/Respuesta")), @OA\Response(response=422, description="RUC inválido"), @OA\Response(response=503, description="Catastro SRI no disponible")
+     *   @OA\Response(response=200, description="Establecimientos encontrados", @OA\JsonContent(ref="#/components/schemas/Respuesta")), @OA\Response(response=401, description="API Key ausente, inválida o revocada"), @OA\Response(response=402, description="Saldo insuficiente"), @OA\Response(response=403, description="Cliente inactivo, scope insuficiente o IP no permitida"),
+     *   @OA\Response(response=404, description="No se encontraron establecimientos; datos contiene ruc y establecimientos vacío", @OA\JsonContent(ref="#/components/schemas/Respuesta")), @OA\Response(response=422, description="RUC inválido"), @OA\Response(response=503, description="Catastro SRI no disponible; no se consumen créditos")
      * )
      */
     public function consultaRuc(): void {}
-
-    /**
-     * @OA\Post(path="/api/v1/api-key/revocar", tags={"API Key"}, summary="Revoca la API Key actual", description="No recibe cuerpo. La key revocada deja de poder autenticarse.", security={{"ApiKeyBearer":{}}}, @OA\Response(response=200, description="API Key revocada", @OA\JsonContent(ref="#/components/schemas/Respuesta")), @OA\Response(response=401, description="API Key inválida o revocada"))
-     */
-    public function revocarApiKey(): void {}
-
-    /**
-     * @OA\Post(path="/api/v1/api-key/rotar", tags={"API Key"}, summary="Rota la API Key actual", description="Los campos omitidos conservan su valor actual. api_key solo se entrega en esta respuesta y no puede recuperarse.", security={{"ApiKeyBearer":{}}}, @OA\RequestBody(@OA\JsonContent(@OA\Property(property="alias", type="string", maxLength=100, nullable=true, example="Integración ERP"), @OA\Property(property="scopes", type="array", @OA\Items(type="string", enum={"consulta:cedula","consulta:ruc","*"})), @OA\Property(property="ips", type="array", @OA\Items(type="string", format="ipv4", example="203.0.113.10")))), @OA\Response(response=200, description="Nueva key entregada una sola vez", @OA\JsonContent(ref="#/components/schemas/Respuesta")), @OA\Response(response=401, description="API Key no autorizada"), @OA\Response(response=422, description="Alias, scopes o IPs inválidos"))
-     */
-    public function rotarApiKey(): void {}
 
     /**
      * @OA\Get(path="/api/user", tags={"Sesión"}, summary="Obtiene el usuario Sanctum autenticado", security={{"SanctumBearer":{}}}, @OA\Response(response=200, description="Usuario autenticado", @OA\JsonContent(ref="#/components/schemas/Usuario")), @OA\Response(response=401, description="Token Sanctum ausente o inválido"))

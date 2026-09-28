@@ -5,7 +5,7 @@
         <div>
             <label class="ui-label mb-1 text-xs" for="clientes-buscar">Buscar</label>
             <input id="clientes-buscar" type="search" wire:model.live.debounce.300ms="buscar"
-                placeholder="Buscar por nombre, email o prefijo API Key"
+                placeholder="Buscar por nombre, email o prefijo de API Key"
                 class="ui-input w-full">
         </div>
         <div>
@@ -37,7 +37,7 @@
                         <th scope="col">Nombre</th>
                         <th scope="col">Saldo</th>
                         <th scope="col">Estado</th>
-                        <th scope="col">Prefijo API Key</th>
+                        <th scope="col">API Keys</th>
                         <th scope="col">Consultas hoy / total</th>
                         <th scope="col">Acciones</th>
                     </tr>
@@ -60,7 +60,7 @@
                                     <span class="ui-table-badge bg-slate-100 text-slate-700">—</span>
                                 @endif
                             </td>
-                            <td class="font-mono text-xs">{{ $cliente->api_key_prefijo ?? '—' }}</td>
+                            <td class="whitespace-nowrap">{{ $cliente->api_keys_count }}</td>
                             <td class="whitespace-nowrap tabular-nums">
                                 {{ $cliente->consultas_hoy_count ?? 0 }} / {{ $cliente->consultas_count ?? 0 }}
                             </td>
@@ -77,62 +77,40 @@
                                 <td colspan="7" class="px-4 py-4">
                                     @if($detalle && $detalle->id === $cliente->id)
                                         @php
-                                            $tieneApiKey = $detalle->api_key_prefijo || $detalle->api_key_creada || $detalle->api_key_ips_permitidas || $detalle->api_key_alcance;
                                         @endphp
 
-                                        {{-- API Key --}}
                                         <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4">
-                                            <h4 class="ui-section-title mb-3 text-base">API Key</h4>
-                                            @if($tieneApiKey)
-                                                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                                                    <div class="flex gap-2">
-                                                        <dt class="text-slate-500">Prefijo:</dt>
-                                                        <dd class="font-mono text-[#14213d]">{{ $detalle->api_key_prefijo ?? '—' }}</dd>
-                                                    </div>
-                                                    <div class="flex gap-2">
-                                                        <dt class="text-slate-500">Creada:</dt>
-                                                        <dd class="text-[#14213d]">{{ $detalle->api_key_creada?->format('d/m/Y H:i') ?? '—' }}</dd>
-                                                    </div>
-                                                    <div class="flex gap-2">
-                                                        <dt class="text-slate-500">Revocada:</dt>
-                                                        <dd class="text-[#14213d]">
-                                                            @if($detalle->api_key_revocada)
-                                                                Sí
-                                                                @if($detalle->api_key_revocada_en)
-                                                                    <span class="text-slate-500">({{ $detalle->api_key_revocada_en->format('d/m/Y H:i') }})</span>
-                                                                @endif
-                                                            @else
-                                                                No
-                                                            @endif
-                                                        </dd>
-                                                    </div>
-                                                    <div class="flex gap-2">
-                                                        <dt class="text-slate-500">Último uso:</dt>
-                                                        <dd class="text-[#14213d]">{{ $detalle->api_key_ultimo_uso?->format('d/m/Y H:i') ?? '—' }}</dd>
-                                                    </div>
-                                                    <div class="flex gap-2 sm:col-span-2">
-                                                        <dt class="text-slate-500">IPs permitidas:</dt>
-                                                        <dd class="text-[#14213d]">
-                                                            @if(!empty($detalle->api_key_ips_permitidas))
-                                                                {{ implode(', ', $detalle->api_key_ips_permitidas) }}
-                                                            @else
-                                                                —
-                                                            @endif
-                                                        </dd>
-                                                    </div>
-                                                    <div class="flex gap-2 sm:col-span-2">
-                                                        <dt class="text-slate-500">Alcance:</dt>
-                                                        <dd class="text-[#14213d]">
-                                                            @if(!empty($detalle->api_key_alcance))
-                                                                {{ implode(', ', $detalle->api_key_alcance) }}
-                                                            @else
-                                                                —
-                                                            @endif
-                                                        </dd>
-                                                    </div>
-                                                </dl>
+                                            <h4 class="ui-section-title mb-3 text-base">API Keys</h4>
+                                            @if($detalle->apiKeys->isNotEmpty())
+                                                <div class="overflow-x-auto">
+                                                    <table class="ui-data-table__table ui-data-table__table--compact">
+                                                        <caption class="sr-only">API Keys del cliente {{ $detalle->usuario->nombre }}</caption>
+                                                        <thead>
+                                                            <tr>
+                                                                <th scope="col">Aplicativo</th>
+                                                                <th scope="col">Estado</th>
+                                                                <th scope="col">Prefijo</th>
+                                                                <th scope="col">Último uso</th>
+                                                                <th scope="col">Permisos</th>
+                                                                <th scope="col">IPs permitidas</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach($detalle->apiKeys as $apiKey)
+                                                                <tr wire:key="cliente-{{ $detalle->id }}-api-key-{{ $apiKey->id }}">
+                                                                    <th scope="row" class="text-left font-semibold">{{ $apiKey->nombre }}</th>
+                                                                    <td>{{ $apiKey->revocada ? 'Revocada' : 'Activa' }}</td>
+                                                                    <td><code class="font-mono text-xs">cd_sk_{{ $apiKey->prefijo }}</code></td>
+                                                                    <td class="whitespace-nowrap">{{ $apiKey->ultimo_uso_en?->format('d/m/Y H:i') ?? 'Nunca' }}</td>
+                                                                    <td>{{ implode(', ', $apiKey->alcance ?? []) ?: '—' }}</td>
+                                                                    <td>{{ implode(', ', $apiKey->ips_permitidas ?? []) ?: 'Todas' }}</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             @else
-                                                <p class="text-sm text-slate-500">Sin API Key generada.</p>
+                                                <p class="text-sm text-slate-500">Sin API Keys generadas.</p>
                                             @endif
                                         </div>
 

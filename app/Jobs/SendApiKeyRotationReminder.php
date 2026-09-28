@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Mail\ApiKeyRotationReminder;
-use App\Models\Cliente;
+use App\Models\ApiKey;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -19,23 +19,23 @@ class SendApiKeyRotationReminder implements ShouldQueue
 
     public int $backoff = 60;
 
-    public function __construct(public readonly int $clienteId) {}
+    public function __construct(public readonly int $apiKeyId) {}
 
     public function handle(): void
     {
-        $cliente = Cliente::with('usuario')->find($this->clienteId);
+        $apiKey = ApiKey::with('cliente.usuario')->find($this->apiKeyId);
 
-        if (! $cliente || $cliente->api_key_revocada || $cliente->api_key_formato !== 'v2') {
+        if (! $apiKey || $apiKey->revocada || $apiKey->formato !== 'v2') {
             return;
         }
 
-        $usuario = $cliente->usuario;
+        $usuario = $apiKey->cliente->usuario;
         if (! $usuario || ! $usuario->email) {
             return;
         }
 
-        Mail::to($usuario->email)->send(new ApiKeyRotationReminder($cliente));
+        Mail::to($usuario->email)->send(new ApiKeyRotationReminder($apiKey));
 
-        $cliente->updateQuietly(['api_key_notificacion_rotacion_enviada' => now()]);
+        $apiKey->updateQuietly(['notificacion_rotacion_enviada_en' => now()]);
     }
 }

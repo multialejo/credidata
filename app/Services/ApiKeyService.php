@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ApiKey;
 use App\Models\Cliente;
 use App\Models\LogActividad;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -22,6 +23,11 @@ class ApiKeyService
 
     public function issue(Cliente $cliente, array $options = [], ?int $actorId = null, string $ip = 'sistema', string $action = 'API_KEY_GENERADA'): string
     {
+        $options = $this->validateOptions($options);
+        if ($cliente->apiKeys()->where('nombre', $options['name'])->exists()) {
+            throw ValidationException::withMessages(['name' => 'Ya existe una API Key con este nombre para el cliente.']);
+        }
+
         for ($attempt = 0; $attempt < 3; $attempt++) {
             try {
                 $secret = bin2hex(random_bytes(32));
@@ -29,18 +35,18 @@ class ApiKeyService
                 $publicPrefix = 'cd_sk_'.$prefix;
                 $now = now();
 
-                $cliente->update([
-                    'api_key_hash' => Hash::make($secret),
-                    'api_key_prefijo' => $prefix,
-                    'api_key_alias' => $options['alias'] ?? $cliente->api_key_alias,
-                    'api_key_creada' => $now,
-                    'api_key_revocada' => false,
-                    'api_key_revocada_en' => null,
-                    'api_key_ips_permitidas' => $options['ips'] ?? $cliente->api_key_ips_permitidas,
-                    'api_key_alcance' => $options['scopes'] ?? ($cliente->api_key_alcance ?: ['consulta:cedula', 'consulta:ruc']),
-                    'api_key_rotacion_sugerida_en' => $now->copy()->addDays($this->parameter('diasSugerenciaRotacion', 90)),
-                    'api_key_notificacion_rotacion_enviada' => null,
-                    'api_key_formato' => 'v2',
+                $apiKey = $cliente->apiKeys()->create([
+                    'nombre' => $options['name'],
+                    'hash' => Hash::make($secret),
+                    'prefijo' => $prefix,
+                    'creada_en' => $now,
+                    'revocada' => false,
+                    'revocada_en' => null,
+                    'ips_permitidas' => $options['ips'],
+                    'alcance' => $options['scopes'],
+                    'rotacion_sugerida_en' => $now->copy()->addDays($this->parameter('diasSugerenciaRotacion', 90)),
+                    'notificacion_rotacion_enviada_en' => null,
+                    'formato' => 'v2',
                 ]);
                 break;
             } catch (UniqueConstraintViolationException $exception) {
@@ -54,30 +60,65 @@ class ApiKeyService
             'accion' => $action,
             'actor_id' => $actorId ?? $cliente->usuario_id,
             'actor_sistema' => $actorId === null,
-            'detalle' => ['prefijo' => $publicPrefix, 'origen' => $ip],
+            'detalle' => ['api_key_id' => $apiKey->id, 'nombre' => $apiKey->nombre, 'prefijo' => $publicPrefix, 'origen' => $ip],
             'ip_origen' => $ip,
         ]);
 
         return 'cd_sk_'.$prefix.'_'.$secret;
     }
 
-    public function rotate(Cliente $cliente, array $options, int $actorId, string $ip): string
+    public function rotate(ApiKey $apiKey, array $options, int $actorId, string $ip): string
     {
-        return DB::transaction(function () use ($cliente, $options, $actorId, $ip): string {
-            $cliente->update(['api_key_revocada' => true, 'api_key_revocada_en' => now()]);
-            $this->logRevocation($cliente, $actorId, $ip, 'API_KEY_ROTADA_ANTERIOR');
+        return DB::transaction(function () use ($apiKey, $options, $actorId, $ip): string {
+            $options = $this->validateOptions([
+                'name' => $apiKey->nombre,
+                'ips' => $options['ips'] ?? $apiKey->ips_permitidas ?? [],
+                'scopes' => $options['scopes'] ?? $apiKey->alcance ?? [],
+            ]);
+            $secret = bin2hex(random_bytes(32));
+            $prefix = substr($secret, 0, 8);
+            $apiKey->update([
+                'prefijo' => $prefix,
+                'hash' => Hash::make($secret),
+                'creada_en' => now(),
+                'revocada' => false,
+                'revocada_en' => null,
+                'ultimo_uso_en' => null,
+                'ips_permitidas' => $options['ips'],
+                'alcance' => $options['scopes'],
+                'rotacion_sugerida_en' => now()->addDays($this->parameter('diasSugerenciaRotacion', 90)),
+                'notificacion_rotacion_enviada_en' => null,
+            ]);
 
-            return $this->issue($cliente, $options, $actorId, $ip, 'API_KEY_ROTADA');
+            LogActividad::create([
+                'accion' => 'API_KEY_ROTADA',
+                'actor_id' => $actorId,
+                'actor_sistema' => false,
+                'detalle' => ['api_key_id' => $apiKey->id, 'nombre' => $apiKey->nombre, 'prefijo' => 'cd_sk_'.$prefix],
+                'ip_origen' => $ip,
+            ]);
+
+            return 'cd_sk_'.$prefix.'_'.$secret;
         });
     }
 
-    public function logRevocation(Cliente $cliente, int $actorId, string $ip, string $action = 'API_KEY_REVOCADA'): void
+    public function revoke(ApiKey $apiKey, int $actorId, string $ip, string $action = 'API_KEY_REVOCADA'): void
     {
-        LogActividad::create(['accion' => $action, 'actor_id' => $actorId, 'actor_sistema' => false,
-            'detalle' => ['prefijo' => $cliente->api_key_prefijo], 'ip_origen' => $ip]);
+        if ($apiKey->revocada) {
+            return;
+        }
+
+        $apiKey->update(['revocada' => true, 'revocada_en' => now()]);
+        LogActividad::create([
+            'accion' => $action,
+            'actor_id' => $actorId,
+            'actor_sistema' => false,
+            'detalle' => ['api_key_id' => $apiKey->id, 'nombre' => $apiKey->nombre, 'prefijo' => $apiKey->prefijo],
+            'ip_origen' => $ip,
+        ]);
     }
 
-    public function authenticate(Request $request): Cliente|string|null
+    public function authenticate(Request $request): ApiKey|string|null
     {
         $header = $request->header('Authorization');
         if (! $header || ! preg_match('/^Bearer\s+(.+)$/', $header, $matches)) {
@@ -89,18 +130,18 @@ class ApiKeyService
             return 'invalid';
         }
 
-        $cliente = Cliente::where('api_key_prefijo', $parts[1])->first();
-        if (! $cliente || ! Hash::check($parts[2], (string) $cliente->api_key_hash)) {
+        $apiKey = ApiKey::with('cliente.usuario')->where('prefijo', $parts[1])->first();
+        if (! $apiKey || ! Hash::check($parts[2], (string) $apiKey->hash)) {
             return 'invalid';
         }
-        if ($cliente->api_key_revocada) {
+        if ($apiKey->revocada) {
             return 'revoked';
         }
-        if ($cliente->usuario->estado !== 'activo') {
+        if ($apiKey->cliente->usuario->estado !== 'activo') {
             return 'inactive';
         }
 
-        return $cliente;
+        return $apiKey;
     }
 
     public function validateOptions(array $data): array
@@ -112,21 +153,45 @@ class ApiKeyService
             throw ValidationException::withMessages(['ips' => 'Las IPs deben ser un arreglo.']);
         }
 
-        $scopes = array_values(array_unique($data['scopes'] ?? ['consulta:cedula', 'consulta:ruc']));
+        $scopes = $data['scopes'] ?? ['consulta:cedula', 'consulta:ruc'];
+        if ($scopes === []) {
+            throw ValidationException::withMessages(['scopes' => 'Selecciona al menos un permiso.']);
+        }
         foreach ($scopes as $scope) {
-            if (! in_array($scope, self::SCOPES, true)) {
+            if (! is_string($scope) || ! in_array($scope, self::SCOPES, true)) {
                 throw ValidationException::withMessages(['scopes' => 'El alcance seleccionado no es válido.']);
             }
         }
+        $scopes = array_values(array_unique($scopes));
 
-        $ips = array_values(array_filter(array_map('trim', $data['ips'] ?? [])));
+        $ips = [];
+        foreach ($data['ips'] ?? [] as $ip) {
+            if (! is_string($ip)) {
+                throw ValidationException::withMessages(['ips' => 'Cada IP debe ser texto.']);
+            }
+
+            $ip = trim($ip);
+            if ($ip === '') {
+                continue;
+            }
+            $ips[] = $ip;
+        }
+
         foreach ($ips as $ip) {
             if (! filter_var($ip, FILTER_VALIDATE_IP)) {
                 throw ValidationException::withMessages(['ips' => "La IP {$ip} no es válida."]);
             }
         }
 
-        return ['alias' => trim((string) ($data['alias'] ?? '')) ?: null, 'ips' => $ips, 'scopes' => $scopes];
+        $name = trim((string) ($data['name'] ?? ''));
+        if ($name === '') {
+            throw ValidationException::withMessages(['name' => 'El nombre del aplicativo es obligatorio.']);
+        }
+        if (mb_strlen($name) > 100) {
+            throw ValidationException::withMessages(['name' => 'El nombre del aplicativo no puede superar 100 caracteres.']);
+        }
+
+        return ['name' => $name, 'ips' => array_values(array_unique($ips)), 'scopes' => $scopes];
     }
 
     public function parameter(string $key, int $fallback): int

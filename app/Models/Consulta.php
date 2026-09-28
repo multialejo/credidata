@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Consulta extends Model
 {
     protected $fillable = [
-        'cliente_id', 'tipo', 'identificador', 'sujeto_id', 'origen',
+        'cliente_id', 'api_key_id', 'tipo', 'identificador', 'sujeto_id', 'origen',
         'creditos_gastados', 'resultado_json', 'fuentes_utilizadas',
         'exitosa', 'ip_origen', 'fecha',
     ];
@@ -23,5 +23,10 @@ class Consulta extends Model
     public function cliente()
     {
         return $this->belongsTo(Cliente::class, 'cliente_id', 'id');
+    }
+
+    public function apiKey()
+    {
+        return $this->belongsTo(ApiKey::class, 'api_key_id');
     }
 }

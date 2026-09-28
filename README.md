@@ -76,7 +76,6 @@ Without this step, you'll see a `ViteManifestNotFoundException` when visiting th
 
 | Command | Description |
 |---|---|
-| `sail artisan apikey:generate {uid}` | Genera una API key para un cliente |
 | `sail artisan credito:asignar {uid} {cantidad}` | Asigna créditos manualmente a un cliente |
 | `sail artisan firebase:vacas` | List documents from the Firestore `vacas` collection |
 

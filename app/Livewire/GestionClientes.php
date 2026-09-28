@@ -48,6 +48,7 @@ class GestionClientes extends Component
         $clientes = Cliente::query()
             ->with('usuario')
             ->withCount([
+                'apiKeys',
                 'consultas',
                 'consultas as consultas_hoy_count' => fn ($q) => $q->whereDate('fecha', today()),
             ])
@@ -56,7 +57,7 @@ class GestionClientes extends Component
                     $q->whereHas('usuario', function ($qu) {
                         $qu->where('nombre', 'like', "%{$this->buscar}%")
                             ->orWhere('email', 'like', "%{$this->buscar}%");
-                    })->orWhere('api_key_prefijo', 'like', "%{$this->buscar}%");
+                    })->orWhereHas('apiKeys', fn ($keyQuery) => $keyQuery->where('prefijo', 'like', "%{$this->buscar}%"));
                 });
             })
             ->when($this->estado !== '', fn ($q) => $q->whereHas('usuario', fn ($qu) => $qu->where('estado', $this->estado)))
@@ -66,6 +67,7 @@ class GestionClientes extends Component
         $detalle = null;
         if ($this->expandidoId) {
             $detalle = Cliente::with([
+                'apiKeys' => fn ($q) => $q->latest('id'),
                 'consultas' => fn ($q) => $q->latest('fecha')->take(20),
                 'recargas' => fn ($q) => $q->latest('fecha')->take(20),
             ])->find($this->expandidoId);

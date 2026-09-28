@@ -3,7 +3,6 @@
 use App\Http\Controllers\Api\AdminAporteController;
 use App\Http\Controllers\Api\AdminRecargaController;
 use App\Http\Controllers\Api\AdminRecargaEvidenceController;
-use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\ColaboradorController;
 use App\Http\Controllers\Api\ConsultaController;
 use App\Http\Controllers\Api\RecargaPaypalController;
@@ -15,11 +14,6 @@ Route::post('/v1/consulta/cedula', [ConsultaController::class, 'consultaCedula']
     ->middleware('api.key:consulta:cedula');
 Route::post('/v1/consulta/ruc', [ConsultaController::class, 'consultaRuc'])
     ->middleware('api.key:consulta:ruc');
-
-Route::middleware('api.key')->group(function () {
-    Route::post('/v1/api-key/revocar', [ApiKeyController::class, 'revocar']);
-    Route::post('/v1/api-key/rotar', [ApiKeyController::class, 'rotar']);
-});
 
 Route::post('v1/colaboradores/registro', [ColaboradorController::class, 'registro'])
     ->middleware('api.key:colaboradores:registro');

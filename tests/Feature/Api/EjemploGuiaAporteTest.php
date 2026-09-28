@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\ApiKey;
 use App\Models\Aporte;
 use App\Models\Cliente;
 use App\Models\Colaborador;
@@ -57,6 +58,10 @@ class EjemploGuiaAporteTest extends TestCase
 
         // La guia afirma que el 201 no trae metadatos, a diferencia del resto de la API.
         $this->assertArrayNotHasKey('metadatos', $response->json());
+        $this->assertDatabaseHas('aportes', [
+            'id' => $response->json('datos.aporte.id'),
+            'api_key_id' => ApiKey::where('prefijo', substr($key, 6, 8))->value('id'),
+        ]);
     }
 
     public function test_una_reescritura_queda_pendiente_sin_acreditar_creditos(): void
@@ -104,7 +109,7 @@ class EjemploGuiaAporteTest extends TestCase
             'estado' => 'pendiente',
             'fecha' => now(),
         ]);
-        $key = app(ApiKeyService::class)->issue($cliente, ['scopes' => ['colaboradores:aportes'], 'ips' => []], $usuario->id);
+        $key = app(ApiKeyService::class)->issue($cliente, ['name' => 'Guia de aportes', 'scopes' => ['colaboradores:aportes'], 'ips' => []], $usuario->id);
 
         $this->withHeader('Authorization', 'Bearer '.$key)
             ->postJson('/api/v1/colaboradores/datos', [
@@ -197,7 +202,7 @@ class EjemploGuiaAporteTest extends TestCase
         $cliente = Cliente::create(['usuario_id' => $usuario->id, 'saldo_creditos' => 0]);
         Colaborador::create(['usuario_id' => $usuario->id, 'estado_colaborador' => 'activo', 'terminos_version' => 1, 'terminos_aceptados_en' => now()]);
 
-        return app(ApiKeyService::class)->issue($cliente, ['scopes' => ['colaboradores:aportes'], 'ips' => []], $usuario->id);
+        return app(ApiKeyService::class)->issue($cliente, ['name' => 'Guia de aportes', 'scopes' => ['colaboradores:aportes'], 'ips' => []], $usuario->id);
     }
 
     private function mockSujeto(array $data): void

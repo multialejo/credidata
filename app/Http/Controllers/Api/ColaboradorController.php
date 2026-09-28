@@ -23,7 +23,14 @@ class ColaboradorController extends Controller
 
     public function datos(RegistrarAporteRequest $request, ColaboracionService $service): JsonResponse
     {
-        $aporte = $service->registrarAporte($request->user()->colaborador, ...[$request->validated('identificador'), $request->validated('tipo_dato'), $request->validated('valor'), $request->ip()]);
+        $aporte = $service->registrarAporte(
+            $request->user()->colaborador,
+            $request->validated('identificador'),
+            $request->validated('tipo_dato'),
+            $request->validated('valor'),
+            $request->ip(),
+            $request->api_key_autenticada->id,
+        );
 
         return response()->json(['codigo' => 201, 'exito' => true, 'mensaje' => 'Aporte registrado', 'datos' => ['aporte' => new AporteResource($aporte)]], 201);
     }

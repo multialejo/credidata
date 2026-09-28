@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Aporte extends Model
 {
     protected $fillable = [
-        'colaborador_id', 'identificador_relacionado', 'tipo_dato', 'valor',
+        'colaborador_id', 'api_key_id', 'identificador_relacionado', 'tipo_dato', 'valor',
         'evidencia_url', 'estado', 'revisado_por', 'comentario_rechazo', 'comentario_revision',
         'revisado_en', 'recompensa_creditos', 'recompensado_en', 'aplicacion_pendiente', 'fecha',
     ];
@@ -22,6 +22,11 @@ class Aporte extends Model
     public function colaborador()
     {
         return $this->belongsTo(Colaborador::class, 'colaborador_id', 'id');
+    }
+
+    public function apiKey()
+    {
+        return $this->belongsTo(ApiKey::class, 'api_key_id');
     }
 
     public function revisadoPor()

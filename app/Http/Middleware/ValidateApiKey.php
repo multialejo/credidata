@@ -12,8 +12,8 @@ class ValidateApiKey
 
     public function handle(Request $request, Closure $next, ...$permisos)
     {
-        $cliente = $this->keys->authenticate($request);
-        if ($cliente === null) {
+        $apiKey = $this->keys->authenticate($request);
+        if ($apiKey === null) {
             return response()->json([
                 'codigo' => 401, 'exito' => false,
                 'mensaje' => 'API Key requerida',
@@ -22,13 +22,13 @@ class ValidateApiKey
                 'metadatos' => ['timestamp' => now()->toIso8601String()],
             ], 401);
         }
-        if ($cliente === 'revoked') {
+        if ($apiKey === 'revoked') {
             return $this->error('API_KEY_REVOCADA', 'API Key revocada', 401);
         }
-        if ($cliente === 'inactive') {
+        if ($apiKey === 'inactive') {
             return $this->error('CLIENTE_INACTIVO', 'La cuenta del cliente está inactiva o suspendida', 403);
         }
-        if ($cliente === 'invalid') {
+        if ($apiKey === 'invalid') {
             return response()->json([
                 'codigo' => 401, 'exito' => false,
                 'mensaje' => 'API Key inválida',
@@ -38,7 +38,8 @@ class ValidateApiKey
             ], 401);
         }
 
-        $alcance = $cliente->api_key_alcance ?? [];
+        $cliente = $apiKey->cliente;
+        $alcance = $apiKey->alcance ?? [];
         $permitido = empty($permisos) || collect($permisos)->contains(fn (string $permiso) => ApiKeyService::cubre($alcance, $permiso));
 
         if (! $permitido) {
@@ -49,7 +50,7 @@ class ValidateApiKey
             ], 403);
         }
 
-        $ips = $cliente->api_key_ips_permitidas ?? [];
+        $ips = $apiKey->ips_permitidas ?? [];
         if ($ips !== [] && ! in_array($request->ip(), $ips, true)) {
             return response()->json([
                 'codigo' => 403, 'exito' => false, 'mensaje' => 'IP no permitida',
@@ -58,7 +59,8 @@ class ValidateApiKey
             ], 403);
         }
 
-        $request->merge(['cliente_autenticado' => $cliente]);
+        $apiKey->forceFill(['ultimo_uso_en' => now()])->saveQuietly();
+        $request->merge(['cliente_autenticado' => $cliente, 'api_key_autenticada' => $apiKey]);
         // Convención: en una ruta `api.key` $request->user() es el dueño de la key y auth()->user()
         // sigue siendo null (no hay sesión). Un guard explícito nunca debe caer en ese usuario.
         $request->setUserResolver(fn (?string $guard = null) => $guard === null ? $cliente->usuario : null);

@@ -74,7 +74,7 @@ class ColaboradorActivationTest extends TestCase
     {
         $usuario = $this->clienteUsuario();
         $key = $this->apiKey($usuario, ['colaboradores:registro']);
-        $usuario->cliente->update(['api_key_revocada' => true, 'api_key_revocada_en' => now()]);
+        $usuario->cliente->apiKeys()->firstOrFail()->update(['revocada' => true, 'revocada_en' => now()]);
 
         $this->withHeader('Authorization', 'Bearer '.$key)->postJson('/api/v1/colaboradores/registro', ['acepta_terminos' => true])
             ->assertUnauthorized()->assertJsonPath('error.tipo', 'API_KEY_REVOCADA');
@@ -96,7 +96,7 @@ class ColaboradorActivationTest extends TestCase
 
     private function apiKey(Usuario $usuario, array $scopes): string
     {
-        return app(ApiKeyService::class)->issue($usuario->cliente, ['scopes' => $scopes, 'ips' => []], $usuario->id);
+        return app(ApiKeyService::class)->issue($usuario->cliente, ['name' => 'Colaborador API test', 'scopes' => $scopes, 'ips' => []], $usuario->id);
     }
 
     private function clienteUsuario(): Usuario

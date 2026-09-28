@@ -35,7 +35,9 @@ class OpenApiDocumentationTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
 
-        $this->assertCount(17, $specification['paths']);
+        $this->assertCount(15, $specification['paths']);
+        $this->assertArrayNotHasKey('/api/v1/api-key/rotar', $specification['paths']);
+        $this->assertArrayNotHasKey('/api/v1/api-key/revocar', $specification['paths']);
         $this->assertArrayHasKey('/api/v1/colaboradores/datos', $specification['paths']);
         $this->assertArrayHasKey('/api/v1/admin/recargas/{recarga}/comprobante', $specification['paths']);
         $this->assertArrayHasKey('ApiKeyBearer', $specification['components']['securitySchemes']);
@@ -46,6 +48,12 @@ class OpenApiDocumentationTest extends TestCase
         $this->assertSame([['ApiKeyBearer' => []]], $specification['paths']['/api/v1/colaboradores/registro']['post']['security']);
         $this->assertSame([['ApiKeyBearer' => []]], $specification['paths']['/api/v1/colaboradores/datos']['post']['security']);
         $this->assertSame([['ApiKeyBearer' => []]], $specification['paths']['/api/v1/colaboradores/aportes/{aporte}']['get']['security']);
+
+        $cedulaResponses = $specification['paths']['/api/v1/consulta/cedula']['post']['responses'];
+        $this->assertStringContainsString('revocada', $cedulaResponses['401']['description']);
+        $this->assertStringContainsString('scope', $cedulaResponses['403']['description']);
+        $this->assertStringContainsString('no se consumen créditos', $cedulaResponses['503']['description']);
+        $this->assertNotContains('API Key', array_column($specification['tags'] ?? [], 'name'));
 
         $this->get('/api/documentation')->assertOk();
         $this->get('/docs')->assertOk()->assertJsonPath('openapi', '3.0.0');

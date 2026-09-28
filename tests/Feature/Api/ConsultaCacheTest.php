@@ -54,14 +54,12 @@ class ConsultaCacheTest extends TestCase
             'roles' => json_encode(['cliente']),
         ]);
 
-        $this->cliente = Cliente::create([
-            'usuario_id' => $usuario->id,
-            'saldo_creditos' => 100,
-            'api_key_prefijo' => substr($this->validApiKey, 6, 8),
-            'api_key_hash' => $apiKeyHash,
-            'api_key_creada' => now(),
-            'api_key_revocada' => false,
-            'api_key_alcance' => ['consulta:cedula'],
+        $this->cliente = Cliente::create(['usuario_id' => $usuario->id, 'saldo_creditos' => 100]);
+        $this->cliente->apiKeys()->create([
+            'nombre' => 'Cache test',
+            'prefijo' => substr($this->validApiKey, 6, 8),
+            'hash' => $apiKeyHash,
+            'alcance' => ['consulta:cedula'],
         ]);
 
         ConfigParametro::create([

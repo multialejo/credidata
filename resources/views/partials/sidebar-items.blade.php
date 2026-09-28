@@ -31,13 +31,13 @@ $isDesktop = $variant === 'desktop';
     @if($isDesktop)
         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">Inicio</x-nav-link>
         <x-nav-link :href="route('dashboard.consultas')" :active="request()->routeIs('dashboard.consultas')" icon="clock">Historial</x-nav-link>
-        <x-nav-link :href="route('dashboard.api-key')" :active="request()->routeIs('dashboard.api-key')" icon="key">API Key</x-nav-link>
+        <x-nav-link :href="route('dashboard.api-key')" :active="request()->routeIs('dashboard.api-key')" icon="key">API Keys</x-nav-link>
         <x-nav-link :href="route('dashboard.recibos')" :active="request()->routeIs('dashboard.recibos')" icon="document-text">Recibos</x-nav-link>
         <x-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')" icon="user-circle">Perfil</x-nav-link>
     @else
         <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">Inicio</x-responsive-nav-link>
         <x-responsive-nav-link :href="route('dashboard.consultas')" :active="request()->routeIs('dashboard.consultas')" icon="clock">Historial</x-responsive-nav-link>
-        <x-responsive-nav-link :href="route('dashboard.api-key')" :active="request()->routeIs('dashboard.api-key')" icon="key">API Key</x-responsive-nav-link>
+        <x-responsive-nav-link :href="route('dashboard.api-key')" :active="request()->routeIs('dashboard.api-key')" icon="key">API Keys</x-responsive-nav-link>
         <x-responsive-nav-link :href="route('dashboard.recibos')" :active="request()->routeIs('dashboard.recibos')" icon="document-text">Recibos</x-responsive-nav-link>
         <x-responsive-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')" icon="user-circle">Perfil</x-responsive-nav-link>
     @endif
