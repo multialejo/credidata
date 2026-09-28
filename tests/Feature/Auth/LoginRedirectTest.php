@@ -48,6 +48,46 @@ class LoginRedirectTest extends TestCase
         $response->assertRedirect(route('dashboard'));
     }
 
+    public function test_staff_is_redirected_to_admin_home_instead_of_intended_url(): void
+    {
+        $usuario = Usuario::create([
+            'email' => 'staff-intended@test.com',
+            'nombre' => 'Staff Intended',
+            'password' => bcrypt('password'),
+            'roles' => ['staff'],
+        ]);
+        Staff::create(['usuario_id' => $usuario->id, 'rol_staff' => 'admin']);
+
+        $response = $this->withSession([
+            'url.intended' => route('dashboard.recargas'),
+        ])->post('/login', [
+            'email' => 'staff-intended@test.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('admin.clientes'));
+    }
+
+    public function test_cliente_is_redirected_to_dashboard_instead_of_intended_url(): void
+    {
+        $usuario = Usuario::create([
+            'email' => 'cliente-intended@test.com',
+            'nombre' => 'Cliente Intended',
+            'password' => bcrypt('password'),
+            'roles' => ['cliente'],
+        ]);
+        Cliente::create(['usuario_id' => $usuario->id]);
+
+        $response = $this->withSession([
+            'url.intended' => route('admin.recargas'),
+        ])->post('/login', [
+            'email' => 'cliente-intended@test.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+    }
+
     public function test_staff_cannot_access_dashboard(): void
     {
         $usuario = Usuario::create([
