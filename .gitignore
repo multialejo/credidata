@@ -34,3 +34,4 @@ _ide_helper_models.php
 
 # Ignore .atl
 /.atl
+/.engram/
