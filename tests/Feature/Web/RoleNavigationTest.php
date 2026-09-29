@@ -24,13 +24,14 @@ class RoleNavigationTest extends TestCase
         $response = $this->actingAs($usuario)->get(route('admin.clientes'));
 
         $response->assertOk()
-            ->assertSeeTextInOrder(['Clientes', 'Logs', 'Configuración', 'Registros', 'Recargas'])
+            ->assertSeeTextInOrder(['Aportes', 'Recargas', 'Configuración', 'Edición de Registros', 'Clientes', 'Logs'])
+            ->assertDontSeeText('Precios')
             ->assertDontSee('href="'.route('dashboard').'"', false)
             ->assertDontSee('href="'.route('dashboard.consultas').'"', false)
             ->assertDontSee('href="'.route('dashboard.api-key').'"', false)
             ->assertDontSee('href="'.route('dashboard.documentacion').'"', false)
             ->assertDontSee('href="'.route('dashboard.recibos').'"', false)
-            ->assertSee('data-testid="home-link" href="'.route('admin.clientes').'"', false);
+            ->assertSee('data-testid="home-link" href="'.route('admin.aportes').'"', false);
     }
 
     public function test_support_no_ve_logs_ni_config_y_no_puede_acceder_a_esas_rutas(): void

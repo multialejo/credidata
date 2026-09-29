@@ -36,7 +36,7 @@
     <aside class="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:flex lg:h-full lg:w-64 lg:flex-col" aria-label="Menú de navegación">
         <div class="flex h-full flex-col overflow-hidden bg-[#14213d] shadow-[4px_0_24px_-10px_rgba(20,33,61,0.35)]">
             {{-- Logo --}}
-            <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-3 px-6 py-6 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#14213d]">
+            <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.aportes') : route('dashboard') }}" class="flex items-center gap-3 px-6 py-6 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#14213d]">
                 <x-application-logo class="h-9 w-9 shrink-0 text-white" />
                 <span class="text-xl font-extrabold tracking-tight text-white">CrediData</span>
             </a>
@@ -118,7 +118,7 @@
         <button x-ref="openSidebar" @click="openSidebar()" aria-controls="mobile-navigation-drawer" :aria-expanded="sidebarOpen.toString()" class="rounded-lg p-1.5 text-slate-300 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" aria-label="Abrir menú">
             <x-icons.bars-3 class="h-6 w-6" />
         </button>
-        <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-white">
+        <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.aportes') : route('dashboard') }}" class="flex items-center gap-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-white">
             <x-application-logo class="h-8 w-8 shrink-0 text-white" />
             <span class="text-xl font-extrabold tracking-tight text-white">CrediData</span>
         </a>
@@ -133,7 +133,7 @@
         <aside id="mobile-navigation-drawer" x-ref="mobileDrawer" x-show="sidebarOpen" x-on:keydown="trapFocus($event)" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="absolute inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#14213d]" role="dialog" aria-modal="true" aria-label="Menú principal">
             {{-- Close button --}}
             <div class="flex items-center justify-between px-4 pt-5 pb-2">
-                <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.clientes') : route('dashboard') }}" class="flex items-center gap-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-white">
+                <a data-testid="home-link" href="{{ auth()->user()->staff ? route('admin.aportes') : route('dashboard') }}" class="flex items-center gap-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-white">
                     <x-application-logo class="h-8 w-8 shrink-0 text-white" />
                     <span class="text-xl font-extrabold tracking-tight text-white">CrediData</span>
                 </a>
