@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-page-header title="Tu perfil" description="Actualizá tus datos y protegé el acceso a tu cuenta." class="mb-0" />
+        <x-page-header title="Tu perfil" description="Actualiza tus datos y protegé el acceso a tu cuenta." class="mb-0" />
     </x-slot>
 
     <x-page-shell max-width="6xl" class="grid gap-6 lg:grid-cols-2">

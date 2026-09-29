@@ -254,7 +254,7 @@ class ConfigGeneralTest extends TestCase
         Livewire::actingAs($this->staffUsuario)
             ->test(ConfigGeneral::class)
             ->call('toggleMetodoPago', 'paypal')
-            ->assertSee('Oculto');
+            ->assertSee('No visible para clientes');
 
         $param = ConfigParametro::where('modulo', 'recargas')
             ->where('clave', 'metodoPaypalHabilitado')

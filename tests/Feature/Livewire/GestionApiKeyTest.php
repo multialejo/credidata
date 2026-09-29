@@ -170,7 +170,7 @@ class GestionApiKeyTest extends TestCase
         Livewire::actingAs($this->usuario)
             ->test(GestionApiKey::class)
             ->assertSee('Todavía no hay API Keys')
-            ->assertSee('Para colaborar, creá una clave aparte')
+            ->assertSee('Para colaborar, crea una clave aparte')
             ->assertSee('Crear primera API Key');
     }
 

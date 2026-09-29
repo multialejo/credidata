@@ -5,7 +5,7 @@
         </h2>
 
         <p class="mt-1 text-sm leading-6 text-slate-600">
-            Actualizá tu nombre. El correo registrado se muestra como dato informativo.
+            Actualiza tu nombre. El correo registrado se muestra como dato informativo.
         </p>
     </header>
 

@@ -19,7 +19,7 @@
     <section class="ui-card" aria-labelledby="pagos-heading">
         <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
             <div class="flex items-start gap-3">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#3155d9]">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
                     <x-icons.credit-card class="h-5 w-5" />
                 </span>
                 <div>
@@ -75,7 +75,7 @@
         <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div class="flex items-start gap-3">
-                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
                         <x-icons.arrows-right-left class="h-5 w-5" />
                     </span>
                     <div>
