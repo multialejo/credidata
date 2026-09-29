@@ -31,8 +31,8 @@ docker run --rm \
 # 5. Generate application key
 ./vendor/bin/sail artisan key:generate
 
-# 6. Run database migrations
-./vendor/bin/sail artisan migrate
+# 6. Run database migrations and seed default parameters
+./vendor/bin/sail artisan migrate --seed
 
 > All `sail artisan` commands can also be run as `./vendor/bin/sail artisan` if the `sail` alias is not configured.
 ```
