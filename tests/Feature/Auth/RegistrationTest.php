@@ -87,7 +87,10 @@ class RegistrationTest extends TestCase
                 && str_contains($rendered, 'href="'.e($mail->actionUrl).'"')
                 && ! str_contains($rendered, '<pre><code>')
                 && ! str_contains($rendered, 'If you\'re having trouble clicking')
-                && ! str_contains($rendered, 'copy and paste the URL below');
+                && ! str_contains($rendered, 'copy and paste the URL below')
+                && str_contains($rendered, 'Hola Test User')
+                && ! str_contains($rendered, 'Hello!')
+                && ! str_contains($rendered, 'Regards,');
         });
     }
 

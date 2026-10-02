@@ -1,8 +1,6 @@
 <x-mail::message>
 @if (! empty($greeting))
 # {{ $greeting }}
-@else
-# @lang('Hello!')
 @endif
 
 @foreach ($introLines as $line)
@@ -23,8 +21,5 @@
 
 @if (! empty($salutation))
 {{ $salutation }}
-@else
-@lang('Regards,')<br>
-{{ config('app.name') }}
 @endif
 </x-mail::message>
