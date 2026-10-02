@@ -30,7 +30,8 @@ class AppServiceProvider extends ServiceProvider
                 ->line('Para completar tu registro, verifica tu dirección de correo electrónico haciendo clic en el botón siguiente.')
                 ->action('Verificar correo electrónico', $url)
                 ->line('Este enlace de verificación expirará en 60 minutos.')
-                ->salutation('Saludos');
+                ->salutation('Saludos')
+                ->markdown('emails.verify-email');
         });
 
         if (str_starts_with((string) config('app.url'), 'https://')) {

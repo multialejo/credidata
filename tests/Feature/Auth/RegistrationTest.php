@@ -79,10 +79,15 @@ class RegistrationTest extends TestCase
 
         Notification::assertSentTo($usuario, VerifyEmail::class, function (VerifyEmail $notification) use ($usuario): bool {
             $mail = $notification->toMail($usuario);
+            $rendered = (string) $mail->render();
 
             return $mail->subject === 'Verifica tu dirección de correo electrónico'
                 && $mail->actionText === 'Verificar correo electrónico'
-                && in_array('Gracias por registrarte en CrediData.', $mail->introLines, true);
+                && in_array('Gracias por registrarte en CrediData.', $mail->introLines, true)
+                && str_contains($rendered, 'href="'.e($mail->actionUrl).'"')
+                && ! str_contains($rendered, '<pre><code>')
+                && ! str_contains($rendered, 'If you\'re having trouble clicking')
+                && ! str_contains($rendered, 'copy and paste the URL below');
         });
     }
 
