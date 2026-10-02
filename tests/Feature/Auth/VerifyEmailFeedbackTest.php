@@ -12,7 +12,7 @@ class VerifyEmailFeedbackTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_newly_verified_client_sees_confirmation_once_on_dashboard(): void
+    public function test_newly_verified_client_is_logged_out_and_sees_login_confirmation(): void
     {
         $usuario = Usuario::create([
             'email' => 'verify-feedback@example.com',
@@ -28,20 +28,18 @@ class VerifyEmailFeedbackTest extends TestCase
 
         $response = $this->actingAs($usuario)->get($url);
 
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('verification.success'));
         $this->assertTrue($usuario->fresh()->hasVerifiedEmail());
+        $this->assertGuest();
 
-        $this->get(route('dashboard'))
+        $this->get(route('verification.success'))
             ->assertOk()
-            ->assertSeeText('Correo verificado.')
-            ->assertSeeText('Revisa tu saldo disponible para empezar.');
-
-        $this->get(route('dashboard'))
-            ->assertOk()
-            ->assertDontSeeText('Correo verificado.');
+            ->assertSeeText('Correo verificado')
+            ->assertSeeText('Ir a iniciar sesión')
+            ->assertSee(route('login'), false);
     }
 
-    public function test_verified_query_parameter_alone_does_not_show_confirmation(): void
+    public function test_revisiting_verified_link_still_logs_out_and_shows_confirmation(): void
     {
         $usuario = Usuario::create([
             'email' => 'already-verified@example.com',
@@ -51,8 +49,17 @@ class VerifyEmailFeedbackTest extends TestCase
         ]);
         Cliente::create(['usuario_id' => $usuario->id]);
 
-        $this->actingAs($usuario)->get(route('dashboard').'?verified=1')
+        $url = URL::temporarySignedRoute('verification.verify', now()->addHour(), [
+            'id' => $usuario->getKey(),
+            'hash' => sha1($usuario->getEmailForVerification()),
+        ]);
+
+        $this->actingAs($usuario)->get($url)
+            ->assertRedirect(route('verification.success'));
+
+        $this->assertGuest();
+        $this->get(route('verification.success'))
             ->assertOk()
-            ->assertDontSeeText('Correo verificado.');
+            ->assertSeeText('Ir a iniciar sesión');
     }
 }
