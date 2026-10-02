@@ -112,6 +112,7 @@ class RoleNavigationTest extends TestCase
             ->assertSee('/api/v1/consulta/ruc', false)
             ->assertSee('{"cedula":"1713175071"}', false)
             ->assertDontSee("-d '{\"ruc\":\"0991234567001\"}'", false)
+            ->assertDontSee('/api/documentation', false)
             ->assertSeeText('En esta página')
             ->assertSee('href="#quickstart"', false)
             ->assertSee('href="#cedula-fields"', false)

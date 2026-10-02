@@ -15,12 +15,7 @@
             <h2 id="quickstart-title" class="ui-section-title text-xl font-bold text-[#14213d]">Quickstart</h2>
             <p class="mt-1 text-sm text-slate-600">Tres pasos simples para enviar tu primera consulta.</p>
         </div>
-        <a href="{{ url('/api/documentation') }}" class="ui-secondary-button inline-flex items-center justify-center gap-2 text-xs sm:text-sm">
-            <span>Abrir referencia OpenAPI</span>
-            <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-            </svg>
-        </a>
+
     </div>
 
     <!-- Steps Grid -->
