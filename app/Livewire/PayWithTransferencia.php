@@ -28,14 +28,20 @@ class PayWithTransferencia extends Component
 
     public function getMontoValidoProperty(): bool
     {
+        if (! isset($this->monto)) {
+            return false;
+        }
+
         return $this->isMontoValido($this->monto);
     }
 
     public function getCreditosEstimadosProperty(): int
     {
-        return $this->monto > 0
-            ? (int) floor($this->monto * $this->getTasaCambioUsdCreditos())
-            : 0;
+        if (! isset($this->monto) || $this->monto <= 0) {
+            return 0;
+        }
+
+        return (int) floor($this->monto * $this->getTasaCambioUsdCreditos());
     }
 
     public function getDatosTransferenciaProperty(): ?array

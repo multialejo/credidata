@@ -119,6 +119,18 @@ class PayWithTransferenciaTest extends TestCase
             ->assertSee('Copiar');
     }
 
+    public function test_monto_vacio_no_lanza_property_not_found(): void
+    {
+        $this->seedDatosTransferencia();
+
+        Livewire::actingAs($this->usuario)
+            ->test(PayWithTransferencia::class, ['monto' => 50])
+            ->set('monto', '')
+            ->assertSet('montoValido', false)
+            ->assertSet('creditosEstimados', 0)
+            ->assertSee('Paso 1');
+    }
+
     private function seedDatosTransferencia(): void
     {
         ConfigParametro::create([
