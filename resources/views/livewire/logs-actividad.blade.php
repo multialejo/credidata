@@ -6,7 +6,13 @@
         <div><label class="ui-label mb-1 text-xs" for="log-desde">Desde</label><input id="log-desde" type="date" wire:model.live="fechaDesde" class="ui-input w-full"></div>
         <div><label class="ui-label mb-1 text-xs" for="log-hasta">Hasta</label><input id="log-hasta" type="date" wire:model.live="fechaHasta" class="ui-input w-full"></div>
         <div><label class="ui-label mb-1 text-xs" for="log-actor">Actor</label><input id="log-actor" type="search" wire:model.live.debounce.300ms="actorEmail" placeholder="Buscar por correo" class="ui-input w-full"></div>
-        <div class="flex items-end justify-end"><button type="button" wire:click="resetFilters" class="ui-secondary-button">Limpiar filtros</button></div>
+        <div class="flex items-end justify-end gap-2">
+            <button type="button" wire:click="resetFilters" class="ui-secondary-button">Limpiar filtros</button>
+            <button type="button" wire:click="exportarCsv" wire:loading.attr="disabled" wire:target="exportarCsv" class="ui-secondary-button">
+                <span wire:loading.remove wire:target="exportarCsv">Exportar CSV</span>
+                <span wire:loading wire:target="exportarCsv">Exportando...</span>
+            </button>
+        </div>
     </x-slot:filters>
 
     <thead><tr><th scope="col">Fecha</th><th scope="col">Acción</th><th scope="col">Actor</th><th scope="col">IP de origen</th><th scope="col">Detalle</th></tr></thead>
@@ -28,12 +34,9 @@
                 <td class="font-mono text-xs">{{ $log->ip_origen ?? '—' }}</td>
                 <td>
                     @if(is_array($log->detalle) && count($log->detalle) > 0)
-                        <div x-data="{ open: false }" class="text-xs">
-                            <button @click="open = !open" type="button" class="font-semibold text-[#3155d9] underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2">
-                                <span x-text="open ? 'Ocultar detalle' : 'Ver detalle'"></span>
-                            </button>
-                             <pre x-show="open" class="mt-2 max-w-lg overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-700">{{ json_encode($log->detalle, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
-                        </div>
+                        <button wire:click="verDetalle({{ $log->id }})" type="button" class="font-semibold text-[#3155d9] underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-[#3155d9] focus:ring-offset-2">
+                            Ver detalle
+                        </button>
                     @else
                         <span class="text-slate-400">—</span>
                     @endif
@@ -50,4 +53,23 @@
         </x-slot:pagination>
     @endif
     </x-data-table>
+
+    <x-modal name="log-detail" maxWidth="xl" titleId="log-detail-title" descriptionId="log-detail-description">
+        @if($detalleLog)
+            <div class="p-6 sm:p-7">
+                <div class="flex items-start justify-between gap-4 border-b border-slate-200 pb-5">
+                    <div>
+                        <p class="ui-eyebrow">Detalle de actividad</p>
+                        <h2 id="log-detail-title" class="mt-1 text-xl font-bold text-[#14213d]">{{ $detalleLog->accion }}</h2>
+                        <p id="log-detail-description" class="mt-1 text-sm text-slate-600">Información registrada el {{ $detalleLog->fecha->format('d/m/Y H:i') }}.</p>
+                    </div>
+                    <button type="button" wire:click="cerrarDetalle" x-on:click="$dispatch('close')" class="ui-secondary-button min-h-11 min-w-11 px-3" aria-label="Cerrar detalle">Cerrar</button>
+                </div>
+
+                <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 sm:px-5">
+                    <x-detail-list :items="$detalleLog->detalle" />
+                </div>
+            </div>
+        @endif
+    </x-modal>
 </x-page-shell>

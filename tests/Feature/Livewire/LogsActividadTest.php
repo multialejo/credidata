@@ -264,4 +264,14 @@ class LogsActividadTest extends TestCase
             ->call('cerrarDetalle')
             ->assertSet('detalleId', null);
     }
+
+    public function test_exportar_csv_descarga_los_detalles_en_json(): void
+    {
+        $this->crearLog(['detalle' => ['creditos' => 5]]);
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(LogsActividad::class)
+            ->call('exportarCsv')
+            ->assertFileDownloaded('actividad-'.now()->format('Y-m-d').'.csv');
+    }
 }
