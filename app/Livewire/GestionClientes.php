@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\Cliente;
+use App\Models\Consulta;
+use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -14,6 +16,10 @@ class GestionClientes extends Component
 
     public string $estado = '';
 
+    public string $graficaFechaDesde = '';
+
+    public string $graficaFechaHasta = '';
+
     public ?int $expandidoId = null;
 
     protected $queryString = [
@@ -21,6 +27,27 @@ class GestionClientes extends Component
         'estado' => ['except' => ''],
         'expandidoId' => ['except' => null],
     ];
+
+    public function mount(): void
+    {
+        $this->establecerRango('30');
+    }
+
+    public function establecerRango(string $rango): void
+    {
+        $hoy = now()->startOfDay();
+
+        [$desde, $hasta] = match ($rango) {
+            '7' => [$hoy->copy()->subDays(6), $hoy],
+            '30' => [$hoy->copy()->subDays(29), $hoy],
+            '90' => [$hoy->copy()->subDays(89), $hoy],
+            'year' => [$hoy->copy()->startOfYear(), $hoy],
+            default => [$hoy->copy()->subDays(29), $hoy],
+        };
+
+        $this->graficaFechaDesde = $desde->toDateString();
+        $this->graficaFechaHasta = $hasta->toDateString();
+    }
 
     public function updatingBuscar(): void
     {
@@ -112,6 +139,9 @@ class GestionClientes extends Component
     public function render()
     {
         $clientes = $this->consultaClientes()->paginate(10);
+        $consultasDiarias = $this->consultasDiarias();
+        $estadisticasConsultas = $this->estadisticasConsultas($consultasDiarias);
+        $this->dispatch('consultation-chart-updated', points: $consultasDiarias);
 
         $detalle = null;
         if ($this->expandidoId) {
@@ -125,7 +155,61 @@ class GestionClientes extends Component
         return view('livewire.gestion-clientes', [
             'clientes' => $clientes,
             'detalle' => $detalle,
+            'consultasDiarias' => $consultasDiarias,
+            'estadisticasConsultas' => $estadisticasConsultas,
         ]);
+    }
+
+    private function consultasDiarias(): array
+    {
+        $desde = Carbon::parse($this->graficaFechaDesde ?: now()->subDays(29)->toDateString())->startOfDay();
+        $hasta = Carbon::parse($this->graficaFechaHasta ?: now()->toDateString())->startOfDay();
+
+        if ($desde->gt($hasta)) {
+            return [];
+        }
+
+        $conteos = Consulta::query()
+            ->whereBetween('fecha', [$desde, $hasta->copy()->endOfDay()])
+            ->selectRaw('DATE(fecha) as dia, COUNT(*) as total')
+            ->groupBy('dia')
+            ->orderBy('dia')
+            ->pluck('total', 'dia');
+
+        $puntos = [];
+        $totales = [];
+        for ($dia = $desde->copy(); $dia->lte($hasta); $dia->addDay()) {
+            $fecha = $dia->toDateString();
+            $total = (int) ($conteos[$fecha] ?? 0);
+            $totales[] = $total;
+            $ventana = array_slice($totales, -7);
+
+            $puntos[] = [
+                'fecha' => $fecha,
+                'etiqueta' => $dia->format('d/m'),
+                'total' => $total,
+                'promedio' => round(array_sum($ventana) / count($ventana), 1),
+            ];
+        }
+
+        return $puntos;
+    }
+
+    private function estadisticasConsultas(array $puntos): array
+    {
+        $desde = Carbon::parse($this->graficaFechaDesde ?: now()->subDays(29)->toDateString())->startOfDay();
+        $hasta = Carbon::parse($this->graficaFechaHasta ?: now()->toDateString())->startOfDay();
+        $dias = $desde->lte($hasta) ? $desde->diffInDays($hasta) + 1 : 0;
+
+        $consulta = Consulta::query()
+            ->when($desde->lte($hasta), fn ($query) => $query->whereBetween('fecha', [$desde, $hasta->copy()->endOfDay()]))
+            ->when($desde->gt($hasta), fn ($query) => $query->whereRaw('1 = 0'));
+
+        return [
+            'total' => array_sum(array_column($puntos, 'total')),
+            'promedio' => $dias > 0 ? round(array_sum(array_column($puntos, 'total')) / $dias, 1) : 0,
+            'clientes_activos' => (clone $consulta)->distinct()->count('cliente_id'),
+        ];
     }
 
     private function consultaClientes()

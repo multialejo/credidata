@@ -178,6 +178,52 @@ class GestionClientesTest extends TestCase
             });
     }
 
+    public function test_muestra_serie_global_y_metricas_de_consultas(): void
+    {
+        $clienteAdicional = $this->crearClienteAdicional();
+        Consulta::create([
+            'cliente_id' => $this->cliente->id,
+            'tipo' => 'cedula',
+            'identificador' => '1713175071',
+            'creditos_gastados' => 1,
+            'origen' => 'api',
+            'exitosa' => true,
+            'fecha' => now()->subDays(2),
+        ]);
+        Consulta::create([
+            'cliente_id' => $this->cliente->id,
+            'tipo' => 'ruc',
+            'identificador' => '0991234567001',
+            'creditos_gastados' => 1,
+            'origen' => 'api',
+            'exitosa' => true,
+            'fecha' => now()->subDay(),
+        ]);
+        Consulta::create([
+            'cliente_id' => $clienteAdicional->id,
+            'tipo' => 'cedula',
+            'identificador' => '1713175072',
+            'creditos_gastados' => 1,
+            'origen' => 'api',
+            'exitosa' => true,
+            'fecha' => now()->subDay(),
+        ]);
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(GestionClientes::class)
+            ->call('establecerRango', '7')
+            ->assertViewHas('consultasDiarias', function (array $puntos) {
+                return count($puntos) === 7
+                    && collect($puntos)->sum('total') === 3
+                    && collect($puntos)->sum('promedio') > 0;
+            })
+            ->assertViewHas('estadisticasConsultas', [
+                'total' => 3,
+                'promedio' => 0.4,
+                'clientes_activos' => 2,
+            ]);
+    }
+
     public function test_detalle_expandible_muestra_consultas(): void
     {
         for ($i = 0; $i < 3; $i++) {

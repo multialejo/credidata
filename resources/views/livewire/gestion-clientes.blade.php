@@ -1,5 +1,59 @@
 <x-page-shell max-width="7xl">
     <x-page-header eyebrow="Administración" title="Gestión de clientes" description="Consulta saldos, estados y accesos de los clientes." />
+
+    <section class="ui-card p-5 sm:p-6" aria-labelledby="consultas-grafica-title">
+        <div class="flex flex-col gap-5 border-b border-slate-100 pb-5 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+                <h2 id="consultas-grafica-title" class="text-xl font-bold tracking-tight text-[#14213d]">Uso agregado de consultas</h2>
+                <p id="consultas-grafica-description" class="mt-1 text-sm leading-6 text-slate-600">Evolución diaria de las consultas realizadas por todos los clientes.</p>
+            </div>
+            <div class="flex flex-col gap-3 xl:items-end">
+                <div class="flex flex-wrap items-end gap-2">
+                    <div>
+                        <label class="ui-label mb-1 text-xs" for="clientes-grafica-desde">Desde</label>
+                        <input id="clientes-grafica-desde" type="date" wire:model.live="graficaFechaDesde" class="ui-input w-full sm:w-36">
+                    </div>
+                    <div>
+                        <label class="ui-label mb-1 text-xs" for="clientes-grafica-hasta">Hasta</label>
+                        <input id="clientes-grafica-hasta" type="date" wire:model.live="graficaFechaHasta" class="ui-input w-full sm:w-36">
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2" aria-label="Rangos rápidos de consultas">
+                    <button type="button" wire:click="establecerRango('7')" class="ui-secondary-button min-h-9 px-3 py-1 text-xs">7 días</button>
+                    <button type="button" wire:click="establecerRango('30')" class="ui-secondary-button min-h-9 px-3 py-1 text-xs">30 días</button>
+                    <button type="button" wire:click="establecerRango('90')" class="ui-secondary-button min-h-9 px-3 py-1 text-xs">90 días</button>
+                    <button type="button" wire:click="establecerRango('year')" class="ui-secondary-button min-h-9 px-3 py-1 text-xs">Este año</button>
+                </div>
+            </div>
+        </div>
+
+        <dl class="mt-5 grid gap-3 sm:grid-cols-3" aria-label="Estadísticas del período">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <dt class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Consultas en el período</dt>
+                <dd class="mt-1 text-2xl font-bold tabular-nums text-[#14213d]">{{ number_format($estadisticasConsultas['total']) }}</dd>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <dt class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Promedio diario</dt>
+                <dd class="mt-1 text-2xl font-bold tabular-nums text-[#14213d]">{{ number_format($estadisticasConsultas['promedio'], 1) }}</dd>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <dt class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Clientes activos</dt>
+                <dd class="mt-1 text-2xl font-bold tabular-nums text-[#14213d]">{{ number_format($estadisticasConsultas['clientes_activos']) }}</dd>
+            </div>
+        </dl>
+
+        @if($consultasDiarias)
+            <div class="mt-5" data-consultation-chart x-init="renderConsultationChart($refs.canvas, @js($consultasDiarias))">
+                <div class="relative h-72" role="img" aria-labelledby="consultas-grafica-title consultas-grafica-description">
+                    <canvas x-ref="canvas" aria-label="Consultas realizadas por día y promedio móvil de siete días"></canvas>
+                </div>
+                <p class="sr-only">El gráfico muestra {{ count($consultasDiarias) }} días de consultas globales, con una línea de promedio móvil de siete días.</p>
+            </div>
+        @else
+            <p class="mt-5 rounded-xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">Seleccioná un rango de fechas válido para graficar las consultas.</p>
+        @endif
+    </section>
+
 <x-data-table caption="Listado de clientes">
     <x-slot:filters class="sm:grid-cols-3 lg:grid-cols-3">
         <div>
