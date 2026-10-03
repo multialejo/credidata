@@ -74,6 +74,15 @@
         @apply min-h-11 rounded-xl border border-slate-300 bg-white text-sm shadow-sm placeholder:text-slate-400 focus:border-[#3155d9] focus:ring-[#3155d9] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500;
     }
 
+    .ui-password-field {
+        @apply relative w-full;
+    }
+
+    .ui-password-field__toggle {
+        @apply absolute right-1 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-[#3155d9] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3155d9] focus-visible:ring-offset-1;
+        margin-top: 0.125rem;
+    }
+
     .ui-label {
         @apply block text-sm font-semibold text-[#14213d];
     }
