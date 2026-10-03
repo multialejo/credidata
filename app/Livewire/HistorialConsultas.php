@@ -22,7 +22,7 @@ class HistorialConsultas extends Component
     {
         $cliente = auth()->user()->cliente;
 
-        $query = Consulta::where('cliente_id', $cliente->id);
+        $query = Consulta::with('apiKey')->where('cliente_id', $cliente->id);
 
         if ($this->filtroFechaDesde) {
             $query->whereDate('fecha', '>=', $this->filtroFechaDesde);
@@ -45,13 +45,16 @@ class HistorialConsultas extends Component
     public function exportarCsv()
     {
         $cliente = auth()->user()->cliente;
-        $consultas = Consulta::where('cliente_id', $cliente->id)
+        $consultas = Consulta::with('apiKey')->where('cliente_id', $cliente->id)
             ->latest('fecha')->get();
 
-        $csv = "ID,Fecha,Tipo,Identificador,Creditos,Exitosa,IP\n";
+        $csv = "ID,Fecha,Tipo,Identificador,API Key,Prefijo API Key,Creditos,Exitosa,IP\n";
         foreach ($consultas as $c) {
             $csv .= "{$c->id},{$c->fecha->format('Y-m-d H:i:s')},{$c->tipo},";
-            $csv .= "{$c->identificador},{$c->creditos_gastados},";
+            $csv .= "{$c->identificador},";
+            $csv .= ($c->apiKey?->nombre ?? 'Sin API key asociada').",";
+            $csv .= ($c->apiKey ? 'cd_sk_'.$c->apiKey->prefijo : '').",";
+            $csv .= "{$c->creditos_gastados},";
             $csv .= ($c->exitosa ? 'Si' : 'No').",{$c->ip_origen}\n";
         }
 
