@@ -244,11 +244,11 @@ class LogsActividadTest extends TestCase
             ->assertSet('actorEmail', '');
     }
 
-    // --- Detalle JSON ---
+    // --- Detalle modal ---
 
-    public function test_detalle_json_se_muestra_siempre_visible(): void
+    public function test_detalle_modal_se_abre_y_se_cierra(): void
     {
-        $this->crearLog([
+        $log = $this->crearLog([
             'accion' => 'consulta.realizada',
             'detalle' => ['identificador' => '0102030405', 'creditos' => 1],
         ]);
@@ -256,6 +256,12 @@ class LogsActividadTest extends TestCase
         Livewire::actingAs($this->staffUsuario)
             ->test(LogsActividad::class)
             ->assertSeeText('consulta.realizada')
-            ->assertSee('"identificador": "0102030405"');
+            ->call('verDetalle', $log->id)
+            ->assertSet('detalleId', $log->id)
+            ->assertSeeText('Identificador')
+            ->assertSeeText('0102030405')
+            ->assertDontSee('"identificador": "0102030405"', false)
+            ->call('cerrarDetalle')
+            ->assertSet('detalleId', null);
     }
 }
