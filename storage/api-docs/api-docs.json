@@ -771,41 +771,21 @@
                 "tags": [
                     "Administración"
                 ],
-                "summary": "Acredita una transferencia manual",
-                "description": "Requiere token Sanctum con rol admin. La referencia bancaria hace la operación idempotente para el mismo cliente.",
+                "summary": "Aprueba una transferencia pendiente",
+                "description": "Requiere token Sanctum con rol admin o support. Solo aprueba una solicitud de transferencia pendiente enviada por un cliente; la operación es idempotente y acredita el saldo una sola vez.",
                 "operationId": "e092e7ff0a95241d5fef229c9f417049",
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "multipart/form-data": {
+                        "application/json": {
                             "schema": {
                                 "required": [
-                                    "cliente_email",
-                                    "monto_usd",
-                                    "referencia_bancaria",
-                                    "comprobante"
+                                    "recarga_id"
                                 ],
                                 "properties": {
-                                    "cliente_email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "cliente@example.test"
-                                    },
-                                    "monto_usd": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 10,
-                                        "minimum": 0.01
-                                    },
-                                    "referencia_bancaria": {
-                                        "type": "string",
-                                        "example": "TRX-FICTICIA-001",
-                                        "maxLength": 100
-                                    },
-                                    "comprobante": {
-                                        "description": "JPG, JPEG, PNG o PDF; máximo 10 MB.",
-                                        "type": "string",
-                                        "format": "binary"
+                                    "recarga_id": {
+                                        "type": "integer",
+                                        "example": 12
                                     }
                                 },
                                 "type": "object"
@@ -815,7 +795,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Recarga acreditada o resultado idempotente",
+                        "description": "Recarga acreditada",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -828,13 +808,13 @@
                         "description": "Token inválido"
                     },
                     "403": {
-                        "description": "Usuario sin rol admin"
+                        "description": "Usuario sin rol admin o support"
                     },
                     "409": {
-                        "description": "Referencia duplicada de otro cliente o transición inválida"
+                        "description": "Solicitud inexistente, no pendiente o sin comprobante"
                     },
                     "422": {
-                        "description": "Formulario inválido o cliente inexistente"
+                        "description": "Identificador o monto inválido"
                     }
                 },
                 "security": [

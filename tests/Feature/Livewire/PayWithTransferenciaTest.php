@@ -2,11 +2,18 @@
 
 namespace Tests\Feature\Livewire;
 
+use App\Enums\EstadoRecarga;
+use App\Jobs\NotifyStaffTransferSubmitted;
+use App\Jobs\SendRecargaEmail;
 use App\Livewire\PayWithTransferencia;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
+use App\Models\Recarga;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -63,42 +70,57 @@ class PayWithTransferenciaTest extends TestCase
             ->assertSee('2204592986')
             ->assertSee('Jean Paul Mayorga')
             ->assertSee('1805752685')
-            ->assertSee('Paso 1')
-            ->assertSee('Paso 2');
+            ->assertSee('Datos para realizar la transferencia')
+            ->assertSee('Confirma tu transferencia');
     }
 
-    public function test_link_whatsapp_contiene_monto_y_referencia(): void
+    public function test_envia_comprobante_y_crea_solicitud_pendiente_sin_acreditar_saldo(): void
     {
         $this->seedDatosTransferencia();
+        Storage::fake('local');
+        Queue::fake();
 
         $component = Livewire::actingAs($this->usuario)
-            ->test(PayWithTransferencia::class, ['monto' => 100.0])
-            ->set('monto', 100.0);
+            ->test(PayWithTransferencia::class, ['monto' => 50.0])
+            ->set('referenciaBancaria', 'BANK-CLIENT-001')
+            ->set('comprobante', UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf'))
+            ->call('enviarComprobante')
+            ->assertHasNoErrors()
+            ->assertSet('solicitudEnviada', true)
+            ->assertSee('Recibimos tu comprobante de transferencia.');
 
-        $component->assertSee('wa.me')
-            ->assertSee('593991234567')
-            ->assertSee('$100.00')
-            ->assertSee('CD-');
+        $recarga = Recarga::firstOrFail();
+        $this->assertSame(EstadoRecarga::Pendiente, $recarga->estado);
+        $this->assertSame('transferencia', $recarga->metodo);
+        $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
+        Storage::disk('local')->assertExists($recarga->comprobante_url);
+        Queue::assertPushed(NotifyStaffTransferSubmitted::class);
+        Queue::assertNotPushed(SendRecargaEmail::class);
     }
 
-    public function test_formato_referencia_es_cd_hex(): void
+    public function test_muestra_formulario_de_comprobante_sin_whatsapp(): void
     {
         $this->seedDatosTransferencia();
 
         $component = Livewire::actingAs($this->usuario)
             ->test(PayWithTransferencia::class, ['monto' => 50]);
 
-        $referencia = $component->get('referencia');
-        $this->assertMatchesRegularExpression('/^CD-[0-9A-F]{6}$/', $referencia);
+        $component->assertSee('Referencia bancaria')
+            ->assertSee('Enviar comprobante')
+            ->assertDontSee('wa.me')
+            ->assertDontSee('Enviar imagen del comprobante');
     }
 
-    public function test_no_muestra_link_whatsapp_cuando_monto_invalido(): void
+    public function test_no_permite_enviar_comprobante_con_monto_invalido(): void
     {
         $this->seedDatosTransferencia();
 
         Livewire::actingAs($this->usuario)
             ->test(PayWithTransferencia::class, ['monto' => 1.0])
-            ->assertDontSee('Enviar imagen del comprobante');
+            ->set('referenciaBancaria', 'BANK-INVALID')
+            ->set('comprobante', UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf'))
+            ->call('enviarComprobante')
+            ->assertHasErrors('monto');
     }
 
     public function test_creditos_estimados_usa_floor(): void
@@ -110,13 +132,14 @@ class PayWithTransferenciaTest extends TestCase
             ->assertSee('155');
     }
 
-    public function test_boton_copiar_renderiza_para_cuenta_y_cedula(): void
+    public function test_datos_bancarios_y_formulario_estan_disponibles(): void
     {
         $this->seedDatosTransferencia();
 
         Livewire::actingAs($this->usuario)
             ->test(PayWithTransferencia::class, ['monto' => 50])
-            ->assertSee('Copiar');
+            ->assertSee('Número de cuenta')
+            ->assertSee('Referencia bancaria');
     }
 
     public function test_monto_vacio_no_lanza_property_not_found(): void
@@ -128,7 +151,7 @@ class PayWithTransferenciaTest extends TestCase
             ->set('monto', '')
             ->assertSet('montoValido', false)
             ->assertSet('creditosEstimados', 0)
-            ->assertSee('Paso 1');
+            ->assertSee('Datos para realizar la transferencia');
     }
 
     private function seedDatosTransferencia(): void
@@ -142,7 +165,6 @@ class PayWithTransferenciaTest extends TestCase
                 'numeroCuenta' => '2204592986',
                 'titular' => 'Jean Paul Mayorga',
                 'cedulaTitular' => '1805752685',
-                'whatsapp' => '593991234567',
             ]),
         ]);
     }

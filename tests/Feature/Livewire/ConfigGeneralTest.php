@@ -325,7 +325,6 @@ class ConfigGeneralTest extends TestCase
             ->set('transferenciaNumeroCuenta', '2204592986')
             ->set('transferenciaTitular', 'Jean Paul Mayorga')
             ->set('transferenciaCedulaTitular', '1805752685')
-            ->set('transferenciaWhatsapp', '593991234567')
             ->call('guardarDatosTransferencia')
             ->assertHasNoErrors();
 
@@ -338,7 +337,7 @@ class ConfigGeneralTest extends TestCase
         $this->assertSame('Banco Pichincha', $datos['banco']);
         $this->assertSame('2204592986', $datos['numeroCuenta']);
         $this->assertSame('1805752685', $datos['cedulaTitular']);
-        $this->assertSame('593991234567', $datos['whatsapp']);
+        $this->assertArrayNotHasKey('whatsapp', $datos);
         $this->assertNotNull($param->actualizado_en);
         $this->assertSame($this->staff->id, $param->actualizado_por);
 
@@ -360,7 +359,6 @@ class ConfigGeneralTest extends TestCase
             ->set('transferenciaNumeroCuenta', '2204592986')
             ->set('transferenciaTitular', 'Jean Paul Mayorga')
             ->set('transferenciaCedulaTitular', '1805752685')
-            ->set('transferenciaWhatsapp', '593991234567')
             ->call('guardarDatosTransferencia')
             ->assertHasErrors(['transferenciaBanco']);
     }
@@ -374,12 +372,11 @@ class ConfigGeneralTest extends TestCase
             ->set('transferenciaNumeroCuenta', '2204592986')
             ->set('transferenciaTitular', 'Jean Paul Mayorga')
             ->set('transferenciaCedulaTitular', '12345')
-            ->set('transferenciaWhatsapp', '593991234567')
             ->call('guardarDatosTransferencia')
             ->assertHasErrors(['transferenciaCedulaTitular']);
     }
 
-    public function test_guardar_datos_transferencia_falla_si_whatsapp_invalido(): void
+    public function test_configuracion_de_transferencia_ya_no_requiere_whatsapp(): void
     {
         Livewire::actingAs($this->staffUsuario)
             ->test(ConfigGeneral::class)
@@ -388,9 +385,9 @@ class ConfigGeneralTest extends TestCase
             ->set('transferenciaNumeroCuenta', '2204592986')
             ->set('transferenciaTitular', 'Jean Paul Mayorga')
             ->set('transferenciaCedulaTitular', '1805752685')
-            ->set('transferenciaWhatsapp', 'abc')
             ->call('guardarDatosTransferencia')
-            ->assertHasErrors(['transferenciaWhatsapp']);
+            ->assertHasNoErrors()
+            ->assertDontSee('WhatsApp para comprobantes');
     }
 
     public function test_carga_datos_transferencia_existentes_al_montar(): void
@@ -414,6 +411,6 @@ class ConfigGeneralTest extends TestCase
             ->assertSet('transferenciaNumeroCuenta', '2204592986')
             ->assertSet('transferenciaTitular', 'Jean Paul Mayorga')
             ->assertSet('transferenciaCedulaTitular', '1805752685')
-            ->assertSet('transferenciaWhatsapp', '593991234567');
+            ->assertDontSee('WhatsApp para comprobantes');
     }
 }

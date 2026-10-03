@@ -2,9 +2,10 @@
 
 namespace Tests\Feature\Api;
 
+use App\Enums\EstadoRecarga;
 use App\Jobs\SendRecargaEmail;
 use App\Models\Cliente;
-use App\Models\LogActividad;
+use App\Models\ConfigParametro;
 use App\Models\Recarga;
 use App\Models\Staff;
 use App\Models\Usuario;
@@ -33,67 +34,72 @@ class AdminAcreditarTest extends TestCase
         Staff::create(['usuario_id' => $this->support->id, 'rol_staff' => 'support', 'fecha_asignacion' => now()]);
         $usuario = Usuario::create(['uid' => 'cliente-uid', 'email' => 'cliente@test.com', 'nombre' => 'Cliente', 'roles' => ['cliente']]);
         $this->cliente = Cliente::create(['usuario_id' => $usuario->id, 'saldo_creditos' => 0]);
-    }
-
-    private function payload(string $reference = 'BANK-001'): array
-    {
-        return [
-            'cliente_email' => 'cliente@test.com',
-            'monto_usd' => 10,
-            'referencia_bancaria' => $reference,
-            'comprobante' => UploadedFile::fake()->create('deposito.pdf', 100, 'application/pdf'),
-        ];
-    }
-
-    public function test_admin_acredita_transferencia_con_evidencia_y_auditoria(): void
-    {
+        ConfigParametro::create(['modulo' => 'financiero', 'clave' => 'tasaCambioUsdCreditos', 'valor' => json_encode(10)]);
         Storage::fake('local');
-        Queue::fake();
+    }
 
-        $response = $this->actingAs($this->admin, 'sanctum')->post('/api/v1/admin/recargas/acreditar', $this->payload());
+    private function crearTransferenciaPendiente(string $referencia = 'BANK-001'): Recarga
+    {
+        $path = UploadedFile::fake()->create('deposito.pdf', 100, 'application/pdf')->store('recargas/comprobantes', 'local');
+
+        return Recarga::create([
+            'cliente_id' => $this->cliente->id,
+            'metodo' => 'transferencia',
+            'monto_usd' => 10,
+            'creditos_obtenidos' => 100,
+            'estado' => EstadoRecarga::Pendiente,
+            'referencia_externa' => $referencia,
+            'comprobante_url' => $path,
+        ]);
+    }
+
+    public function test_admin_approves_pending_transfer_and_credits_once(): void
+    {
+        Queue::fake();
+        $recarga = $this->crearTransferenciaPendiente();
+
+        $response = $this->actingAs($this->admin, 'sanctum')->post('/api/v1/admin/recargas/acreditar', ['recarga_id' => $recarga->id]);
 
         $response->assertOk()->assertJsonPath('datos.recarga.estado', 'completada');
         $this->assertSame(100, (int) $this->cliente->fresh()->saldo_creditos);
-        $recarga = Recarga::firstOrFail();
-        $this->assertSame('transferencia', $recarga->metodo);
+        $this->assertSame('transferencia', $recarga->fresh()->metodo);
         Storage::disk('local')->assertExists($recarga->comprobante_url);
         $this->assertDatabaseHas('logs_actividad', ['accion' => 'recarga.acreditada_manual', 'actor_id' => $this->admin->id]);
         Queue::assertPushed(SendRecargaEmail::class);
-    }
 
-    public function test_repeated_bank_reference_does_not_credit_twice(): void
-    {
-        Storage::fake('local');
-        $first = $this->actingAs($this->admin, 'sanctum')->post('/api/v1/admin/recargas/acreditar', $this->payload());
-        $first->assertOk();
-        $second = $this->actingAs($this->admin, 'sanctum')->post('/api/v1/admin/recargas/acreditar', $this->payload());
-        $second->assertOk();
+        $this->actingAs($this->admin, 'sanctum')->post('/api/v1/admin/recargas/acreditar', ['recarga_id' => $recarga->id])
+            ->assertStatus(409);
         $this->assertSame(100, (int) $this->cliente->fresh()->saldo_creditos);
-        $this->assertSame(1, LogActividad::where('accion', 'recarga.acreditada_manual')->count());
     }
 
-    public function test_requires_client_and_evidence(): void
+    public function test_support_can_approve_pending_transfer(): void
     {
-        $response = $this->actingAs($this->admin, 'sanctum')->post('/api/v1/admin/recargas/acreditar', [
-            'cliente_email' => 'missing@test.com', 'creditos' => 1, 'referencia_bancaria' => 'BANK-002',
-        ]);
-        $response->assertStatus(422)->assertJsonValidationErrors(['comprobante']);
-
-        $response = $this->actingAs($this->admin, 'sanctum')->post('/api/v1/admin/recargas/acreditar', [
-            ...$this->payload('BANK-003'), 'cliente_email' => 'missing@test.com',
-        ]);
-        $response->assertStatus(422)->assertJsonValidationErrors(['cliente_email']);
-    }
-
-    public function test_support_can_accredit_direct_transfer(): void
-    {
-        Storage::fake('local');
         Queue::fake();
+        $recarga = $this->crearTransferenciaPendiente();
 
-        $response = $this->actingAs($this->support, 'sanctum')->post('/api/v1/admin/recargas/acreditar', $this->payload());
+        $this->actingAs($this->support, 'sanctum')
+            ->post('/api/v1/admin/recargas/acreditar', ['recarga_id' => $recarga->id])
+            ->assertOk();
 
-        $response->assertOk()->assertJsonPath('datos.recarga.estado', 'completada');
         $this->assertSame(100, (int) $this->cliente->fresh()->saldo_creditos);
         $this->assertDatabaseHas('logs_actividad', ['accion' => 'recarga.acreditada_manual', 'actor_id' => $this->support->id]);
+    }
+
+    public function test_api_requires_a_valid_pending_transfer_id(): void
+    {
+        $response = $this->actingAs($this->admin, 'sanctum')->post('/api/v1/admin/recargas/acreditar', []);
+        $response->assertStatus(422)->assertJsonValidationErrors(['recarga_id']);
+
+        $recarga = Recarga::create([
+            'cliente_id' => $this->cliente->id,
+            'metodo' => 'paypal',
+            'estado' => EstadoRecarga::Completada,
+            'referencia_externa' => 'PAYPAL-001',
+        ]);
+
+        $this->actingAs($this->admin, 'sanctum')
+            ->post('/api/v1/admin/recargas/acreditar', ['recarga_id' => $recarga->id])
+            ->assertStatus(409);
+        $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
     }
 }

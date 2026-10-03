@@ -2,78 +2,60 @@
 
 namespace App\Livewire;
 
+use App\Enums\EstadoRecarga;
 use App\Http\Controllers\Concerns\InteractsWithFinancieroConfig;
-use App\Models\Cliente;
 use App\Models\LogActividad;
 use App\Models\Recarga;
 use App\Services\RecargaService;
 use App\StateTransitions\Exceptions\InvalidRecargaTransitionException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
-use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class ValidacionRecargas extends Component
 {
     use InteractsWithFinancieroConfig;
-    use WithFileUploads;
+    use WithPagination;
 
-    public string $clienteEmail = '';
-
-    public string $montoUsd = '';
-
-    public string $referenciaBancaria = '';
-
-    public $comprobante;
-
-    public function getCreditosCalculadosProperty(): int
-    {
-        return $this->montoUsd === ''
-            ? 0
-            : (int) floor((float) $this->montoUsd * $this->getTasaCambioUsdCreditos());
-    }
-
-    public function acreditar(): void
+    public function aprobar(int $recargaId): void
     {
         abort_unless($this->puedeAcreditar(), 403);
 
-        $this->validate([
-            'clienteEmail' => ['required', 'email', 'max:255'],
-            'montoUsd' => ['required', 'numeric', 'min:0.01'],
-            'referenciaBancaria' => ['required', 'string', 'max:100'],
-            'comprobante' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
-        ]);
+        $recarga = Recarga::query()
+            ->with('cliente.usuario')
+            ->where('metodo', 'transferencia')
+            ->where('estado', EstadoRecarga::Pendiente)
+            ->find($recargaId);
 
-        $cliente = Cliente::whereHas('usuario', fn ($query) => $query->where('email', $this->clienteEmail))->first();
-        if (! $cliente) {
-            $this->addError('clienteEmail', 'No existe un cliente con ese email.');
+        if (! $recarga) {
+            $this->addError('aprobacion', 'Esta transferencia ya fue validada o no está disponible.');
 
             return;
         }
 
-        if (Recarga::where('referencia_externa', $this->referenciaBancaria)->exists()) {
-            $this->addError('referenciaBancaria', 'La referencia bancaria ya fue registrada.');
+        if (! $recarga->referencia_externa || ! $recarga->comprobante_url || ! Storage::disk('local')->exists($recarga->comprobante_url) || ! $recarga->cliente?->usuario) {
+            $this->addError('aprobacion', 'No se puede acreditar esta solicitud porque faltan datos del cliente o de la transferencia.');
 
             return;
         }
 
-        $path = $this->comprobante->store('recargas/comprobantes');
+        $creditos = (int) floor((float) $recarga->monto_usd * $this->getTasaCambioUsdCreditos());
+        if ($creditos < 1) {
+            $this->addError('aprobacion', 'El monto registrado no alcanza para acreditar un crédito.');
+
+            return;
+        }
 
         try {
-            $creditos = (int) floor((float) $this->montoUsd * $this->getTasaCambioUsdCreditos());
-            if ($creditos < 1) {
-                $this->addError('montoUsd', 'El monto no alcanza para acreditar un crédito.');
-
-                return;
-            }
-
-            DB::transaction(function () use ($cliente, $path, $creditos) {
-                $recarga = app(RecargaService::class)->procesar(
-                    referenciaExterna: $this->referenciaBancaria,
-                    clienteUid: $cliente->usuario->uid,
+            DB::transaction(function () use ($recarga, $creditos): void {
+                $acreditada = app(RecargaService::class)->procesar(
+                    referenciaExterna: $recarga->referencia_externa,
+                    clienteUid: $recarga->cliente->usuario->uid,
                     creditosObtenidos: $creditos,
                     metodoPago: 'transferencia',
-                    evidenciaPath: $path,
-                    montoUsd: (float) $this->montoUsd,
+                    evidenciaPath: $recarga->comprobante_url,
+                    montoUsd: (float) $recarga->monto_usd,
                 );
 
                 LogActividad::create([
@@ -81,23 +63,22 @@ class ValidacionRecargas extends Component
                     'actor_id' => auth()->id(),
                     'actor_sistema' => false,
                     'detalle' => [
-                        'recarga_id' => $recarga->id,
+                        'recarga_id' => $acreditada->id,
                         'creditos' => $creditos,
-                        'monto_usd' => (float) $this->montoUsd,
-                        'referencia_bancaria' => $this->referenciaBancaria,
-                        'comprobante' => $path,
+                        'monto_usd' => (float) $recarga->monto_usd,
+                        'referencia_bancaria' => $recarga->referencia_externa,
+                        'comprobante' => $recarga->comprobante_url,
                     ],
                     'ip_origen' => request()->ip(),
                 ]);
             });
         } catch (InvalidRecargaTransitionException) {
-            $this->addError('referenciaBancaria', 'La referencia no puede acreditarse en su estado actual.');
+            $this->addError('aprobacion', 'Esta transferencia ya fue validada o no puede acreditarse.');
 
             return;
         }
 
-        $this->reset(['clienteEmail', 'montoUsd', 'referenciaBancaria', 'comprobante']);
-        session()->flash('status', 'Transferencia acreditada correctamente.');
+        session()->flash('status', 'Transferencia aprobada y créditos acreditados. Se notificó al cliente por correo.');
     }
 
     private function puedeAcreditar(): bool
@@ -109,6 +90,12 @@ class ValidacionRecargas extends Component
     {
         return view('livewire.validacion-recargas', [
             'puedeAcreditar' => $this->puedeAcreditar(),
+            'recargas' => Recarga::query()
+                ->with('cliente.usuario')
+                ->where('metodo', 'transferencia')
+                ->where('estado', EstadoRecarga::Pendiente)
+                ->orderBy('created_at')
+                ->paginate(10),
         ]);
     }
 }

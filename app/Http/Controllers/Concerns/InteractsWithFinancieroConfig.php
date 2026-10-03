@@ -63,31 +63,13 @@ trait InteractsWithFinancieroConfig
             return null;
         }
 
-        $whatsapp = $this->normalizeWhatsapp($datos['whatsapp'] ?? '');
-
         return [
             'banco' => $datos['banco'] ?? '',
             'tipoCuenta' => $datos['tipoCuenta'] ?? '',
             'numeroCuenta' => $datos['numeroCuenta'] ?? '',
             'titular' => $datos['titular'] ?? '',
             'cedulaTitular' => $datos['cedulaTitular'] ?? '',
-            'whatsapp' => $whatsapp,
         ];
-    }
-
-    protected function normalizeWhatsapp(string $whatsapp): string
-    {
-        $digits = preg_replace('/\D/', '', $whatsapp);
-
-        if (str_starts_with($digits, '0') && strlen($digits) === 10) {
-            $digits = '593'.substr($digits, 1);
-        }
-
-        if (strlen($digits) === 9 && str_starts_with($digits, '9')) {
-            $digits = '593'.$digits;
-        }
-
-        return $digits;
     }
 
     protected function getMetodosPagoHabilitados(): array

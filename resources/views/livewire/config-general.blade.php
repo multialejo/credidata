@@ -116,11 +116,6 @@
                     <x-text-input id="transferenciaCedulaTitular" wire:model="transferenciaCedulaTitular" type="text" inputmode="numeric" class="mt-1.5 block w-full" placeholder="1805752685" maxlength="10" />
                     @error('transferenciaCedulaTitular') <p class="ui-error">{{ $message }}</p> @enderror
                 </div>
-                <div>
-                    <x-input-label for="transferenciaWhatsapp" value="WhatsApp para comprobantes" />
-                    <x-text-input id="transferenciaWhatsapp" wire:model="transferenciaWhatsapp" type="text" inputmode="tel" class="mt-1.5 block w-full" placeholder="593991234567" maxlength="15" />
-                    @error('transferenciaWhatsapp') <p class="ui-error">{{ $message }}</p> @enderror
-                </div>
             </div>
             <div class="flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <button type="submit" class="ui-primary-button" wire:loading.attr="disabled" wire:loading.class="opacity-60">

@@ -31,8 +31,6 @@ class ConfigGeneral extends Component
 
     public string $transferenciaCedulaTitular = '';
 
-    public string $transferenciaWhatsapp = '';
-
     public function mount(): void
     {
         $this->cargarDatosTransferencia();
@@ -59,7 +57,6 @@ class ConfigGeneral extends Component
         $this->transferenciaNumeroCuenta = $datos['numeroCuenta'] ?? '';
         $this->transferenciaTitular = $datos['titular'] ?? '';
         $this->transferenciaCedulaTitular = $datos['cedulaTitular'] ?? '';
-        $this->transferenciaWhatsapp = $datos['whatsapp'] ?? '';
     }
 
     public function iniciarEdicion(string $modulo, string $clave): void
@@ -149,7 +146,6 @@ class ConfigGeneral extends Component
             'transferenciaNumeroCuenta' => ['required', 'string', 'max:20'],
             'transferenciaTitular' => ['required', 'string', 'max:150'],
             'transferenciaCedulaTitular' => ['required', 'string', 'digits:10'],
-            'transferenciaWhatsapp' => ['required', 'string', 'digits_between:10,15'],
         ]);
 
         $param = ConfigParametro::firstOrCreate(
@@ -163,7 +159,6 @@ class ConfigGeneral extends Component
             'numeroCuenta' => $this->transferenciaNumeroCuenta,
             'titular' => $this->transferenciaTitular,
             'cedulaTitular' => $this->transferenciaCedulaTitular,
-            'whatsapp' => $this->transferenciaWhatsapp,
         ]);
 
         $this->actualizarParametro($param, $valorNuevo);

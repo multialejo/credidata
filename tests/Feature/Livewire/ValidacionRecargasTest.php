@@ -2,12 +2,17 @@
 
 namespace Tests\Feature\Livewire;
 
+use App\Enums\EstadoRecarga;
+use App\Jobs\SendRecargaEmail;
 use App\Livewire\ValidacionRecargas;
 use App\Models\Cliente;
+use App\Models\ConfigParametro;
+use App\Models\Recarga;
 use App\Models\Staff;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -29,33 +34,70 @@ class ValidacionRecargasTest extends TestCase
         Staff::create(['usuario_id' => $this->admin->id, 'rol_staff' => 'admin', 'fecha_asignacion' => now()]);
         $this->support = Usuario::create(['uid' => 'support-uid', 'email' => 'support@test.com', 'nombre' => 'Support', 'roles' => ['staff']]);
         Staff::create(['usuario_id' => $this->support->id, 'rol_staff' => 'support', 'fecha_asignacion' => now()]);
+        ConfigParametro::create(['modulo' => 'financiero', 'clave' => 'tasaCambioUsdCreditos', 'valor' => json_encode(10)]);
         $user = Usuario::create(['uid' => 'cliente-uid', 'email' => 'cliente@test.com', 'nombre' => 'Cliente', 'roles' => ['cliente']]);
         $this->cliente = Cliente::create(['usuario_id' => $user->id, 'saldo_creditos' => 0]);
     }
 
-    public function test_admin_can_accredit_direct_transfer(): void
+    public function test_admin_approves_pending_transfer_and_customer_is_emailed(): void
     {
         Storage::fake('local');
+        Queue::fake();
+        $recarga = $this->crearTransferenciaPendiente('BANK-LW-001');
+
         Livewire::actingAs($this->admin)->test(ValidacionRecargas::class)
-            ->set('clienteEmail', 'cliente@test.com')->set('montoUsd', 5)
-            ->set('referenciaBancaria', 'BANK-LW-001')
-            ->set('comprobante', UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf'))
-            ->call('acreditar')->assertHasNoErrors();
+            ->assertSee('cliente@test.com')
+            ->assertSee('Ver comprobante')
+            ->call('aprobar', $recarga->id)
+            ->assertHasNoErrors()
+            ->assertSee('Transferencia aprobada y créditos acreditados.');
 
         $this->assertSame(50, (int) $this->cliente->fresh()->saldo_creditos);
-        $this->assertDatabaseHas('recargas', ['metodo' => 'transferencia', 'referencia_externa' => 'BANK-LW-001']);
+        $this->assertDatabaseHas('recargas', ['id' => $recarga->id, 'estado' => 'completada']);
+        Queue::assertPushed(SendRecargaEmail::class);
     }
 
-    public function test_support_can_accredit_direct_transfer(): void
+    public function test_support_can_approve_a_client_submitted_transfer(): void
     {
         Storage::fake('local');
+        Queue::fake();
+        $recarga = $this->crearTransferenciaPendiente('BANK-LW-002');
+
         Livewire::actingAs($this->support)->test(ValidacionRecargas::class)
-            ->set('clienteEmail', 'cliente@test.com')->set('montoUsd', 5)
-            ->set('referenciaBancaria', 'BANK-LW-002')
-            ->set('comprobante', UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf'))
-            ->call('acreditar')->assertHasNoErrors();
+            ->call('aprobar', $recarga->id)
+            ->assertHasNoErrors();
 
         $this->assertSame(50, (int) $this->cliente->fresh()->saldo_creditos);
-        $this->assertDatabaseHas('recargas', ['metodo' => 'transferencia', 'referencia_externa' => 'BANK-LW-002']);
+        $this->assertDatabaseHas('recargas', ['id' => $recarga->id, 'estado' => 'completada']);
+        Queue::assertPushed(SendRecargaEmail::class);
+    }
+
+    public function test_completed_transfer_cannot_be_approved_twice(): void
+    {
+        Storage::fake('local');
+        Queue::fake();
+        $recarga = $this->crearTransferenciaPendiente('BANK-LW-003');
+
+        $component = Livewire::actingAs($this->admin)->test(ValidacionRecargas::class);
+        $component->call('aprobar', $recarga->id)->assertHasNoErrors();
+        $component->call('aprobar', $recarga->id);
+
+        $this->assertSame(50, (int) $this->cliente->fresh()->saldo_creditos);
+        Queue::assertPushedTimes(SendRecargaEmail::class, 1);
+    }
+
+    private function crearTransferenciaPendiente(string $referencia): Recarga
+    {
+        $path = UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf')->store('recargas/comprobantes', 'local');
+
+        return Recarga::create([
+            'cliente_id' => $this->cliente->id,
+            'metodo' => 'transferencia',
+            'monto_usd' => 5,
+            'creditos_obtenidos' => 50,
+            'estado' => EstadoRecarga::Pendiente,
+            'referencia_externa' => $referencia,
+            'comprobante_url' => $path,
+        ]);
     }
 }

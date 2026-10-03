@@ -2,22 +2,34 @@
 
 namespace App\Livewire;
 
+use App\Enums\EstadoRecarga;
 use App\Http\Controllers\Concerns\InteractsWithFinancieroConfig;
+use App\Jobs\NotifyStaffTransferSubmitted;
+use App\Models\Recarga;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class PayWithTransferencia extends Component
 {
     use InteractsWithFinancieroConfig;
+    use WithFileUploads;
 
     public float $monto = 0;
 
-    public ?string $referencia = null;
+    public string $referenciaBancaria = '';
+
+    public $comprobante;
+
+    public bool $solicitudEnviada = false;
 
     public function mount(float|int|null $monto = 0): void
     {
         $this->monto = (float) ($monto ?? 0);
-        $this->referencia = 'CD-'.strtoupper(bin2hex(random_bytes(3)));
     }
 
     #[On('monto-updated')]
@@ -49,22 +61,51 @@ class PayWithTransferencia extends Component
         return $this->getDatosTransferencia();
     }
 
-    public function getWhatsappLinkProperty(): ?string
+    public function enviarComprobante(): void
     {
-        $datos = $this->datosTransferencia;
+        abort_unless($this->isMetodoPagoHabilitado('transferencia') && $this->getDatosTransferencia(), 403);
 
-        if (! $datos || empty($datos['whatsapp']) || ! $this->montoValido) {
-            return null;
+        $this->referenciaBancaria = trim($this->referenciaBancaria);
+
+        $this->validate([
+            'monto' => ['required', 'numeric', 'decimal:0,2', 'min:'.$this->getRecargaMinimaUsd(), 'max:99999999.99'],
+            'referenciaBancaria' => ['required', 'string', 'max:100', Rule::unique('recargas', 'referencia_externa')],
+            'comprobante' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
+        ]);
+
+        $cliente = auth()->user()?->cliente;
+        abort_unless($cliente, 403);
+
+        $creditos = (int) floor($this->monto * $this->getTasaCambioUsdCreditos());
+        if ($creditos < 1) {
+            $this->addError('monto', 'El monto no alcanza para acreditar un crédito.');
+
+            return;
         }
 
-        $mensaje = 'Hola, quiero confirmar una recarga de $'.number_format($this->monto, 2)
-            ." ({$this->creditosEstimados} créditos)."
-            ."\nReferencia: {$this->referencia}"
-            ."\n\nAdjunto el comprobante de pago.";
+        $path = $this->comprobante->store('recargas/comprobantes', 'local');
 
-        $encoded = rawurlencode($mensaje);
+        try {
+            $recarga = DB::transaction(fn () => Recarga::create([
+                'cliente_id' => $cliente->id,
+                'metodo' => 'transferencia',
+                'monto_usd' => $this->monto,
+                'creditos_obtenidos' => $creditos,
+                'estado' => EstadoRecarga::Pendiente,
+                'referencia_externa' => $this->referenciaBancaria,
+                'comprobante_url' => $path,
+                'fecha' => now(),
+            ]));
+        } catch (UniqueConstraintViolationException) {
+            Storage::disk('local')->delete($path);
+            $this->addError('referenciaBancaria', 'Esta referencia bancaria ya fue registrada. Verifica el número ingresado.');
 
-        return "https://wa.me/{$datos['whatsapp']}?text={$encoded}";
+            return;
+        }
+
+        NotifyStaffTransferSubmitted::dispatch($recarga);
+        $this->reset(['referenciaBancaria', 'comprobante']);
+        $this->solicitudEnviada = true;
     }
 
     public function render()
