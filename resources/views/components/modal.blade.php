@@ -1,7 +1,9 @@
 @props([
     'name',
     'show' => false,
-    'maxWidth' => '2xl'
+    'maxWidth' => '2xl',
+    'titleId' => 'user-deletion-title',
+    'descriptionId' => 'user-deletion-description',
 ])
 
 @php
@@ -70,8 +72,8 @@ $maxWidth = [
         x-show="show"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="user-deletion-title"
-        aria-describedby="user-deletion-description"
+        aria-labelledby="{{ $titleId }}"
+        aria-describedby="{{ $descriptionId }}"
         class="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_-24px_rgba(20,33,61,0.45)] transform transition-all sm:w-full {{ $maxWidth }} sm:mx-auto"
         x-transition:enter="ease-out duration-300"
         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"

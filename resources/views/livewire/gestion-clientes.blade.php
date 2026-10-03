@@ -18,9 +18,11 @@
                 <option value="suspendido">Suspendido</option>
             </select>
         </div>
-        <div class="flex items-end justify-end">
-            <button wire:click="resetFilters" type="button" class="ui-secondary-button">
-                Limpiar filtros
+        <div class="flex items-end justify-end gap-2">
+            <button wire:click="resetFilters" type="button" class="ui-secondary-button">Limpiar filtros</button>
+            <button wire:click="exportarCsv" type="button" wire:loading.attr="disabled" wire:target="exportarCsv" class="ui-secondary-button">
+                <span wire:loading.remove wire:target="exportarCsv">Exportar CSV</span>
+                <span wire:loading wire:target="exportarCsv">Exportando...</span>
             </button>
         </div>
     </x-slot:filters>
@@ -67,127 +69,10 @@
                         <button wire:click="toggleDetalle({{ $cliente->id }})" type="button"
                             class="ui-secondary-button min-h-9 px-3 py-1.5 text-xs
                                 {{ $expandidoId === $cliente->id ? 'bg-slate-100' : '' }}">
-                            {{ $expandidoId === $cliente->id ? 'Ocultar' : 'Ver detalle' }}
+                            Ver detalle
                         </button>
                     </td>
                 </tr>
-                @if($expandidoId === $cliente->id)
-                    <tr class="bg-slate-50">
-                        <td colspan="7" class="px-4 py-4">
-                            @if($detalle && $detalle->id === $cliente->id)
-
-                                <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4">
-                                            <h4 class="ui-section-title mb-3 text-base">API Keys</h4>
-                                            @if($detalle->apiKeys->isNotEmpty())
-                                                <div class="overflow-x-auto">
-                                                    <table class="ui-data-table__table ui-data-table__table--compact">
-                                                        <caption class="sr-only">API Keys del cliente {{ $detalle->usuario->nombre }}</caption>
-                                                        <thead>
-                                                            <tr>
-                                                                <th scope="col">Aplicativo</th>
-                                                                <th scope="col">Estado</th>
-                                                                <th scope="col">Prefijo</th>
-                                                                <th scope="col">Último uso</th>
-                                                                <th scope="col">Permisos</th>
-                                                                <th scope="col">IPs permitidas</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach($detalle->apiKeys as $apiKey)
-                                                                <tr wire:key="cliente-{{ $detalle->id }}-api-key-{{ $apiKey->id }}">
-                                                                    <th scope="row" class="text-left font-semibold">{{ $apiKey->nombre }}</th>
-                                                                    <td>{{ $apiKey->revocada ? 'Revocada' : 'Activa' }}</td>
-                                                                    <td><code class="font-mono text-xs">cd_sk_{{ $apiKey->prefijo }}</code></td>
-                                                                    <td class="whitespace-nowrap">{{ $apiKey->ultimo_uso_en?->format('d/m/Y H:i') ?? 'Nunca' }}</td>
-                                                                    <td>{{ implode(', ', $apiKey->alcance ?? []) ?: '—' }}</td>
-                                                                    <td>{{ implode(', ', $apiKey->ips_permitidas ?? []) ?: 'Todas' }}</td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            @else
-                                                <p class="text-sm text-slate-500">Sin API Keys generadas.</p>
-                                            @endif
-                                </div>
-
-                                        {{-- Consultas --}}
-                                <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4">
-                                            <h4 class="ui-section-title mb-3 text-base">Últimas consultas</h4>
-                                            @if($detalle->consultas->isNotEmpty())
-                                                <table class="ui-data-table__table ui-data-table__table--compact">
-                                                    <thead>
-                                                        <tr>
-                                                            <th scope="col">Fecha</th>
-                                                            <th scope="col">Tipo</th>
-                                                            <th scope="col">Identificador</th>
-                                                            <th scope="col">Créditos</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        @foreach($detalle->consultas as $c)
-                                                            <tr>
-                                                                <td class="whitespace-nowrap">{{ $c->fecha->format('d/m/Y H:i') }}</td>
-                                                                <td><span class="ui-table-badge bg-slate-100 uppercase text-slate-700">{{ $c->tipo }}</span></td>
-                                                                <td class="py-1 pr-4 font-mono text-sm">{{ $c->identificador }}</td>
-                                                                <td class="font-medium tabular-nums text-rose-700">-{{ $c->creditos_gastados }}</td>
-                                                            </tr>
-                                                        @endforeach
-                                                    </tbody>
-                                                </table>
-                                            @else
-                                                <p class="text-sm text-slate-500">Sin consultas.</p>
-                                            @endif
-                                </div>
-
-                                        {{-- Recargas --}}
-                                <div class="rounded-xl border border-slate-200 bg-white p-4">
-                                            <h4 class="ui-section-title mb-3 text-base">Últimas recargas</h4>
-                                            @if($detalle->recargas->isNotEmpty())
-                                                <table class="ui-data-table__table ui-data-table__table--compact">
-                                                    <thead>
-                                                        <tr>
-                                                            <th scope="col">Fecha</th>
-                                                            <th scope="col">Método</th>
-                                                            <th scope="col">Monto USD</th>
-                                                            <th scope="col">Créditos</th>
-                                                            <th scope="col">Estado</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        @foreach($detalle->recargas as $r)
-                                                            @php
-                                                                $colorRecarga = $r->estado->color();
-                                                                $estadoBadgeClasses = match($colorRecarga) {
-                                                                    'yellow' => 'bg-amber-100 text-amber-800',
-                                                                    'green'  => 'bg-emerald-100 text-emerald-800',
-                                                                    'red'    => 'bg-rose-100 text-rose-800',
-                                                                    'orange' => 'bg-orange-100 text-orange-800',
-                                                                    default  => 'bg-slate-100 text-slate-700',
-                                                                };
-                                                            @endphp
-                                                            <tr>
-                                                                <td class="whitespace-nowrap">{{ $r->fecha->format('d/m/Y H:i') }}</td>
-                                                                <td>{{ $r->metodo }}</td>
-                                                                <td>{{ number_format($r->monto_usd, 2) }}</td>
-                                                                <td class="font-medium tabular-nums">{{ $r->creditos_obtenidos }}</td>
-                                                                <td>
-                                                                    <span class="ui-table-badge {{ $estadoBadgeClasses }}">
-                                                                        {{ $r->estado->label() }}
-                                                                    </span>
-                                                                </td>
-                                                            </tr>
-                                                        @endforeach
-                                                    </tbody>
-                                                </table>
-                                            @else
-                                                <p class="text-sm text-slate-500">Sin recargas.</p>
-                                            @endif
-                                </div>
-                            @endif
-                        </td>
-                    </tr>
-                @endif
             @endforeach
         </tbody>
     @endif

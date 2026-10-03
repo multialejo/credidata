@@ -251,6 +251,14 @@ class GestionClientesTest extends TestCase
             ->assertSet('expandidoId', null);
     }
 
+    public function test_exportar_csv_descarga_los_detalles_en_json(): void
+    {
+        Livewire::actingAs($this->staffUsuario)
+            ->test(GestionClientes::class)
+            ->call('exportarCsv')
+            ->assertFileDownloaded('clientes-'.now()->format('Y-m-d').'.csv');
+    }
+
     public function test_reset_filters_limpia_todo(): void
     {
         Livewire::actingAs($this->staffUsuario)
