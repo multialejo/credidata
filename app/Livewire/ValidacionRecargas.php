@@ -23,8 +23,6 @@ class ValidacionRecargas extends Component
 
     public string $referenciaBancaria = '';
 
-    public string $motivo = '';
-
     public $comprobante;
 
     public function getCreditosCalculadosProperty(): int
@@ -42,7 +40,6 @@ class ValidacionRecargas extends Component
             'clienteEmail' => ['required', 'email', 'max:255'],
             'montoUsd' => ['required', 'numeric', 'min:0.01'],
             'referenciaBancaria' => ['required', 'string', 'max:100'],
-            'motivo' => ['required', 'string', 'min:10', 'max:500'],
             'comprobante' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ]);
 
@@ -88,7 +85,6 @@ class ValidacionRecargas extends Component
                         'creditos' => $creditos,
                         'monto_usd' => (float) $this->montoUsd,
                         'referencia_bancaria' => $this->referenciaBancaria,
-                        'motivo' => $this->motivo,
                         'comprobante' => $path,
                     ],
                     'ip_origen' => request()->ip(),
@@ -100,7 +96,7 @@ class ValidacionRecargas extends Component
             return;
         }
 
-        $this->reset(['clienteEmail', 'montoUsd', 'referenciaBancaria', 'motivo', 'comprobante']);
+        $this->reset(['clienteEmail', 'montoUsd', 'referenciaBancaria', 'comprobante']);
         session()->flash('status', 'Transferencia acreditada correctamente.');
     }
 

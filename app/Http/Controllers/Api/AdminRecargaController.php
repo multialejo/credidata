@@ -29,7 +29,6 @@ class AdminRecargaController extends Controller
                 'monto_usd' => 'El monto no alcanza para acreditar un crédito.',
             ]);
         }
-        $motivo = $request->validated('motivo');
         $referencia = $request->validated('referencia_bancaria');
         $usuario = Usuario::where('email', $request->validated('cliente_email'))
             ->whereHas('cliente')
@@ -57,7 +56,7 @@ class AdminRecargaController extends Controller
         $evidenciaPath = $request->file('comprobante')->store('recargas/comprobantes');
 
         try {
-            $recarga = DB::transaction(function () use ($usuario, $referencia, $monto, $creditos, $evidenciaPath, $staff, $motivo, $request) {
+            $recarga = DB::transaction(function () use ($usuario, $referencia, $monto, $creditos, $evidenciaPath, $staff, $request) {
                 $recarga = app(RecargaService::class)->procesar(
                     referenciaExterna: $referencia,
                     clienteUid: $usuario->uid,
@@ -76,7 +75,6 @@ class AdminRecargaController extends Controller
                         'creditos' => $creditos,
                         'monto_usd' => $monto,
                         'referencia_bancaria' => $referencia,
-                        'motivo' => $motivo,
                         'comprobante' => $recarga->comprobante_url,
                     ],
                     'ip_origen' => $request->ip(),

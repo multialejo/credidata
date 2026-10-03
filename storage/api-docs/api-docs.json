@@ -783,7 +783,6 @@
                                     "cliente_email",
                                     "monto_usd",
                                     "referencia_bancaria",
-                                    "motivo",
                                     "comprobante"
                                 ],
                                 "properties": {
@@ -802,12 +801,6 @@
                                         "type": "string",
                                         "example": "TRX-FICTICIA-001",
                                         "maxLength": 100
-                                    },
-                                    "motivo": {
-                                        "type": "string",
-                                        "example": "Transferencia verificada manualmente.",
-                                        "maxLength": 500,
-                                        "minLength": 10
                                     },
                                     "comprobante": {
                                         "description": "JPG, JPEG, PNG o PDF; máximo 10 MB.",

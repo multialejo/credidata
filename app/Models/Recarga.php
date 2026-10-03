@@ -12,7 +12,7 @@ class Recarga extends Model
         'estado', 'referencia_externa', 'provider_payment_id', 'provider_transaction_id',
         'provider_authorization_code', 'provider_status', 'provider_amount',
         'provider_currency', 'provider_verified_at', 'comprobante_url', 'fecha',
-        'motivo_rechazo', 'rechazada_at', 'rechazada_por',
+        'rechazada_at', 'rechazada_por',
     ];
 
     protected $casts = [

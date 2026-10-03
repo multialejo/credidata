@@ -38,7 +38,7 @@ class ValidacionRecargasTest extends TestCase
         Storage::fake('local');
         Livewire::actingAs($this->admin)->test(ValidacionRecargas::class)
             ->set('clienteEmail', 'cliente@test.com')->set('montoUsd', 5)
-            ->set('referenciaBancaria', 'BANK-LW-001')->set('motivo', 'Transferencia confirmada por WhatsApp')
+            ->set('referenciaBancaria', 'BANK-LW-001')
             ->set('comprobante', UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf'))
             ->call('acreditar')->assertHasNoErrors();
 
@@ -51,7 +51,7 @@ class ValidacionRecargasTest extends TestCase
         Storage::fake('local');
         Livewire::actingAs($this->support)->test(ValidacionRecargas::class)
             ->set('clienteEmail', 'cliente@test.com')->set('montoUsd', 5)
-            ->set('referenciaBancaria', 'BANK-LW-002')->set('motivo', 'Transferencia confirmada por soporte')
+            ->set('referenciaBancaria', 'BANK-LW-002')
             ->set('comprobante', UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf'))
             ->call('acreditar')->assertHasNoErrors();
 

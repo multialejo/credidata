@@ -28,11 +28,6 @@
                     @error('comprobante') <p class="ui-error">{{ $message }}</p> @enderror
                 </div>
                 <div class="md:col-span-2">
-                    <x-input-label for="motivo" value="Motivo" />
-                    <textarea id="motivo" wire:model="motivo" rows="2" class="ui-input mt-1 block w-full"></textarea>
-                    @error('motivo') <p class="ui-error">{{ $message }}</p> @enderror
-                </div>
-                <div class="md:col-span-2">
                     <x-primary-button wire:loading.attr="disabled">Acreditar transferencia</x-primary-button>
                 </div>
             </form>

@@ -15,10 +15,6 @@
             <tr><td style="padding: 10px 0; color: #64748b; font-size: 14px; border-bottom: 1px solid #e2e8f0;">Créditos solicitados</td><td style="padding: 10px 0; color: #14213d; font-size: 14px; text-align: right; border-bottom: 1px solid #e2e8f0;">{{ number_format($recarga->creditos_obtenidos) }}</td></tr>
             <tr><td style="padding: 10px 0; color: #64748b; font-size: 14px;">Fecha</td><td style="padding: 10px 0; color: #14213d; font-size: 14px; text-align: right;">{{ $recarga->fecha?->format('Y-m-d H:i') ?? now()->format('Y-m-d H:i') }}</td></tr>
         </table>
-        <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px; padding: 16px; margin: 0 0 24px;">
-            <p style="color: #b45309; font-size: 12px; font-weight: bold; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.05em;">Motivo del rechazo</p>
-            <p style="color: #92400e; font-size: 14px; line-height: 1.5; margin: 0;">{{ $motivo }}</p>
-        </div>
         <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">Si crees que se trata de un error o necesitas más información, contacta a nuestro equipo de soporte.</p>
         <p style="color: #64748b; font-size: 12px; margin: 0;">Referencia: {{ $recarga->referencia_externa }}</p>
     </div>

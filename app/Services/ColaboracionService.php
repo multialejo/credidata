@@ -190,7 +190,7 @@ class ColaboracionService
         $cliente->increment('saldo_creditos', $creditos);
         $aporte->update(['recompensa_creditos' => $creditos, 'recompensado_en' => now()]);
         $this->updateCounters($colaborador, true, $creditos);
-        LogActividad::create(['accion' => 'colaborador.recompensa_acreditada', 'actor_sistema' => true, 'detalle' => ['aporte_id' => $aporte->id, 'motivo' => 'aporte_aprobado', 'saldo_anterior' => $saldoAnterior, 'saldo_nuevo' => $saldoAnterior + $creditos, 'creditos' => $creditos], 'ip_origen' => $ip]);
+        LogActividad::create(['accion' => 'colaborador.recompensa_acreditada', 'actor_sistema' => true, 'detalle' => ['aporte_id' => $aporte->id, 'saldo_anterior' => $saldoAnterior, 'saldo_nuevo' => $saldoAnterior + $creditos, 'creditos' => $creditos], 'ip_origen' => $ip]);
     }
 
     private function updateCounters(Colaborador $colaborador, bool $aprobado, int $creditos = 0): void

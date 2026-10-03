@@ -41,7 +41,6 @@ class AdminAcreditarTest extends TestCase
             'cliente_email' => 'cliente@test.com',
             'monto_usd' => 10,
             'referencia_bancaria' => $reference,
-            'motivo' => 'Depósito confirmado por WhatsApp',
             'comprobante' => UploadedFile::fake()->create('deposito.pdf', 100, 'application/pdf'),
         ];
     }
@@ -77,7 +76,6 @@ class AdminAcreditarTest extends TestCase
     {
         $response = $this->actingAs($this->admin, 'sanctum')->post('/api/v1/admin/recargas/acreditar', [
             'cliente_email' => 'missing@test.com', 'creditos' => 1, 'referencia_bancaria' => 'BANK-002',
-            'motivo' => 'Motivo suficientemente descriptivo',
         ]);
         $response->assertStatus(422)->assertJsonValidationErrors(['comprobante']);
 
