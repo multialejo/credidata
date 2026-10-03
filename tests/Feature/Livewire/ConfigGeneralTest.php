@@ -172,6 +172,20 @@ class ConfigGeneralTest extends TestCase
         $this->assertSame(0, json_decode(ConfigParametro::where('clave', 'creditosBienvenida')->value('valor')));
     }
 
+    public function test_tasa_de_creditos_requiere_un_entero_positivo(): void
+    {
+        $this->crearParametro(['clave' => 'tasaCambioUsdCreditos', 'valor' => json_encode('10')]);
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(ConfigGeneral::class)
+            ->call('iniciarEdicion', 'financiero', 'tasaCambioUsdCreditos')
+            ->set('valorEditando', '0')
+            ->call('guardar', 'financiero', 'tasaCambioUsdCreditos')
+            ->assertHasErrors('valorEditando');
+
+        $this->assertSame('10', json_decode(ConfigParametro::where('clave', 'tasaCambioUsdCreditos')->value('valor')));
+    }
+
     public function test_limite_diario_de_colaboracion_requiere_entero_no_negativo(): void
     {
         ConfigParametro::where('modulo', 'colaboracion')

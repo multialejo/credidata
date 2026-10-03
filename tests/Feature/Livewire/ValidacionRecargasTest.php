@@ -86,6 +86,22 @@ class ValidacionRecargasTest extends TestCase
         Queue::assertPushedTimes(SendRecargaEmail::class, 1);
     }
 
+    public function test_pending_transfer_with_non_exact_credit_amount_cannot_be_approved(): void
+    {
+        Storage::fake('local');
+        Queue::fake();
+        $recarga = $this->crearTransferenciaPendiente('BANK-NON-EXACT');
+        $recarga->update(['monto_usd' => 5.01]);
+
+        Livewire::actingAs($this->admin)->test(ValidacionRecargas::class)
+            ->call('aprobar', $recarga->id)
+            ->assertHasErrors('aprobacion');
+
+        $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
+        $this->assertSame(EstadoRecarga::Pendiente, $recarga->fresh()->estado);
+        Queue::assertNothingPushed();
+    }
+
     private function crearTransferenciaPendiente(string $referencia): Recarga
     {
         $path = UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf')->store('recargas/comprobantes', 'local');

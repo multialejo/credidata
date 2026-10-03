@@ -35,6 +35,9 @@
                     <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-sm font-semibold text-slate-500">$</span>
                     <input id="monto" type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" wire:model.live="monto" class="ui-input block w-full pl-9 pr-4 py-3" placeholder="10.00" aria-describedby="monto-minimo" />
                 </div>
+                @if($monto !== '' && is_numeric($monto) && (float) $monto >= $recargaMinimaUsd && ! $this->montoValido)
+                    <p class="ui-error" role="alert">El monto debe corresponder a una cantidad entera de créditos.</p>
+                @endif
                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <p id="monto-minimo" class="ui-help">Monto mínimo: ${{ number_format($recargaMinimaUsd, 2) }}</p>
                     <p class="ui-help {{ $monto > $recargaMaximaPayphoneUsd ? 'font-medium text-rose-600' : '' }}">Monto máximo: ${{ number_format($recargaMaximaPayphoneUsd, 2) }}</p>

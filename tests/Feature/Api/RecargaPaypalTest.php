@@ -113,6 +113,20 @@ class RecargaPaypalTest extends TestCase
         $response->assertJsonPath('datos.creditos_calculados', 35);
     }
 
+    public function test_crear_orden_rechaza_monto_que_no_corresponde_a_creditos_enteros(): void
+    {
+        ConfigParametro::where('clave', 'tasaCambioUsdCreditos')->update(['valor' => json_encode(7)]);
+        $this->partialMock(RecargaPaypalService::class, function ($mock) {
+            $mock->shouldReceive('createOrder')->never();
+        });
+
+        $response = $this->actingAs($this->usuario, 'sanctum')
+            ->postJson('/api/v1/recargas/paypal/orden', ['monto_usd' => '5.01']);
+
+        $response->assertStatus(422)->assertJsonPath('error.tipo', 'VALIDACION');
+        $this->assertSame(0, IntencionPaypal::count());
+    }
+
     public function test_crear_orden_dos_veces_genera_order_ids_distintos(): void
     {
         $primera = $this->actingAs($this->usuario, 'sanctum')

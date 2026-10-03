@@ -32,13 +32,13 @@ class PayWithPaypal extends Component
 
     public function getMontoValidoProperty(): bool
     {
-        return $this->isMontoValido($this->monto);
+        return $this->isMontoValido($this->monto) && $this->montoEsExacto($this->monto);
     }
 
     protected function rules()
     {
         return [
-            'monto' => 'required|numeric|min:'.$this->getRecargaMinimaUsd(),
+            'monto' => 'required|numeric|decimal:0,2|min:'.$this->getRecargaMinimaUsd(),
         ];
     }
 
@@ -49,6 +49,13 @@ class PayWithPaypal extends Component
         }
 
         $this->validate();
+
+        $creditos = $this->creditosParaMonto($this->monto);
+        if ($creditos === null) {
+            $this->addError('monto', 'El monto debe corresponder a una cantidad entera de créditos.');
+
+            return;
+        }
 
         try {
             $order = $service->createOrder($this->monto);
@@ -72,8 +79,6 @@ class PayWithPaypal extends Component
 
             return;
         }
-
-        $creditos = (int) floor($this->monto * $this->getTasaCambioUsdCreditos());
 
         IntencionPaypal::create([
             'cliente_id' => auth()->user()->cliente->id,

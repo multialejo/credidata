@@ -153,6 +153,16 @@ class RecargasTest extends TestCase
             ->assertHasNoErrors(['monto']);
     }
 
+    public function test_recargas_muestra_creditos_solo_para_montos_exactos(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->set('monto', '5.01')
+            ->assertSet('creditosEstimados', 0)
+            ->assertSet('montoValido', false)
+            ->assertSee('El monto debe corresponder a una cantidad entera de créditos.');
+    }
+
     public function test_recargas_propaga_monto_al_componente_paypal_embebido(): void
     {
         $tester = Livewire::actingAs($this->usuario)

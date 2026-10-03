@@ -26,7 +26,9 @@ class RecargaPaypalService
                     'purchase_units' => [[
                         'amount' => [
                             'currency_code' => 'USD',
-                            'value' => number_format($montoUsd, 2, '.', ''),
+                            'value' => app(CreditPurchaseCalculator::class)->formatCentsAsUsd(
+                                app(CreditPurchaseCalculator::class)->amountInCents($montoUsd),
+                            ),
                         ],
                     ]],
                     'payment_source' => [

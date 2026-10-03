@@ -21,7 +21,7 @@ class RecargaPayphoneService
             return $this->prepareMock();
         }
 
-        $cents = (int) round($montoUsd * 100);
+        $cents = app(CreditPurchaseCalculator::class)->amountInCents($montoUsd);
 
         try {
             $response = Http::withToken(config('payphone.api_token'))
@@ -143,6 +143,7 @@ class RecargaPayphoneService
             'transactionId' => isset($payload['transactionId']) ? (string) $payload['transactionId'] : null,
             'authorizationCode' => $payload['authorizationCode'] ?? null,
             'message' => $payload['message'] ?? null,
+            'amountPaidCents' => isset($payload['amount']) ? (int) $payload['amount'] : null,
             'amountPaidUsd' => isset($payload['amount']) ? round((float) $payload['amount'] / 100, 2) : null,
         ];
     }

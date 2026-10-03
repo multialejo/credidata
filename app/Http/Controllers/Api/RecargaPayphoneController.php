@@ -10,6 +10,7 @@ use App\Models\Cliente;
 use App\Models\IntencionPayphone;
 use App\Models\LogActividad;
 use App\Models\Recarga;
+use App\Services\CreditPurchaseCalculator;
 use App\Services\RecargaPayphoneService;
 use App\Services\RecargaService;
 use App\StateTransitions\IntencionPayphoneTransitions;
@@ -36,15 +37,19 @@ class RecargaPayphoneController extends Controller
 
         try {
             $validated = $request->validate([
-                'monto_usd' => ['required', 'numeric', 'min:'.$minimo, 'max:'.$maximo],
+                'monto_usd' => ['required', 'numeric', 'decimal:0,2', 'min:'.$minimo, 'max:'.$maximo],
             ]);
         } catch (ValidationException $e) {
             return $this->respondValidationError($e, $minimo, $maximo);
         }
 
         $cliente = $request->user()->cliente;
-        $monto = (float) $validated['monto_usd'];
-        $creditos = (int) round($monto * $this->getTasaCambioUsdCreditos());
+        $monto = (string) $validated['monto_usd'];
+        $creditos = $this->creditosParaMonto($monto);
+        if ($creditos === null) {
+            return $this->respondInvalidCreditAmount($minimo, $maximo);
+        }
+        $monto = (float) $monto;
         $ctid = $this->payphone->generateClientTransactionId();
 
         try {
@@ -201,10 +206,15 @@ class RecargaPayphoneController extends Controller
             ]);
         }
 
-        $montoPagado = round((float) ($confirmacion['amountPaidUsd'] ?? 0), 2);
-        $montoEsperado = round((float) $intencion->monto_usd, 2);
+        $montoPagadoCentavos = $confirmacion['amountPaidCents']
+            ?? (isset($confirmacion['amountPaidUsd'])
+                ? app(CreditPurchaseCalculator::class)->amountInCents((string) $confirmacion['amountPaidUsd'])
+                : null);
+        $montoEsperadoCentavos = app(CreditPurchaseCalculator::class)->amountInCents((string) $intencion->monto_usd);
+        $montoPagado = $montoPagadoCentavos === null ? 0 : $montoPagadoCentavos / 100;
+        $montoEsperado = $montoEsperadoCentavos / 100;
 
-        if ($montoPagado !== $montoEsperado) {
+        if ($montoPagadoCentavos !== $montoEsperadoCentavos) {
             $this->marcarCancelada($intencion, $cliente, $ctid, $status, $confirmacion);
 
             return response()->json([
@@ -326,6 +336,17 @@ class RecargaPayphoneController extends Controller
                 'timestamp' => now()->toIso8601String(),
                 'errores' => $e->errors(),
             ],
+        ], 422);
+    }
+
+    private function respondInvalidCreditAmount(float $minimo, float $maximo): JsonResponse
+    {
+        return response()->json([
+            'codigo' => 422,
+            'exito' => false,
+            'mensaje' => 'Datos de entrada inválidos',
+            'error' => ['tipo' => 'VALIDACION', 'detalle' => 'El monto debe corresponder a una cantidad entera de créditos.'],
+            'metadatos' => ['timestamp' => now()->toIso8601String(), 'minimo_usd' => $minimo, 'maximo_usd' => $maximo],
         ], 422);
     }
 }

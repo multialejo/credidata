@@ -35,13 +35,15 @@ class PayWithPayphone extends Component
 
     public function getMontoValidoProperty(): bool
     {
-        return $this->isMontoValido($this->monto) && $this->monto <= $this->getRecargaMaximaPayphoneUsd();
+        return $this->isMontoValido($this->monto)
+            && $this->montoEsExacto($this->monto)
+            && $this->monto <= $this->getRecargaMaximaPayphoneUsd();
     }
 
     protected function rules()
     {
         return [
-            'monto' => 'required|numeric|min:'.$this->getRecargaMinimaUsd().'|max:'.$this->getRecargaMaximaPayphoneUsd(),
+            'monto' => 'required|numeric|decimal:0,2|min:'.$this->getRecargaMinimaUsd().'|max:'.$this->getRecargaMaximaPayphoneUsd(),
         ];
     }
 
@@ -53,6 +55,13 @@ class PayWithPayphone extends Component
 
         $this->validate();
         $this->errorMessage = null;
+
+        $creditos = $this->creditosParaMonto($this->monto);
+        if ($creditos === null) {
+            $this->addError('monto', 'El monto debe corresponder a una cantidad entera de créditos.');
+
+            return;
+        }
 
         $ctid = $service->generateClientTransactionId();
 
@@ -70,8 +79,6 @@ class PayWithPayphone extends Component
 
             return;
         }
-
-        $creditos = (int) floor($this->monto * $this->getTasaCambioUsdCreditos());
 
         IntencionPayphone::create([
             'cliente_id' => auth()->user()->cliente->id,

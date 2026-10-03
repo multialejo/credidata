@@ -44,7 +44,7 @@ class PayWithTransferencia extends Component
             return false;
         }
 
-        return $this->isMontoValido($this->monto);
+        return $this->isMontoValido($this->monto) && $this->montoEsExacto($this->monto);
     }
 
     public function getCreditosEstimadosProperty(): int
@@ -53,7 +53,7 @@ class PayWithTransferencia extends Component
             return 0;
         }
 
-        return (int) floor($this->monto * $this->getTasaCambioUsdCreditos());
+        return $this->creditosParaMonto($this->monto) ?? 0;
     }
 
     public function getDatosTransferenciaProperty(): ?array
@@ -73,15 +73,15 @@ class PayWithTransferencia extends Component
             'comprobante' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ]);
 
-        $cliente = auth()->user()?->cliente;
-        abort_unless($cliente, 403);
-
-        $creditos = (int) floor($this->monto * $this->getTasaCambioUsdCreditos());
-        if ($creditos < 1) {
-            $this->addError('monto', 'El monto no alcanza para acreditar un crédito.');
+        $creditos = $this->creditosParaMonto($this->monto);
+        if ($creditos === null) {
+            $this->addError('monto', 'El monto debe corresponder a una cantidad entera de créditos.');
 
             return;
         }
+
+        $cliente = auth()->user()?->cliente;
+        abort_unless($cliente, 403);
 
         $path = $this->comprobante->store('recargas/comprobantes', 'local');
 

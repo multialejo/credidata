@@ -123,7 +123,23 @@ class PayWithTransferenciaTest extends TestCase
             ->assertHasErrors('monto');
     }
 
-    public function test_creditos_estimados_usa_floor(): void
+    public function test_no_crea_solicitud_para_monto_que_no_corresponde_a_creditos_enteros(): void
+    {
+        $this->seedDatosTransferencia();
+        Storage::fake('local');
+
+        Livewire::actingAs($this->usuario)
+            ->test(PayWithTransferencia::class, ['monto' => 5.01])
+            ->set('referenciaBancaria', 'BANK-NON-INTEGER-CREDITS')
+            ->set('comprobante', UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf'))
+            ->call('enviarComprobante')
+            ->assertHasErrors('monto');
+
+        $this->assertSame(0, Recarga::count());
+        $this->assertSame([], Storage::disk('local')->allFiles('recargas/comprobantes'));
+    }
+
+    public function test_creditos_estimados_representan_creditos_enteros_sin_redondeo(): void
     {
         $this->seedDatosTransferencia();
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Concerns;
 
 use App\Models\ConfigParametro;
+use App\Services\CreditPurchaseCalculator;
 
 trait InteractsWithFinancieroConfig
 {
@@ -26,6 +27,22 @@ trait InteractsWithFinancieroConfig
             ->first();
 
         return $param ? (int) json_decode($param->valor) : 10;
+    }
+
+    protected function creditosParaMonto(string|int|float $montoUsd): ?int
+    {
+        try {
+            $centavos = app(CreditPurchaseCalculator::class)->amountInCents($montoUsd);
+        } catch (\InvalidArgumentException) {
+            return null;
+        }
+
+        return app(CreditPurchaseCalculator::class)->creditsForCents($centavos, $this->getTasaCambioUsdCreditos());
+    }
+
+    protected function montoEsExacto(string|int|float $montoUsd): bool
+    {
+        return $this->creditosParaMonto($montoUsd) !== null;
     }
 
     protected function getRecargaMinimaUsd(): float

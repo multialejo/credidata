@@ -142,6 +142,19 @@ class RecargaPayphoneTest extends TestCase
         $response->assertJsonPath('datos.creditos_calculados', 35);
     }
 
+    public function test_crear_transaccion_rechaza_monto_que_no_corresponde_a_creditos_enteros(): void
+    {
+        ConfigParametro::where('clave', 'tasaCambioUsdCreditos')->update(['valor' => json_encode(7)]);
+        Http::fake();
+
+        $response = $this->actingAs($this->usuario, 'sanctum')
+            ->postJson('/api/v1/recargas/payphone/transaccion', ['monto_usd' => '5.01']);
+
+        $response->assertStatus(422)->assertJsonPath('error.tipo', 'VALIDACION');
+        $this->assertSame(0, IntencionPayphone::count());
+        Http::assertNothingSent();
+    }
+
     public function test_crear_transaccion_dos_veces_genera_client_transaction_id_distintos(): void
     {
         $primera = $this->actingAs($this->usuario, 'sanctum')

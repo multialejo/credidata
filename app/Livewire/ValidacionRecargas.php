@@ -40,9 +40,9 @@ class ValidacionRecargas extends Component
             return;
         }
 
-        $creditos = (int) floor((float) $recarga->monto_usd * $this->getTasaCambioUsdCreditos());
-        if ($creditos < 1) {
-            $this->addError('aprobacion', 'El monto registrado no alcanza para acreditar un crédito.');
+        $creditos = $this->creditosParaMonto((string) $recarga->monto_usd);
+        if ($creditos === null) {
+            $this->addError('aprobacion', 'El monto registrado no corresponde a una cantidad entera de créditos.');
 
             return;
         }

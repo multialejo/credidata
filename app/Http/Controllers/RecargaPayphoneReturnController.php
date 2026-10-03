@@ -8,6 +8,7 @@ use App\Http\Controllers\Concerns\InteractsWithFinancieroConfig;
 use App\Models\IntencionPayphone;
 use App\Models\LogActividad;
 use App\Models\Recarga;
+use App\Services\CreditPurchaseCalculator;
 use App\Services\RecargaPayphoneService;
 use App\Services\RecargaService;
 use App\StateTransitions\IntencionPayphoneTransitions;
@@ -125,10 +126,15 @@ class RecargaPayphoneReturnController extends Controller
             ]);
         }
 
-        $montoPagado = round((float) ($confirm['amountPaidUsd'] ?? 0), 2);
-        $montoEsperado = round((float) $intencion->monto_usd, 2);
+        $montoPagadoCentavos = $confirm['amountPaidCents']
+            ?? (isset($confirm['amountPaidUsd'])
+                ? app(CreditPurchaseCalculator::class)->amountInCents((string) $confirm['amountPaidUsd'])
+                : null);
+        $montoEsperadoCentavos = app(CreditPurchaseCalculator::class)->amountInCents((string) $intencion->monto_usd);
+        $montoPagado = $montoPagadoCentavos === null ? 0 : $montoPagadoCentavos / 100;
+        $montoEsperado = $montoEsperadoCentavos / 100;
 
-        if ($montoPagado !== $montoEsperado) {
+        if ($montoPagadoCentavos !== $montoEsperadoCentavos) {
             IntencionPayphoneTransitions::assert($intencion->estado, EstadoIntencionPayphone::Cancelada);
             $intencion->update(['estado' => EstadoIntencionPayphone::Cancelada]);
             LogActividad::create([

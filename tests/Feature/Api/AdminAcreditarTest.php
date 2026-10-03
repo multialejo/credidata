@@ -102,4 +102,20 @@ class AdminAcreditarTest extends TestCase
             ->assertStatus(409);
         $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
     }
+
+    public function test_api_does_not_accredit_pending_transfer_with_non_exact_credit_amount(): void
+    {
+        Queue::fake();
+        $recarga = $this->crearTransferenciaPendiente('BANK-NON-EXACT');
+        $recarga->update(['monto_usd' => 10.01]);
+
+        $this->actingAs($this->admin, 'sanctum')
+            ->post('/api/v1/admin/recargas/acreditar', ['recarga_id' => $recarga->id])
+            ->assertStatus(422)
+            ->assertJsonPath('error.tipo', 'MONTO_INVALIDO');
+
+        $this->assertSame(0, (int) $this->cliente->fresh()->saldo_creditos);
+        $this->assertSame(EstadoRecarga::Pendiente, $recarga->fresh()->estado);
+        Queue::assertNothingPushed();
+    }
 }

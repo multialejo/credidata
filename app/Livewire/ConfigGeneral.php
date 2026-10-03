@@ -97,6 +97,12 @@ class ConfigGeneral extends Component
                     $fail('Los créditos de bienvenida deben ser un entero entre 0 y 99,999,999.');
                 }
 
+                if ($modulo === 'financiero' && $clave === 'tasaCambioUsdCreditos'
+                    && ((! is_int($decoded) && ! (is_string($decoded) && ctype_digit($decoded)))
+                        || (int) $decoded < 1 || (int) $decoded > 1_000_000)) {
+                    $fail('La tasa debe ser un entero entre 1 y 1,000,000 créditos por USD.');
+                }
+
                 if ($modulo === 'colaboracion' && in_array($clave, ['limiteDiarioPorIdentificador', 'limiteDiarioPorColaborador'], true)
                     && (! is_int($decoded) || $decoded < 0 || $decoded > 1_000_000)) {
                     $fail('Los límites diarios deben ser enteros entre 0 y 1,000,000.');

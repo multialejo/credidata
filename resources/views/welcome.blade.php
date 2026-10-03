@@ -87,7 +87,9 @@
                         @auth
                             <a href="{{ url('/dashboard') }}" class="ui-primary-button px-6 py-3 text-base">Ir al panel</a>
                         @else
-                            <a href="{{ route('register') }}" class="ui-primary-button px-6 py-3 text-base">Crear cuenta gratis</a>
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}" class="ui-primary-button px-6 py-3 text-base">Crear cuenta gratis</a>
+                            @endif
                             @if (Route::has('login'))
                                 <a href="{{ route('login') }}" class="ui-secondary-button px-6 py-3 text-base">Iniciar sesión</a>
                             @endif
@@ -123,7 +125,7 @@
                                 </div>
                                 <div>
                                     <dt class="text-xs font-medium text-slate-400">Lugar de nacimiento</dt>
-                                    <dd class="mt-0.5 text-sm font-semibold text-[#14213d]">Quito, Pichincha</dd>
+                                    <dd class="mt-0.5 text-sm font-semibold text-[#14213d]">Quito, Pichincha (ejemplo)</dd>
                                 </div>
                             </dl>
                         </div>
@@ -190,7 +192,9 @@
                         @auth
                             <a href="{{ url('/dashboard/api-key') }}" class="ui-primary-button px-6 py-3">Crear tu API Key</a>
                         @else
-                            <a href="{{ route('register') }}" class="ui-primary-button px-6 py-3">Crear cuenta gratis</a>
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}" class="ui-primary-button px-6 py-3">Crear cuenta gratis</a>
+                            @endif
                             @if (Route::has('login'))
                                 <a href="{{ route('login') }}" class="inline-flex items-center justify-center rounded-xl border border-white/25 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">Iniciar sesión</a>
                             @endif
@@ -203,20 +207,20 @@
 curl -X POST "https://api.credidata.app/api/v1/consulta/cedula" \
   -H "Authorization: Bearer cd_sk_tu_api_key" \
   -H "Content-Type: application/json" \
-  -d '{"cedula":"1700000000"}'
+  -d '{"cedula":"0000000000"}'
                     </x-code-copy>
                     <div class="overflow-hidden rounded-xl bg-[#0a1023] ring-1 ring-white/10">
-                        <div class="border-b border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-300">Respuesta de ejemplo</div>
+                        <div class="border-b border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-300">Respuesta simulada — datos ficticios</div>
                         <pre class="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-slate-100">{
   "codigo": 200,
   "exito": true,
   "mensaje": null,
   "datos": {
-    "cedula": "1700000000",
-    "nombres": "PÉREZ GARCÍA JUAN CARLOS",
-    "profesion": "Ingeniero de Sistemas",
-    "fechaNacimiento": "1990-05-14",
-    "lugarNacimiento": "Quito, Pichincha",
+    "cedula": "0000000000",
+    "nombres": "PERSONA DE EJEMPLO",
+    "profesion": "Profesión de ejemplo",
+    "fechaNacimiento": "1990-03-12",
+    "lugarNacimiento": "Quito, Pichincha (ejemplo)",
     "ubicacion": {
       "provincia": "Pichincha",
       "canton": "Quito"
@@ -224,7 +228,7 @@ curl -X POST "https://api.credidata.app/api/v1/consulta/cedula" \
     "contacto": { "telefonos": [], "emails": [], "direcciones": [] }
   },
   "metadatos": {
-    "timestamp": "2026-09-19T12:00:00Z"
+    "timestamp": "2026-01-01T00:00:00Z"
   }
 }</pre>
                     </div>
@@ -239,7 +243,7 @@ curl -X POST "https://api.credidata.app/api/v1/consulta/cedula" \
                     <p class="ui-eyebrow">Colaboradores</p>
                     <h2 class="mt-3 text-3xl font-extrabold tracking-tight text-[#14213d] sm:text-4xl">Aporta datos y gana créditos</h2>
                     <p class="mt-4 text-lg leading-relaxed text-slate-600">
-                        Encuentras un dato público que todavía no está en CrediData? Aporta la información, nuestro equipo la valida
+                        ¿Encuentras un dato público que todavía no está en CrediData? Aporta la información, nuestro equipo la valida
                         y tú recibes créditos de consulta a cambio. Colaborar te permite consultar sin pagar.
                     </p>
                     <a href="{{ url('/dashboard/colaborador') }}" class="mt-6 inline-flex items-center gap-1 font-semibold text-[#3155d9] transition hover:gap-2 hover:text-[#2647c2]">
@@ -274,14 +278,14 @@ curl -X POST "https://api.credidata.app/api/v1/consulta/cedula" \
                 <div class="mx-auto max-w-2xl text-center">
                     <p class="ui-eyebrow">Precios</p>
                     <h2 class="mt-3 text-3xl font-extrabold tracking-tight text-[#14213d] sm:text-4xl">Paga por consulta. Nada más</h2>
-                    <p class="mt-4 text-lg text-slate-600">Sin planes, sin mensualidades y sin permanencia. Recargan cuando lo necesites y usas tus créditos a tu ritmo.</p>
                 </div>
 
                 <div class="mt-12 ui-card p-8 sm:p-10">
                     <ul class="grid gap-5 sm:grid-cols-2">
                         @foreach ([
-                            'Recargas desde $0.50 con PayPal, PayPhone o transferencia.',
-                            'Solo se cobra si hay respuesta, no por la petición fallida.',
+                            'Recarga mínima de $' . number_format($recargaMinimaUsd, 2, ',', '.') . ' USD.',
+                            'Cada consulta consume ' . $costoConsultaCreditos . ' ' . ($costoConsultaCreditos === 1 ? 'crédito' : 'créditos') . ' (aproximadamente $' . number_format($precioConsultaUsd, 2, ',', '.') . ' USD).',
+                            'Las fallas por indisponibilidad de la fuente no consumen créditos.',
                             'Tu historial y saldo quedan registrados en tu panel.',
                             'Colaborando con datos puedes obtener créditos sin pagar.',
                         ] as $beneficio)
@@ -297,7 +301,9 @@ curl -X POST "https://api.credidata.app/api/v1/consulta/cedula" \
                         @auth
                             <a href="{{ url('/dashboard/recargas') }}" class="ui-primary-button px-6 py-3">Recargar saldo</a>
                         @else
-                            <a href="{{ route('register') }}" class="ui-primary-button px-6 py-3">Crear cuenta gratis</a>
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}" class="ui-primary-button px-6 py-3">Crear cuenta gratis</a>
+                            @endif
                             @if (Route::has('login'))
                                 <a href="{{ route('login') }}" class="ui-secondary-button px-6 py-3">Iniciar sesión</a>
                             @endif
@@ -319,7 +325,8 @@ curl -X POST "https://api.credidata.app/api/v1/consulta/cedula" \
                     @foreach ([
                         '¿Qué es CrediData?' => 'Una plataforma para consultar datos de identidad (cédula) y empresas (RUC) de Ecuador, ya sea desde el panel o mediante una API REST para desarrolladores.',
                         '¿Qué consultas puedo hacer?' => 'Hoy puedes consultar por cédula (Registro Civil) y por RUC (SRI). Se irán sumando más fuentes de datos públicos con el tiempo.',
-                        '¿Cómo pago por las consultas?' => 'Recargas saldo en créditos desde $0.50 con PayPal, PayPhone o transferencia. Cada consulta consume un crédito y solo se cobra si hay respuesta.',
+                        '¿Cuánto cuesta cada consulta?' => 'Cada consulta consume ' . $costoConsultaCreditos . ' ' . ($costoConsultaCreditos === 1 ? 'crédito' : 'créditos') . ', aproximadamente $' . number_format($precioConsultaUsd, 2, ',', '.') . ' USD según la tasa vigente. La recarga mínima es de $' . number_format($recargaMinimaUsd, 2, ',', '.') . ' USD. Las fallas por indisponibilidad de la fuente no consumen créditos.',
+                        '¿Cómo recargo saldo?' => 'Puedes recargar desde $' . number_format($recargaMinimaUsd, 2, ',', '.') . ' USD mediante los métodos de pago habilitados en la plataforma.',
                         '¿Qué es una API Key?' => 'Es la credencial que usas para consumir la API. La generas desde tu panel y la envías en el encabezado Authorization de cada petición.',
                         '¿Puedo obtener créditos sin pagar?' => 'Sí. Como colaborador puedes aportar datos públicos que falten y, una vez validados, recibes créditos de consulta a cambio.',
                         '¿Es legal y seguro?' => 'CrediData es una plataforma privada e independiente, no afiliada al gobierno. Consultamos información pública y tratamos tus datos conforme a la legislación ecuatoriana.',
@@ -347,7 +354,9 @@ curl -X POST "https://api.credidata.app/api/v1/consulta/cedula" \
                     @auth
                         <a href="{{ url('/dashboard') }}" class="ui-primary-button px-8 py-3 text-base">Ir al panel</a>
                     @else
-                        <a href="{{ route('register') }}" class="ui-primary-button px-8 py-3 text-base">Crear cuenta gratis</a>
+                        @if (Route::has('register'))
+                            <a href="{{ route('register') }}" class="ui-primary-button px-8 py-3 text-base">Crear cuenta gratis</a>
+                        @endif
                         @if (Route::has('login'))
                             <a href="{{ route('login') }}" class="inline-flex items-center justify-center rounded-xl border border-white/25 px-8 py-3 text-base font-semibold text-white transition hover:bg-white/10">Iniciar sesión</a>
                         @endif

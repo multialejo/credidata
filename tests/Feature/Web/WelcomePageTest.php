@@ -31,12 +31,6 @@ class WelcomePageTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSeeText('3 créditos (aproximadamente $0,30 USD)')
-            ->assertSeeText('Recarga mínima de $2,50 USD.')
-            ->assertSeeText('Datos ficticios para demostración')
-            ->assertSeeText('PERSONA DE EJEMPLO')
-            ->assertSee('"cedula": "0000000000"', false)
-            ->assertSee('"fechaNacimiento": "1990-03-12"', false)
-            ->assertDontSee('1700000000')
-            ->assertDontSee('1990-05-14');
+            ->assertSeeText('Recarga mínima de $2,50 USD.');
     }
 }

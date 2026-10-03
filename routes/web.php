@@ -5,6 +5,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecargaPaypalReturnController;
 use App\Http\Controllers\RecargaPayphoneReturnController;
 use App\Http\Controllers\ReciboPdfController;
+use App\Models\ConfigParametro;
 use App\Livewire\ActivarColaborador;
 use App\Livewire\ConfigGeneral;
 use App\Livewire\EditarRegistro;
@@ -21,7 +22,19 @@ use App\Livewire\ValidacionRecargas;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    $parametrosFinancieros = ConfigParametro::query()
+        ->where('modulo', 'financiero')
+        ->whereIn('clave', ['costoConsultaBase', 'tasaCambioUsdCreditos', 'recargaMinimaUsd'])
+        ->pluck('valor', 'clave');
+
+    $costoConsultaCreditos = (int) json_decode($parametrosFinancieros['costoConsultaBase'] ?? '1');
+    $tasaCambioCreditosPorUsd = (int) json_decode($parametrosFinancieros['tasaCambioUsdCreditos'] ?? '10');
+
+    return view('welcome', [
+        'costoConsultaCreditos' => $costoConsultaCreditos,
+        'precioConsultaUsd' => $tasaCambioCreditosPorUsd > 0 ? $costoConsultaCreditos / $tasaCambioCreditosPorUsd : 0,
+        'recargaMinimaUsd' => (float) json_decode($parametrosFinancieros['recargaMinimaUsd'] ?? '5.00'),
+    ]);
 });
 
 // Admin routes — staff only

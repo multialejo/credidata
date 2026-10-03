@@ -31,9 +31,9 @@ class AdminRecargaController extends Controller
             return $this->error('La solicitud no existe, no está pendiente o no tiene comprobante.', 'SOLICITUD_NO_DISPONIBLE', 409);
         }
 
-        $creditos = (int) floor((float) $recarga->monto_usd * $this->getTasaCambioUsdCreditos());
-        if ($creditos < 1) {
-            return $this->error('El monto no alcanza para acreditar un crédito.', 'MONTO_INVALIDO', 422);
+        $creditos = $this->creditosParaMonto((string) $recarga->monto_usd);
+        if ($creditos === null) {
+            return $this->error('El monto no corresponde a una cantidad entera de créditos.', 'MONTO_INVALIDO', 422);
         }
 
         try {

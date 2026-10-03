@@ -35,15 +35,19 @@ class RecargaPaypalController extends Controller
 
         try {
             $validated = $request->validate([
-                'monto_usd' => ['required', 'numeric', 'min:'.$minimo],
+                'monto_usd' => ['required', 'numeric', 'decimal:0,2', 'min:'.$minimo],
             ]);
         } catch (ValidationException $e) {
             return $this->respondValidationError($e, $minimo);
         }
 
         $cliente = $request->user()->cliente;
-        $monto = (float) $validated['monto_usd'];
-        $creditos = (int) floor($monto * $this->getTasaCambioUsdCreditos());
+        $monto = (string) $validated['monto_usd'];
+        $creditos = $this->creditosParaMonto($monto);
+        if ($creditos === null) {
+            return $this->respondInvalidCreditAmount($minimo);
+        }
+        $monto = (float) $monto;
 
         try {
             $order = $this->paypal->createOrder($monto);
@@ -302,6 +306,17 @@ class RecargaPaypalController extends Controller
                 'timestamp' => now()->toIso8601String(),
                 'errores' => $e->errors(),
             ],
+        ], 422);
+    }
+
+    private function respondInvalidCreditAmount(float $minimo): JsonResponse
+    {
+        return response()->json([
+            'codigo' => 422,
+            'exito' => false,
+            'mensaje' => 'Datos de entrada inválidos',
+            'error' => ['tipo' => 'VALIDACION', 'detalle' => 'El monto debe corresponder a una cantidad entera de créditos.'],
+            'metadatos' => ['timestamp' => now()->toIso8601String(), 'minimo_usd' => $minimo],
         ], 422);
     }
 }

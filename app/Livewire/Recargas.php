@@ -55,24 +55,20 @@ class Recargas extends Component
 
     public function getCreditosEstimadosProperty(): int
     {
-        $monto = $this->montoFloat();
-
-        return $monto > 0
-            ? (int) floor($monto * $this->getTasaCambioUsdCreditos())
-            : 0;
+        return $this->creditosParaMonto($this->monto) ?? 0;
     }
 
     public function getMontoValidoProperty(): bool
     {
         $monto = $this->montoFloat();
 
-        return $monto > 0 && $this->isMontoValido($monto);
+        return $monto > 0 && $this->isMontoValido($monto) && $this->montoEsExacto($this->monto);
     }
 
     protected function rules()
     {
         return [
-            'monto' => 'required|numeric|min:'.$this->getRecargaMinimaUsd(),
+            'monto' => 'required|numeric|decimal:0,2|min:'.$this->getRecargaMinimaUsd(),
         ];
     }
 
@@ -80,6 +76,10 @@ class Recargas extends Component
     {
         $this->dispatch('monto-updated', $this->montoFloat());
         $this->validateOnly('monto');
+
+        if ($this->montoFloat() > 0 && ! $this->montoEsExacto($this->monto)) {
+            $this->addError('monto', 'El monto debe corresponder a una cantidad entera de créditos.');
+        }
     }
 
     public function render()
