@@ -97,6 +97,6 @@ Without this step, you'll see a `ViteManifestNotFoundException` when visiting th
 # SSH into the app container
 ./vendor/bin/sail shell
 
-# Run tests
-./vendor/bin/sail artisan test
+# Run tests (clears cached config so PHPUnit can apply testing settings)
+./vendor/bin/sail composer test
 ```

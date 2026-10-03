@@ -145,6 +145,16 @@ class RecargasTest extends TestCase
             ->assertHasErrors(['monto']);
     }
 
+    public function test_recargas_muestra_mensaje_de_validacion_en_espanol(): void
+    {
+        app()->setLocale('es');
+
+        Livewire::actingAs($this->usuario)
+            ->test(Recargas::class)
+            ->set('monto', 1.0)
+            ->assertSee('El campo monto debe ser al menos 5.');
+    }
+
     public function test_recargas_monto_valido_pasa_validacion(): void
     {
         Livewire::actingAs($this->usuario)

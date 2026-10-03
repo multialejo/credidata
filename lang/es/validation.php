@@ -135,5 +135,11 @@ return [
     'ulid' => 'El campo :attribute debe ser un ULID válido.',
     'uuid' => 'El campo :attribute debe ser un UUID válido.',
 
-    'attributes' => [],
+    'attributes' => [
+        'monto' => 'monto',
+        'monto_usd' => 'monto',
+        'email' => 'correo electrónico',
+        'password' => 'contraseña',
+        'name' => 'nombre',
+    ],
 ];
