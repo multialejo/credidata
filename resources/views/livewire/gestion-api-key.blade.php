@@ -27,7 +27,7 @@
     <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <h2 class="text-lg font-semibold text-[#14213d]">Tus credenciales</h2>
-            <p class="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Usa una clave por aplicación. Para colaborar, crea una clave aparte y habilita únicamente el permiso de aportes.</p>
+            <p class="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Usa una credencial por aplicación. Para colaborar, habilita la opción "Aportes" o genera una nueva clave dedicada.</p>
         </div>
         @if (! $mostrarFormulario)
             <button type="button" wire:click="abrirFormulario" class="ui-primary-button min-h-11 shrink-0 px-4 py-2">
@@ -40,7 +40,7 @@
         <section class="ui-card p-5 sm:p-7" aria-labelledby="api-key-form-title">
             <div class="flex flex-col gap-1">
                 <h2 id="api-key-form-title" class="ui-section-title">{{ $editandoId ? 'Configurar API Key' : 'Nueva API Key' }}</h2>
-                <p class="text-sm leading-6 text-slate-600">{{ $editandoId ? 'Los cambios aplican únicamente a esta clave.' : 'Asigná un nombre que te permita reconocer el sistema que la va a usar.' }}</p>
+                <p class="text-sm leading-6 text-slate-600">{{ $editandoId ? 'Los cambios aplican únicamente a esta clave.' : 'Asigna un nombre que te permita reconocer el sistema que la va a usar.' }}</p>
             </div>
 
             <form wire:submit.prevent="{{ $editandoId ? 'guardar' : 'crear' }}" class="mt-6 space-y-6">
