@@ -194,10 +194,13 @@ class GestionClientesTest extends TestCase
 
         Livewire::actingAs($this->staffUsuario)
             ->test(GestionClientes::class)
-            ->set('expandidoId', $this->cliente->id)
+            ->call('toggleDetalle', $this->cliente->id)
+            ->assertSet('expandidoId', $this->cliente->id)
             ->assertSee('1234567890')
             ->assertSee('1234567891')
-            ->assertSee('1234567892');
+            ->assertSee('1234567892')
+            ->call('cerrarDetalle')
+            ->assertSet('expandidoId', null);
     }
 
     public function test_detalle_expandible_muestra_recargas(): void
@@ -214,7 +217,7 @@ class GestionClientesTest extends TestCase
 
         Livewire::actingAs($this->staffUsuario)
             ->test(GestionClientes::class)
-            ->set('expandidoId', $this->cliente->id)
+            ->call('toggleDetalle', $this->cliente->id)
             ->assertSee('paypal')
             ->assertSee('10.00')
             ->assertSee('100')
@@ -231,7 +234,7 @@ class GestionClientesTest extends TestCase
 
         Livewire::actingAs($this->staffUsuario)
             ->test(GestionClientes::class)
-            ->set('expandidoId', $this->cliente->id)
+            ->call('toggleDetalle', $this->cliente->id)
             ->assertSee('cd_sk_testkey1')
             ->assertSee('192.168.1.1')
             ->assertSee('10.0.0.1')
