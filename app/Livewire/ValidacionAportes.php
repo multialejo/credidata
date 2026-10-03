@@ -19,19 +19,33 @@ class ValidacionAportes extends Component
 
     public function ver(int $id, ColaboracionService $service): void
     {
-        $this->detalleId = $this->detalleId === $id ? null : $id;
+        if ($this->detalleId === $id) {
+            $this->cerrarDetalle();
+
+            return;
+        }
+
+        $this->detalleId = $id;
         $this->comentario = '';
         $aporte = Aporte::findOrFail($id);
         $actual = $service->valorActual($aporte);
         $this->valorActual = is_array($actual) ? implode(', ', $actual) : (string) $actual;
+        $this->dispatch('open-modal', 'contribution-detail');
+    }
+
+    public function cerrarDetalle(): void
+    {
+        $this->detalleId = null;
+        $this->comentario = '';
+        $this->valorActual = '';
+        $this->dispatch('close');
     }
 
     public function decidir(int $id, bool $aprobar, ColaboracionService $service): void
     {
         $this->validate(['comentario' => ['nullable', 'string', 'max:500']]);
         $service->decidir(Aporte::findOrFail($id), auth()->user(), $aprobar, $this->comentario ?: null, request()->ip());
-        $this->detalleId = null;
-        $this->comentario = '';
+        $this->cerrarDetalle();
         $this->resetPage();
     }
 
