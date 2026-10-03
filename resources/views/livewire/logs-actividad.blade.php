@@ -1,11 +1,48 @@
 <x-page-shell max-width="7xl">
     <x-page-header eyebrow="Administración" title="Registro de actividad" description="Trazabilidad de acciones realizadas por usuarios y procesos del sistema." />
+
+    <section class="ui-card p-5 sm:p-6" aria-labelledby="actividad-grafica-title">
+        <div class="flex flex-col gap-5 border-b border-slate-100 pb-5 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+                <h2 id="actividad-grafica-title" class="text-xl font-bold tracking-tight text-[#14213d]">Eventos por día</h2>
+                <p id="actividad-grafica-description" class="mt-1 text-sm leading-6 text-slate-600">Cantidad de eventos registrados por día, según los filtros aplicados.</p>
+            </div>
+            <div class="flex flex-col gap-3 xl:items-end">
+                <div class="flex flex-wrap items-end gap-2">
+                    <div>
+                        <label class="ui-label mb-1 text-xs" for="grafica-desde">Desde</label>
+                        <input id="grafica-desde" type="date" wire:model.live="fechaDesde" class="ui-input w-full sm:w-36">
+                    </div>
+                    <div>
+                        <label class="ui-label mb-1 text-xs" for="grafica-hasta">Hasta</label>
+                        <input id="grafica-hasta" type="date" wire:model.live="fechaHasta" class="ui-input w-full sm:w-36">
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2" aria-label="Rangos rápidos">
+                    <button type="button" wire:click="establecerRango('7')" class="ui-secondary-button min-h-9 px-3 py-1 text-xs">7 días</button>
+                    <button type="button" wire:click="establecerRango('30')" class="ui-secondary-button min-h-9 px-3 py-1 text-xs">30 días</button>
+                    <button type="button" wire:click="establecerRango('90')" class="ui-secondary-button min-h-9 px-3 py-1 text-xs">90 días</button>
+                    <button type="button" wire:click="establecerRango('year')" class="ui-secondary-button min-h-9 px-3 py-1 text-xs">Este año</button>
+                </div>
+            </div>
+        </div>
+
+        @if($actividadDiaria)
+            <div class="mt-5" data-activity-chart x-init="renderActivityChart($refs.canvas, @js($actividadDiaria))">
+                <div class="relative h-72" role="img" aria-labelledby="actividad-grafica-title actividad-grafica-description">
+                    <canvas x-ref="canvas" aria-label="Eventos registrados por día"></canvas>
+                </div>
+                <p class="sr-only">El gráfico muestra {{ count($actividadDiaria) }} días. El máximo registrado fue de {{ $picoActividad['total'] }} eventos el {{ \Carbon\Carbon::parse($picoActividad['fecha'])->format('d/m/Y') }}.</p>
+            </div>
+        @else
+            <p class="mt-5 rounded-xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">No hay eventos para graficar en el período seleccionado.</p>
+        @endif
+    </section>
+
 <x-data-table caption="Actividad registrada">
-    <x-slot:filters class="lg:grid-cols-5">
-        <div><label class="ui-label mb-1 text-xs" for="log-accion">Acción</label><select id="log-accion" wire:model.live="accion" class="ui-input w-full"><option value="">Todas las acciones</option>@foreach($accionesConocidas as $a)<option value="{{ $a }}">{{ $a }}</option>@endforeach</select></div>
-        <div><label class="ui-label mb-1 text-xs" for="log-desde">Desde</label><input id="log-desde" type="date" wire:model.live="fechaDesde" class="ui-input w-full"></div>
-        <div><label class="ui-label mb-1 text-xs" for="log-hasta">Hasta</label><input id="log-hasta" type="date" wire:model.live="fechaHasta" class="ui-input w-full"></div>
-        <div><label class="ui-label mb-1 text-xs" for="log-actor">Actor</label><input id="log-actor" type="search" wire:model.live.debounce.300ms="actorEmail" placeholder="Buscar por correo" class="ui-input w-full"></div>
+     <x-slot:filters class="lg:grid-cols-3">
+         <div><label class="ui-label mb-1 text-xs" for="log-accion">Acción</label><select id="log-accion" wire:model.live="accion" class="ui-input w-full"><option value="">Todas las acciones</option>@foreach($accionesConocidas as $a)<option value="{{ $a }}">{{ $a }}</option>@endforeach</select></div>
+         <div><label class="ui-label mb-1 text-xs" for="log-actor">Actor</label><input id="log-actor" type="search" wire:model.live.debounce.300ms="actorEmail" placeholder="Buscar por correo" class="ui-input w-full"></div>
         <div class="flex items-end justify-end gap-2">
             <button type="button" wire:click="resetFilters" class="ui-secondary-button">Limpiar filtros</button>
             <button type="button" wire:click="exportarCsv" wire:loading.attr="disabled" wire:target="exportarCsv" class="ui-secondary-button">

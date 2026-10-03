@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\LogActividad;
+use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -48,6 +49,11 @@ class LogsActividad extends Component
         'actorEmail' => ['except' => ''],
     ];
 
+    public function mount(): void
+    {
+        $this->establecerRango('30');
+    }
+
     public function updatingAccion(): void
     {
         $this->resetPage();
@@ -70,7 +76,24 @@ class LogsActividad extends Component
 
     public function resetFilters(): void
     {
-        $this->reset(['accion', 'fechaDesde', 'fechaHasta', 'actorEmail']);
+        $this->reset(['accion', 'actorEmail']);
+        $this->establecerRango('30');
+    }
+
+    public function establecerRango(string $rango): void
+    {
+        $hoy = now()->startOfDay();
+
+        [$desde, $hasta] = match ($rango) {
+            '7' => [$hoy->copy()->subDays(6), $hoy],
+            '30' => [$hoy->copy()->subDays(29), $hoy],
+            '90' => [$hoy->copy()->subDays(89), $hoy],
+            'year' => [$hoy->copy()->startOfYear(), $hoy],
+            default => [$hoy->copy()->subDays(29), $hoy],
+        };
+
+        $this->fechaDesde = $desde->toDateString();
+        $this->fechaHasta = $hasta->toDateString();
         $this->resetPage();
     }
 
@@ -112,16 +135,53 @@ class LogsActividad extends Component
     public function render()
     {
         $logs = $this->consultaLogs()->paginate(25);
+        $actividadDiaria = $this->actividadDiaria();
+        $picoActividad = collect($actividadDiaria)->sortByDesc('total')->first();
 
         $detalleLog = $this->detalleId
             ? LogActividad::with('actor')->find($this->detalleId)
             : null;
 
+        $this->dispatch('activity-chart-updated', points: $actividadDiaria);
+
         return view('livewire.logs-actividad', [
             'logs' => $logs,
             'accionesConocidas' => self::ACCIONES_CONOCIDAS,
             'detalleLog' => $detalleLog,
+            'actividadDiaria' => $actividadDiaria,
+            'picoActividad' => $picoActividad,
         ]);
+    }
+
+    private function actividadDiaria(): array
+    {
+        $desde = Carbon::parse($this->fechaDesde ?: now()->subDays(29)->toDateString())->startOfDay();
+        $hasta = Carbon::parse($this->fechaHasta ?: now()->toDateString())->startOfDay();
+
+        if ($desde->gt($hasta)) {
+            return [];
+        }
+
+        $conteos = $this->consultaLogs()
+            ->whereDate('fecha', '>=', $desde->toDateString())
+            ->whereDate('fecha', '<=', $hasta->toDateString())
+            ->reorder()
+            ->selectRaw('DATE(fecha) as dia, COUNT(*) as total')
+            ->groupBy('dia')
+            ->orderBy('dia')
+            ->pluck('total', 'dia');
+
+        $puntos = [];
+        for ($dia = $desde->copy(); $dia->lte($hasta); $dia->addDay()) {
+            $fecha = $dia->toDateString();
+            $puntos[] = [
+                'fecha' => $fecha,
+                'etiqueta' => $dia->format('d/m'),
+                'total' => (int) ($conteos[$fecha] ?? 0),
+            ];
+        }
+
+        return $puntos;
     }
 
     private function consultaLogs()

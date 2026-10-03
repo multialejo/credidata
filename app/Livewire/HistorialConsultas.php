@@ -20,8 +20,23 @@ class HistorialConsultas extends Component
 
     public function render()
     {
-        $cliente = auth()->user()->cliente;
+        $query = $this->consultaQuery();
+        $total = (clone $query)->count();
+        $exitosas = (clone $query)->where('exitosa', true)->count();
 
+        return view('livewire.historial-consultas', [
+            'consultas' => $query->latest('fecha')->paginate(15),
+            'estadisticas' => [
+                'total' => $total,
+                'creditos' => (clone $query)->sum('creditos_gastados'),
+                'tasa_exito' => $total > 0 ? round(($exitosas / $total) * 100) : 0,
+            ],
+        ]);
+    }
+
+    private function consultaQuery()
+    {
+        $cliente = auth()->user()->cliente;
         $query = Consulta::with('apiKey')->where('cliente_id', $cliente->id);
 
         if ($this->filtroFechaDesde) {
@@ -37,9 +52,7 @@ class HistorialConsultas extends Component
             $query->where('exitosa', $this->filtroResultado === 'exito');
         }
 
-        return view('livewire.historial-consultas', [
-            'consultas' => $query->latest('fecha')->paginate(15),
-        ]);
+        return $query;
     }
 
     public function exportarCsv()

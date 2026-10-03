@@ -1,6 +1,24 @@
 <x-page-shell max-width="7xl">
     <x-page-header eyebrow="Consultas" title="Historial de consultas" description="Revisa tus consultas y el consumo de créditos asociado." />
 
+    <section class="grid gap-4 sm:grid-cols-3" aria-label="Resumen de consultas">
+        <div class="ui-card p-5">
+            <p class="text-sm font-medium text-slate-600">Consultas</p>
+            <p class="mt-2 text-3xl font-bold tracking-tight text-[#14213d] tabular-nums">{{ number_format($estadisticas['total']) }}</p>
+            <p class="mt-1 text-xs text-slate-500">Según los filtros aplicados</p>
+        </div>
+        <div class="ui-card p-5">
+            <p class="text-sm font-medium text-slate-600">Créditos consumidos</p>
+            <p class="mt-2 text-3xl font-bold tracking-tight text-slate-500 tabular-nums">{{ number_format($estadisticas['creditos']) }}</p>
+            <p class="mt-1 text-xs text-slate-500">En el conjunto filtrado</p>
+        </div>
+        <div class="ui-card p-5">
+            <p class="text-sm font-medium text-slate-600">Tasa de éxito</p>
+            <p class="mt-2 text-3xl font-bold tracking-tight text-emerald-700 tabular-nums">{{ $estadisticas['tasa_exito'] }}%</p>
+            <p class="mt-1 text-xs text-slate-500">Consultas con respuesta exitosa</p>
+        </div>
+    </section>
+
     <x-data-table caption="Consultas registradas">
     <x-slot:filters class="lg:grid-cols-5">
         <div>

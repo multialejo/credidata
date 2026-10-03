@@ -127,6 +127,15 @@ class LogsActividadTest extends TestCase
             });
     }
 
+    public function test_rango_rapido_de_7_dias_actualiza_los_filtros(): void
+    {
+        Livewire::actingAs($this->staffUsuario)
+            ->test(LogsActividad::class)
+            ->call('establecerRango', '7')
+            ->assertSet('fechaDesde', now()->subDays(6)->format('Y-m-d'))
+            ->assertSet('fechaHasta', now()->format('Y-m-d'));
+    }
+
     public function test_filtro_por_actor_email(): void
     {
         $otroUsuario = Usuario::create([
@@ -239,8 +248,8 @@ class LogsActividadTest extends TestCase
             ->set('actorEmail', 'staff@')
             ->call('resetFilters')
             ->assertSet('accion', '')
-            ->assertSet('fechaDesde', '')
-            ->assertSet('fechaHasta', '')
+            ->assertSet('fechaDesde', now()->subDays(29)->format('Y-m-d'))
+            ->assertSet('fechaHasta', now()->format('Y-m-d'))
             ->assertSet('actorEmail', '');
     }
 
@@ -273,5 +282,23 @@ class LogsActividadTest extends TestCase
             ->test(LogsActividad::class)
             ->call('exportarCsv')
             ->assertFileDownloaded('actividad-'.now()->format('Y-m-d').'.csv');
+    }
+
+    public function test_grafica_agrega_eventos_por_dia_y_rellena_dias_vacios(): void
+    {
+        $desde = now()->startOfYear();
+        $this->crearLog(['fecha' => $desde->copy()->addDay()]);
+        $this->crearLog(['fecha' => $desde->copy()->addDays(2)]);
+        $this->crearLog(['fecha' => $desde->copy()->addDays(2)]);
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(LogsActividad::class)
+            ->set('fechaDesde', $desde->toDateString())
+            ->set('fechaHasta', $desde->copy()->addDays(2)->toDateString())
+            ->assertViewHas('actividadDiaria', [
+                ['fecha' => $desde->toDateString(), 'etiqueta' => $desde->format('d/m'), 'total' => 0],
+                ['fecha' => $desde->copy()->addDay()->toDateString(), 'etiqueta' => $desde->copy()->addDay()->format('d/m'), 'total' => 1],
+                ['fecha' => $desde->copy()->addDays(2)->toDateString(), 'etiqueta' => $desde->copy()->addDays(2)->format('d/m'), 'total' => 2],
+            ]);
     }
 }
