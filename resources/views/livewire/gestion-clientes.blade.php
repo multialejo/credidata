@@ -1,7 +1,7 @@
 <x-page-shell max-width="7xl">
     <x-page-header eyebrow="Administración" title="Gestión de clientes" description="Consulta saldos, estados y accesos de los clientes." />
-<section class="ui-data-table">
-    <div class="ui-data-table__filters sm:grid-cols-3 lg:grid-cols-3">
+<x-data-table caption="Listado de clientes">
+    <x-slot:filters class="sm:grid-cols-3 lg:grid-cols-3">
         <div>
             <label class="ui-label mb-1 text-xs" for="clientes-buscar">Buscar</label>
             <input id="clientes-buscar" type="search" wire:model.live.debounce.300ms="buscar"
@@ -23,63 +23,60 @@
                 Limpiar filtros
             </button>
         </div>
-    </div>
+    </x-slot:filters>
 
     @if($clientes->isEmpty())
-        <p class="ui-data-table__empty">No se encontraron clientes con los filtros aplicados.</p>
+        <tbody>
+            <tr><td colspan="7" class="ui-data-table__empty">No se encontraron clientes con los filtros aplicados.</td></tr>
+        </tbody>
     @else
-        <div class="ui-data-table__scroll">
-            <table class="ui-data-table__table">
-                <caption class="sr-only">Listado de clientes</caption>
-                <thead>
-                        <tr>
-                        <th scope="col">Email</th>
-                        <th scope="col">Nombre</th>
-                        <th scope="col">Saldo</th>
-                        <th scope="col">Estado</th>
-                        <th scope="col">API Keys</th>
-                        <th scope="col">Consultas hoy / total</th>
-                        <th scope="col">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($clientes as $cliente)
-                        <tr>
-                            <td class="whitespace-nowrap">{{ $cliente->usuario->email ?? '—' }}</td>
-                            <td class="whitespace-nowrap">{{ $cliente->usuario->nombre ?? '—' }}</td>
-                            <td class="font-semibold tabular-nums">{{ $cliente->saldo_creditos }}</td>
-                            <td>
-                                @php $estadoUsuario = $cliente->usuario->estado ?? null; @endphp
-                                @if($estadoUsuario === 'activo')
-                                    <span class="ui-table-badge bg-emerald-100 text-emerald-800">Activo</span>
-                                @elseif($estadoUsuario === 'suspendido')
-                                    <span class="ui-table-badge bg-rose-100 text-rose-800">Suspendido</span>
-                                @elseif($estadoUsuario === 'inactivo')
-                                    <span class="ui-table-badge bg-slate-100 text-slate-700">Inactivo</span>
-                                @else
-                                    <span class="ui-table-badge bg-slate-100 text-slate-700">—</span>
-                                @endif
-                            </td>
-                            <td class="whitespace-nowrap">{{ $cliente->api_keys_count }}</td>
-                            <td class="whitespace-nowrap tabular-nums">
-                                {{ $cliente->consultas_hoy_count ?? 0 }} / {{ $cliente->consultas_count ?? 0 }}
-                            </td>
-                            <td>
-                                <button wire:click="toggleDetalle({{ $cliente->id }})" type="button"
-                                    class="ui-secondary-button min-h-9 px-3 py-1.5 text-xs
-                                        {{ $expandidoId === $cliente->id ? 'bg-slate-100' : '' }}">
-                                    {{ $expandidoId === $cliente->id ? 'Ocultar' : 'Ver detalle' }}
-                                </button>
-                            </td>
-                        </tr>
-                        @if($expandidoId === $cliente->id)
-                            <tr class="bg-slate-50">
-                                <td colspan="7" class="px-4 py-4">
-                                    @if($detalle && $detalle->id === $cliente->id)
-                                        @php
-                                        @endphp
+        <thead>
+            <tr>
+                <th scope="col">Email</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Saldo</th>
+                <th scope="col">Estado</th>
+                <th scope="col">API Keys</th>
+                <th scope="col">Consultas hoy / total</th>
+                <th scope="col">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($clientes as $cliente)
+                <tr>
+                    <td class="whitespace-nowrap">{{ $cliente->usuario->email ?? '—' }}</td>
+                    <td class="whitespace-nowrap">{{ $cliente->usuario->nombre ?? '—' }}</td>
+                    <td class="font-semibold tabular-nums">{{ $cliente->saldo_creditos }}</td>
+                    <td>
+                        @php $estadoUsuario = $cliente->usuario->estado ?? null; @endphp
+                        @if($estadoUsuario === 'activo')
+                            <span class="ui-table-badge bg-emerald-100 text-emerald-800">Activo</span>
+                        @elseif($estadoUsuario === 'suspendido')
+                            <span class="ui-table-badge bg-rose-100 text-rose-800">Suspendido</span>
+                        @elseif($estadoUsuario === 'inactivo')
+                            <span class="ui-table-badge bg-slate-100 text-slate-700">Inactivo</span>
+                        @else
+                            <span class="ui-table-badge bg-slate-100 text-slate-700">—</span>
+                        @endif
+                    </td>
+                    <td class="whitespace-nowrap">{{ $cliente->api_keys_count }}</td>
+                    <td class="whitespace-nowrap tabular-nums">
+                        {{ $cliente->consultas_hoy_count ?? 0 }} / {{ $cliente->consultas_count ?? 0 }}
+                    </td>
+                    <td>
+                        <button wire:click="toggleDetalle({{ $cliente->id }})" type="button"
+                            class="ui-secondary-button min-h-9 px-3 py-1.5 text-xs
+                                {{ $expandidoId === $cliente->id ? 'bg-slate-100' : '' }}">
+                            {{ $expandidoId === $cliente->id ? 'Ocultar' : 'Ver detalle' }}
+                        </button>
+                    </td>
+                </tr>
+                @if($expandidoId === $cliente->id)
+                    <tr class="bg-slate-50">
+                        <td colspan="7" class="px-4 py-4">
+                            @if($detalle && $detalle->id === $cliente->id)
 
-                                        <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4">
+                                <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4">
                                             <h4 class="ui-section-title mb-3 text-base">API Keys</h4>
                                             @if($detalle->apiKeys->isNotEmpty())
                                                 <div class="overflow-x-auto">
@@ -112,10 +109,10 @@
                                             @else
                                                 <p class="text-sm text-slate-500">Sin API Keys generadas.</p>
                                             @endif
-                                        </div>
+                                </div>
 
                                         {{-- Consultas --}}
-                                        <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4">
+                                <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4">
                                             <h4 class="ui-section-title mb-3 text-base">Últimas consultas</h4>
                                             @if($detalle->consultas->isNotEmpty())
                                                 <table class="ui-data-table__table ui-data-table__table--compact">
@@ -141,10 +138,10 @@
                                             @else
                                                 <p class="text-sm text-slate-500">Sin consultas.</p>
                                             @endif
-                                        </div>
+                                </div>
 
                                         {{-- Recargas --}}
-                                        <div class="rounded-xl border border-slate-200 bg-white p-4">
+                                <div class="rounded-xl border border-slate-200 bg-white p-4">
                                             <h4 class="ui-section-title mb-3 text-base">Últimas recargas</h4>
                                             @if($detalle->recargas->isNotEmpty())
                                                 <table class="ui-data-table__table ui-data-table__table--compact">
@@ -186,23 +183,21 @@
                                             @else
                                                 <p class="text-sm text-slate-500">Sin recargas.</p>
                                             @endif
-                                        </div>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endif
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                                </div>
+                            @endif
+                        </td>
+                    </tr>
+                @endif
+            @endforeach
+        </tbody>
     @endif
 
     @if($clientes->hasPages())
-        <div class="ui-data-table__pagination">
+        <x-slot:pagination>
             {{ $clientes->links() }}
-        </div>
+        </x-slot:pagination>
     @endif
 
-    <p wire:loading.delay role="status" class="sr-only">Actualizando resultados.</p>
-</section>
+</x-data-table>
+<x-client-detail-modal :detail="$detalle" />
 </x-page-shell>

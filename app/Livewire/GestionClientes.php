@@ -35,6 +35,16 @@ class GestionClientes extends Component
     public function toggleDetalle(int $clienteId): void
     {
         $this->expandidoId = $this->expandidoId === $clienteId ? null : $clienteId;
+
+        if ($this->expandidoId !== null) {
+            $this->dispatch('open-modal', 'client-detail');
+        }
+    }
+
+    public function cerrarDetalle(): void
+    {
+        $this->expandidoId = null;
+        $this->dispatch('close');
     }
 
     public function resetFilters(): void
