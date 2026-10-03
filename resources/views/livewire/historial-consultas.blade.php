@@ -28,12 +28,12 @@
         </div>
     </x-slot:filters>
 
-    <thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Identificador</th><th scope="col" class="text-right">Créditos</th><th scope="col">Resultado</th></tr></thead>
+    <thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Identificador</th><th scope="col">API key</th><th scope="col" class="text-right">Créditos</th><th scope="col">Resultado</th></tr></thead>
     <tbody>
         @forelse($consultas as $c)
-            <tr><td class="whitespace-nowrap">{{ $c->fecha->format('d/m/Y H:i') }}</td><td><span class="ui-table-badge bg-slate-100 uppercase text-slate-700">{{ $c->tipo }}</span></td><td class="font-mono text-xs">{{ $c->identificador }}</td><td class="text-right font-semibold text-rose-700 tabular-nums">-{{ $c->creditos_gastados }}</td><td>@if($c->exitosa)<span class="ui-table-badge bg-emerald-100 text-emerald-800">Exitosa</span>@else<span class="ui-table-badge bg-rose-100 text-rose-800">Fallida</span>@endif</td></tr>
+            <tr><td class="whitespace-nowrap">{{ $c->fecha->format('d/m/Y H:i') }}</td><td><span class="ui-table-badge bg-slate-100 uppercase text-slate-700">{{ $c->tipo }}</span></td><td class="font-mono text-xs">{{ $c->identificador }}</td><td><span class="block font-medium text-[#14213d]">{{ $c->apiKey?->nombre ?? 'Sin API key asociada' }}</span>@if($c->apiKey)<code class="font-mono text-xs text-slate-500">cd_sk_{{ $c->apiKey->prefijo }}</code>@endif</td><td class="text-right font-semibold text-rose-700 tabular-nums">-{{ $c->creditos_gastados }}</td><td>@if($c->exitosa)<span class="ui-table-badge bg-emerald-100 text-emerald-800">Exitosa</span>@else<span class="ui-table-badge bg-rose-100 text-rose-800">Fallida</span>@endif</td></tr>
         @empty
-            <tr><td colspan="5" class="ui-data-table__empty">No hay consultas registradas.</td></tr>
+            <tr><td colspan="6" class="ui-data-table__empty">No hay consultas registradas.</td></tr>
         @endforelse
     </tbody>
 
