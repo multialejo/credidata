@@ -5,7 +5,6 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecargaPaypalReturnController;
 use App\Http\Controllers\RecargaPayphoneReturnController;
 use App\Http\Controllers\ReciboPdfController;
-use App\Models\ConfigParametro;
 use App\Livewire\ActivarColaborador;
 use App\Livewire\ConfigGeneral;
 use App\Livewire\EditarRegistro;
@@ -19,6 +18,7 @@ use App\Livewire\Recargas;
 use App\Livewire\Recibos;
 use App\Livewire\ValidacionAportes;
 use App\Livewire\ValidacionRecargas;
+use App\Models\ConfigParametro;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
