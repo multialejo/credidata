@@ -274,6 +274,26 @@ class LogsActividadTest extends TestCase
             ->assertSet('detalleId', null);
     }
 
+    public function test_detalle_de_consulta_cobrada_muestra_traza_de_saldo(): void
+    {
+        $log = $this->crearLog([
+            'accion' => 'CONSULTA_CEDULA',
+            'detalle' => [
+                'consulta_id' => 1, 'cedula' => '1713175071', 'api_key_id' => 7, 'creditos_gastados' => 1,
+                'saldo_anterior' => 10, 'saldo_nuevo' => 9, 'motivo' => 'consulta.cedula',
+            ],
+        ]);
+
+        Livewire::actingAs($this->staffUsuario)
+            ->test(LogsActividad::class)
+            ->call('verDetalle', $log->id)
+            ->assertSeeText('Saldo Anterior')
+            ->assertSeeText('Saldo Nuevo')
+            ->assertSeeText('Motivo')
+            ->assertSeeText('consulta.cedula')
+            ->assertSeeText('Api Key Id');
+    }
+
     public function test_exportar_csv_descarga_los_detalles_en_json(): void
     {
         $this->crearLog(['detalle' => ['creditos' => 5]]);

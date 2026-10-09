@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\SaldoInsuficienteException;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ConsultaResource;
 use App\Http\Resources\ConsultaRucResource;
+use App\Models\ApiKey;
 use App\Models\Cliente;
-use App\Models\ConfigParametro;
-use App\Models\Consulta;
-use App\Models\LogActividad;
 use App\Rules\EcuadorianIdentificador;
 use App\Services\CatastroService;
+use App\Services\ConsultaCobroService;
 use App\Services\DinardapService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -23,6 +22,7 @@ class ConsultaController extends Controller
     public function __construct(
         private DinardapService $dinardapService,
         private CatastroService $catastroService,
+        private ConsultaCobroService $cobroService,
     ) {}
 
     public function consultaCedula(Request $request)
@@ -32,7 +32,6 @@ class ConsultaController extends Controller
         ]);
 
         $cliente = $request->cliente_autenticado;
-        $apiKeyId = $request->api_key_autenticada->id;
 
         if (! $cliente) {
             return response()->json([
@@ -46,34 +45,22 @@ class ConsultaController extends Controller
         }
 
         $cedula = $request->cedula;
-        $costo = $this->getCostoConsulta();
+        $apiKey = $request->api_key_autenticada;
+        $costo = $this->cobroService->costoConsulta();
 
-        // 1. Validate saldo
+        // 1. Pre-validate saldo (fast-fail); the locked revalidation in the service is authoritative
         if ($cliente->saldo_creditos < $costo) {
-            return response()->json([
-                'codigo' => 402,
-                'exito' => false,
-                'mensaje' => 'Saldo insuficiente para realizar la consulta.',
-                'error' => [
-                    'tipo' => 'SALDO_INSUFICIENTE',
-                    'detalle' => "El saldo actual es {$cliente->saldo_creditos} créditos. Se requiere al menos {$costo} crédito(s).",
-                ],
-                'datos' => null,
-                'metadatos' => [
-                    'timestamp' => now()->toIso8601String(),
-                    'creditos_restantes' => (int) $cliente->saldo_creditos,
-                ],
-            ], 402);
+            return $this->respondSaldoInsuficiente((float) $cliente->saldo_creditos, $costo);
         }
 
         // 2. Check Firestore cache
         $cache = $this->dinardapService->obtenerCache($cedula);
         if ($cache !== null) {
-            DB::transaction(function () use ($cliente, $apiKeyId, $costo, $cedula, $cache, $request, &$consulta) {
-                $this->debitarCliente($cliente, $costo);
-                $consulta = $this->registrarConsulta($cliente, $apiKeyId, $cedula, $costo, true, $cache, $request->ip());
-                $this->registrarLog($cliente, $consulta->id, $cedula, $costo, $request->ip());
-            });
+            try {
+                $cobro = $this->cobroService->cobrar($cliente, $apiKey, 'cedula', $cedula, $costo, $cache, ['dinardap'], $request->ip());
+            } catch (SaldoInsuficienteException $e) {
+                return $this->respondSaldoInsuficiente($e->saldoActual, $e->costo);
+            }
 
             return response()->json([
                 'codigo' => 200,
@@ -83,7 +70,7 @@ class ConsultaController extends Controller
                 'metadatos' => [
                     'timestamp' => now()->toIso8601String(),
                     'creditos_gastados' => $costo,
-                    'creditos_restantes' => (int) $cliente->saldo_creditos,
+                    'creditos_restantes' => (int) $cobro->saldoNuevo,
                     'fuente' => 'cache',
                 ],
             ]);
@@ -93,21 +80,21 @@ class ConsultaController extends Controller
         try {
             $resultado = $this->dinardapService->consultar($cedula);
         } catch (ConnectionException $e) {
-            return $this->respondFuenteNoDisponible($cliente, $apiKeyId, $cedula, $costo, $request->ip());
+            return $this->respondFuenteNoDisponible($cliente, $apiKey, $cedula, $request->ip());
         }
 
         if ($resultado['status'] === 'not_found') {
-            return $this->respondSujetoNoEncontrado($cliente, $apiKeyId, $cedula, $costo, $request->ip());
+            return $this->respondSujetoNoEncontrado($cliente, $apiKey, $cedula, $costo, $request->ip());
         }
 
-        // 4. Success
+        // 4. Success: the data is valid, so it is cached even if the charge below ends in 402
         $this->dinardapService->guardarCache($cedula, $resultado['data']);
 
-        DB::transaction(function () use ($cliente, $apiKeyId, $costo, $cedula, $resultado, $request, &$consulta) {
-            $this->debitarCliente($cliente, $costo);
-            $consulta = $this->registrarConsulta($cliente, $apiKeyId, $cedula, $costo, true, $resultado['data'], $request->ip());
-            $this->registrarLog($cliente, $consulta->id, $cedula, $costo, $request->ip());
-        });
+        try {
+            $cobro = $this->cobroService->cobrar($cliente, $apiKey, 'cedula', $cedula, $costo, $resultado['data'], ['dinardap'], $request->ip());
+        } catch (SaldoInsuficienteException $e) {
+            return $this->respondSaldoInsuficiente($e->saldoActual, $e->costo);
+        }
 
         return response()->json([
             'codigo' => 200,
@@ -117,7 +104,7 @@ class ConsultaController extends Controller
             'metadatos' => [
                 'timestamp' => now()->toIso8601String(),
                 'creditos_gastados' => $costo,
-                'creditos_restantes' => (int) $cliente->saldo_creditos,
+                'creditos_restantes' => (int) $cobro->saldoNuevo,
                 'fuente' => 'dinardap',
             ],
         ]);
@@ -130,19 +117,15 @@ class ConsultaController extends Controller
         ]);
 
         $cliente = $request->cliente_autenticado;
-        $apiKeyId = $request->api_key_autenticada->id;
+        $apiKey = $request->api_key_autenticada;
         $ruc = $request->string('ruc')->toString();
-        $costo = $this->getCostoConsulta();
+        $costo = $this->cobroService->costoConsulta();
 
         if (! $cliente) {
             return response()->json(['codigo' => 401, 'exito' => false, 'mensaje' => 'API Key inválida o revocada', 'datos' => null], 401);
         }
         if ($cliente->saldo_creditos < $costo) {
-            return response()->json([
-                'codigo' => 402, 'exito' => false, 'mensaje' => 'Saldo insuficiente para realizar la consulta.',
-                'error' => ['tipo' => 'SALDO_INSUFICIENTE', 'detalle' => null], 'datos' => null,
-                'metadatos' => ['timestamp' => now()->toIso8601String(), 'creditos_restantes' => (int) $cliente->saldo_creditos],
-            ], 402);
+            return $this->respondSaldoInsuficiente((float) $cliente->saldo_creditos, $costo);
         }
 
         try {
@@ -159,22 +142,14 @@ class ConsultaController extends Controller
         }
 
         $encontrado = count($establecimientos) > 0;
-        DB::transaction(function () use ($cliente, $apiKeyId, $ruc, $costo, $establecimientos, $request, &$clienteBloqueado, &$consulta): void {
-            $clienteBloqueado = Cliente::query()->lockForUpdate()->findOrFail($cliente->id);
-            if ($clienteBloqueado->saldo_creditos < $costo) {
-                throw new \RuntimeException('Saldo insuficiente para realizar la consulta.');
-            }
-            $this->debitarCliente($clienteBloqueado, $costo);
-            $consulta = Consulta::create([
-                'cliente_id' => $clienteBloqueado->id, 'api_key_id' => $apiKeyId, 'tipo' => 'ruc', 'identificador' => $ruc,
-                'creditos_gastados' => $costo, 'resultado_json' => ['ruc' => $ruc, 'establecimientos' => $establecimientos],
-                'fuentes_utilizadas' => ['catastro_sri'], 'exitosa' => true, 'ip_origen' => $request->ip(), 'origen' => 'api',
-            ]);
-            LogActividad::create([
-                'accion' => 'CONSULTA_RUC', 'actor_id' => $clienteBloqueado->usuario->id,
-                'detalle' => ['consulta_id' => $consulta->id, 'ruc' => $ruc, 'creditos_gastados' => $costo], 'ip_origen' => $request->ip(),
-            ]);
-        });
+        try {
+            $cobro = $this->cobroService->cobrar(
+                $cliente, $apiKey, 'ruc', $ruc, $costo,
+                ['ruc' => $ruc, 'establecimientos' => $establecimientos], ['catastro_sri'], $request->ip(),
+            );
+        } catch (SaldoInsuficienteException $e) {
+            return $this->respondSaldoInsuficiente($e->saldoActual, $e->costo);
+        }
 
         return response()->json([
             'codigo' => $encontrado ? 200 : 404, 'exito' => true,
@@ -182,62 +157,32 @@ class ConsultaController extends Controller
             'datos' => new ConsultaRucResource(['ruc' => $ruc, 'establecimientos' => $establecimientos]),
             'metadatos' => [
                 'timestamp' => now()->toIso8601String(), 'creditos_gastados' => $costo,
-                'creditos_restantes' => (int) $clienteBloqueado->saldo_creditos, 'fuente' => 'catastro_sri',
+                'creditos_restantes' => (int) $cobro->saldoNuevo, 'fuente' => 'catastro_sri',
             ],
         ], $encontrado ? 200 : 404);
     }
 
-    private function getCostoConsulta(): int
+    private function respondSaldoInsuficiente(float $saldo, int $costo)
     {
-        $param = ConfigParametro::where('clave', 'costoConsultaBase')->first();
-
-        return $param ? (int) json_decode($param->valor) : 1;
-    }
-
-    private function debitarCliente(Cliente $cliente, int $costo): void
-    {
-        $cliente->decrement('saldo_creditos', $costo);
-        $cliente->refresh();
-    }
-
-    private function registrarConsulta(Cliente $cliente, int $apiKeyId, string $cedula, int $creditosGastados, bool $exitosa, ?array $datos, string $ip): Consulta
-    {
-        return Consulta::create([
-            'cliente_id' => $cliente->id,
-            'api_key_id' => $apiKeyId,
-            'tipo' => 'cedula',
-            'identificador' => $cedula,
-            'creditos_gastados' => $creditosGastados,
-            'resultado_json' => $datos,
-            'fuentes_utilizadas' => $datos !== null ? ['dinardap'] : null,
-            'exitosa' => $exitosa,
-            'ip_origen' => $ip,
-            'origen' => 'api',
-        ]);
-    }
-
-    private function registrarLog(Cliente $cliente, ?int $consultaId, string $cedula, int $creditosGastados, string $ip): void
-    {
-        LogActividad::create([
-            'accion' => 'CONSULTA_CEDULA',
-            'actor_id' => $cliente->usuario->id,
-            'detalle' => [
-                'consulta_id' => $consultaId,
-                'cedula' => $cedula,
-                'creditos_gastados' => $creditosGastados,
+        return response()->json([
+            'codigo' => 402,
+            'exito' => false,
+            'mensaje' => 'Saldo insuficiente para realizar la consulta.',
+            'error' => [
+                'tipo' => 'SALDO_INSUFICIENTE',
+                'detalle' => "El saldo actual es {$saldo} créditos. Se requiere al menos {$costo} crédito(s).",
             ],
-            'ip_origen' => $ip,
-        ]);
+            'datos' => null,
+            'metadatos' => [
+                'timestamp' => now()->toIso8601String(),
+                'creditos_restantes' => (int) $saldo,
+            ],
+        ], 402);
     }
 
-    private function respondFuenteNoDisponible(Cliente $cliente, int $apiKeyId, string $cedula, int $costo, string $ip)
+    private function respondFuenteNoDisponible(Cliente $cliente, ApiKey $apiKey, string $cedula, string $ip)
     {
-        $consulta = null;
-
-        DB::transaction(function () use ($cliente, $apiKeyId, $cedula, $ip, &$consulta) {
-            $consulta = $this->registrarConsulta($cliente, $apiKeyId, $cedula, 0, false, null, $ip);
-            $this->registrarLog($cliente, $consulta->id, $cedula, 0, $ip);
-        });
+        $registro = $this->cobroService->registrarSinCobro($cliente, $apiKey, 'cedula', $cedula, $ip);
 
         return response()->json([
             'codigo' => 503,
@@ -251,20 +196,18 @@ class ConsultaController extends Controller
             'metadatos' => [
                 'timestamp' => now()->toIso8601String(),
                 'creditos_gastados' => 0,
-                'creditos_restantes' => (int) $cliente->saldo_creditos,
+                'creditos_restantes' => (int) $registro->saldoNuevo,
             ],
         ], 503);
     }
 
-    private function respondSujetoNoEncontrado(Cliente $cliente, int $apiKeyId, string $cedula, int $costo, string $ip)
+    private function respondSujetoNoEncontrado(Cliente $cliente, ApiKey $apiKey, string $cedula, int $costo, string $ip)
     {
-        $consulta = null;
-
-        DB::transaction(function () use ($cliente, $apiKeyId, $costo, $cedula, $ip, &$consulta) {
-            $this->debitarCliente($cliente, $costo);
-            $consulta = $this->registrarConsulta($cliente, $apiKeyId, $cedula, $costo, true, null, $ip);
-            $this->registrarLog($cliente, $consulta->id, $cedula, $costo, $ip);
-        });
+        try {
+            $cobro = $this->cobroService->cobrar($cliente, $apiKey, 'cedula', $cedula, $costo, null, [], $ip);
+        } catch (SaldoInsuficienteException $e) {
+            return $this->respondSaldoInsuficiente($e->saldoActual, $e->costo);
+        }
 
         return response()->json([
             'codigo' => 404,
@@ -278,7 +221,7 @@ class ConsultaController extends Controller
             'metadatos' => [
                 'timestamp' => now()->toIso8601String(),
                 'creditos_gastados' => $costo,
-                'creditos_restantes' => (int) $cliente->saldo_creditos,
+                'creditos_restantes' => (int) $cobro->saldoNuevo,
             ],
         ], 404);
     }

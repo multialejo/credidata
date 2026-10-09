@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
 use App\Models\Consulta;
+use App\Models\LogActividad;
 use App\Models\Usuario;
 use App\Services\DinardapService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -63,7 +64,7 @@ class ConsultaCacheTest extends TestCase
         ]);
 
         ConfigParametro::create([
-            'modulo' => 'consulta',
+            'modulo' => 'financiero',
             'clave' => 'costoConsultaBase',
             'valor' => json_encode(1),
         ]);
@@ -193,5 +194,23 @@ class ConsultaCacheTest extends TestCase
         $response->assertJsonPath('metadatos.creditos_gastados', 1);
         $response->assertJsonPath('metadatos.creditos_restantes', 99);
         $response->assertJsonPath('metadatos.fuente', 'cache');
+    }
+
+    public function test_cache_hit_registra_traza_de_saldo(): void
+    {
+        $this->mockDinardapCacheHit();
+
+        $this->withHeaders([
+            'Authorization' => 'Bearer '.$this->validApiKey,
+        ])->postJson('/api/v1/consulta/cedula', [
+            'cedula' => $this->cedula,
+        ])->assertOk();
+
+        $detalle = LogActividad::where('accion', 'CONSULTA_CEDULA')->sole()->detalle;
+        $this->assertSame(1, $detalle['creditos_gastados']);
+        $this->assertEquals(100, $detalle['saldo_anterior']);
+        $this->assertEquals(99, $detalle['saldo_nuevo']);
+        $this->assertSame('consulta.cedula', $detalle['motivo']);
+        $this->assertSame($this->cliente->apiKeys()->sole()->id, $detalle['api_key_id']);
     }
 }

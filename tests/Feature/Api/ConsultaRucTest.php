@@ -6,6 +6,7 @@ use App\Models\ApiKey;
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
 use App\Models\Consulta;
+use App\Models\LogActividad;
 use App\Models\Usuario;
 use App\Services\CatastroService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,7 +41,7 @@ class ConsultaRucTest extends TestCase
             'prefijo' => substr(self::API_KEY, 6, 8),
             'alcance' => ['consulta:ruc'],
         ]);
-        ConfigParametro::create(['modulo' => 'consulta', 'clave' => 'costoConsultaBase', 'valor' => json_encode(1)]);
+        ConfigParametro::create(['modulo' => 'financiero', 'clave' => 'costoConsultaBase', 'valor' => json_encode(1)]);
     }
 
     public function test_returns_ordered_establishments_and_charges_once(): void
@@ -128,5 +129,24 @@ class ConsultaRucTest extends TestCase
     private function headers(): array
     {
         return ['Authorization' => 'Bearer '.self::API_KEY];
+    }
+
+    public function test_registra_traza_de_saldo_y_402_previo_tiene_detalle(): void
+    {
+        $this->mock(CatastroService::class, fn (MockInterface $mock) => $mock->shouldReceive('buscarEstablecimientos')->once()->andReturn([['numero' => '001']]));
+
+        $this->getResponse()->assertOk();
+
+        $detalle = LogActividad::where('accion', 'CONSULTA_RUC')->sole()->detalle;
+        $this->assertSame(self::RUC, $detalle['ruc']);
+        $this->assertEquals(10, $detalle['saldo_anterior']);
+        $this->assertEquals(9, $detalle['saldo_nuevo']);
+        $this->assertSame('consulta.ruc', $detalle['motivo']);
+        $this->assertSame($this->apiKey->id, $detalle['api_key_id']);
+
+        $this->cliente->update(['saldo_creditos' => 0]);
+        $this->getResponse()->assertStatus(402)
+            ->assertJsonPath('error.detalle', 'El saldo actual es 0 créditos. Se requiere al menos 1 crédito(s).')
+            ->assertJsonPath('metadatos.creditos_restantes', 0);
     }
 }

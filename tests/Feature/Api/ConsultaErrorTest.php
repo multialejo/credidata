@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Cliente;
 use App\Models\ConfigParametro;
+use App\Models\LogActividad;
 use App\Models\Usuario;
 use App\Services\DinardapService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -46,7 +47,7 @@ class ConsultaErrorTest extends TestCase
         ]);
 
         ConfigParametro::create([
-            'modulo' => 'consulta',
+            'modulo' => 'financiero',
             'clave' => 'costoConsultaBase',
             'valor' => json_encode(1),
         ]);
@@ -229,5 +230,40 @@ class ConsultaErrorTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJsonPath('metadatos.fuente', 'dinardap');
+    }
+
+    public function test_not_found_registra_traza_de_saldo(): void
+    {
+        Http::fake(['*' => Http::response(['error' => 'no_encontrado'], 404)]);
+
+        $this->withHeaders([
+            'Authorization' => 'Bearer '.$this->validApiKey,
+        ])->postJson('/api/v1/consulta/cedula', [
+            'cedula' => $this->cedula,
+        ])->assertStatus(404)->assertJsonPath('metadatos.creditos_restantes', 99);
+
+        $detalle = LogActividad::where('accion', 'CONSULTA_CEDULA')->sole()->detalle;
+        $this->assertEquals(100, $detalle['saldo_anterior']);
+        $this->assertEquals(99, $detalle['saldo_nuevo']);
+        $this->assertSame('consulta.cedula', $detalle['motivo']);
+    }
+
+    public function test_timeout_deja_saldo_intacto_y_traza_sin_cobro(): void
+    {
+        Http::fake(fn () => throw new ConnectionException('Timeout'));
+
+        $this->withHeaders([
+            'Authorization' => 'Bearer '.$this->validApiKey,
+        ])->postJson('/api/v1/consulta/cedula', [
+            'cedula' => $this->cedula,
+        ])->assertStatus(503)->assertJsonPath('metadatos.creditos_restantes', 100);
+
+        $this->assertSame(100.0, (float) $this->cliente->fresh()->saldo_creditos);
+        $this->assertDatabaseHas('consultas', ['cliente_id' => $this->cliente->id, 'creditos_gastados' => 0, 'exitosa' => false]);
+
+        $detalle = LogActividad::where('accion', 'CONSULTA_CEDULA')->sole()->detalle;
+        $this->assertSame(0, $detalle['creditos_gastados']);
+        $this->assertEquals(100, $detalle['saldo_anterior']);
+        $this->assertEquals(100, $detalle['saldo_nuevo']);
     }
 }
